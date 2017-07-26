@@ -285,7 +285,7 @@ $httpClient->download('http://www.example.com/robots.txt', $_SERVER['DOCUMENT_RO
 // Old school
 global $APPLICATION;
 $APPLICATION->set_cookie("TEST", 42, false, "/", "example.com");
-// Cookie áóäåò äîñòóïíà òîëüêî íà ñëåäóþùåì õèòå!
+// Cookie Ð±ÑƒÐ´ÐµÑ‚ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð½Ð° Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð½Ð° ÑÐ»ÐµÐ´ÑƒÑŽÑ‰ÐµÐ¼ Ñ…Ð¸Ñ‚Ðµ!
 echo $APPLICATION->get_cookie("TEST");
 
 // D7
@@ -293,7 +293,7 @@ use Bitrix\Main\Web\Cookie;
 $cookie = new Cookie("TEST", 42);
 $cookie->setDomain("example.com");
 Application::getInstance()->getContext()->getResponse()->addCookie($cookie);
-// Cookie áóäåò äîñòóïíà òîëüêî íà ñëåäóþùåì õèòå!
+// Cookie Ð±ÑƒÐ´ÐµÑ‚ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð½Ð° Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð½Ð° ÑÐ»ÐµÐ´ÑƒÑŽÑ‰ÐµÐ¼ Ñ…Ð¸Ñ‚Ðµ!
 echo Application::getInstance()->getContext()->getRequest()->getCookie("TEST");
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -326,7 +326,7 @@ $record = Application::getConnection()
 Debug::writeToFile($record);
 
 
-// Èñïîëüçóéòå \Bitrix\Iblock\PropertyTable::getList. Ðàñøèðÿòü CIBlockProperty::GetList íå ïëàíèðóåòñÿ.
+// Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ \Bitrix\Iblock\PropertyTable::getList. Ð Ð°ÑÑˆÐ¸Ñ€ÑÑ‚ÑŒ CIBlockProperty::GetList Ð½Ðµ Ð¿Ð»Ð°Ð½Ð¸Ñ€ÑƒÐµÑ‚ÑÑ.
 \Bitrix\Iblock\PropertyTable::getList();
 
 ?>
