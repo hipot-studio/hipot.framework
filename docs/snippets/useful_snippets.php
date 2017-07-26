@@ -13,7 +13,7 @@ define("LOG_FILENAME", $_SERVER["DOCUMENT_ROOT"] . "/bx_log.txt");
 ?>
 
 <?
-// для производительности и прочие фиксы на крон
+// РґР»СЏ РїСЂРѕРёР·РІРѕРґРёС‚РµР»СЊРЅРѕСЃС‚Рё Рё РїСЂРѕС‡РёРµ С„РёРєСЃС‹ РЅР° РєСЂРѕРЅ
 define("NO_KEEP_STATISTIC", true);
 define("NOT_CHECK_PERMISSIONS", true);
 define("BX_BUFFER_USED", true); // ?
@@ -32,7 +32,7 @@ while ($arRes = $csvFile->Fetch()) {
 
 
 <?
-// old-way Выбор элементов со свойствами
+// old-way Р’С‹Р±РѕСЂ СЌР»РµРјРµРЅС‚РѕРІ СЃРѕ СЃРІРѕР№СЃС‚РІР°РјРё
 CModule::IncludeModule('iblock');
 
 
@@ -57,7 +57,7 @@ while ($arItem = $rsItems->GetNext()) {
 		array("EMPTY" => "N")
 	);
 	while ($ar_props = $db_props->GetNext()) {
-		// для свойств TEXT/HTML не верно экранируются символы
+		// РґР»СЏ СЃРІРѕР№СЃС‚РІ TEXT/HTML РЅРµ РІРµСЂРЅРѕ СЌРєСЂР°РЅРёСЂСѓСЋС‚СЃСЏ СЃРёРјРІРѕР»С‹
 		if ($ar_props['PROPERTY_TYPE'] == "S" && isset($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE'])) {
 			$ar_props['VALUE']['TEXT'] = FormatText($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE']);
 		}
@@ -93,7 +93,7 @@ if ($obMenuCache->StartDataCache(FilterController::$cacheTime, $CACHE_ID, Filter
 
 
 <?
-// Пример выборки дерева подразделов для раздела
+// РџСЂРёРјРµСЂ РІС‹Р±РѕСЂРєРё РґРµСЂРµРІР° РїРѕРґСЂР°Р·РґРµР»РѕРІ РґР»СЏ СЂР°Р·РґРµР»Р°
 $rsParentSection = CIBlockSection::GetByID($ID);
 if ($arParentSection = $rsParentSection->GetNext()) {
 	$arFilter = array(
@@ -104,7 +104,7 @@ if ($arParentSection = $rsParentSection->GetNext()) {
 	);
 	$rsSect = CIBlockSection::GetList(array('left_margin' => 'asc'), $arFilter);
 	while ($arSect = $rsSect->GetNext()) {
-		// получаем подразделы
+		// РїРѕР»СѓС‡Р°РµРј РїРѕРґСЂР°Р·РґРµР»С‹
 	}
 }
 ?>
@@ -119,7 +119,7 @@ if ($_SERVER['HTTP_X_REQUESTED_WITH'] != 'XMLHttpRequest') {
 
 
 <script type="text/javascript">
-// $.ajax пример
+// $.ajax РїСЂРёРјРµСЂ
 $(".notify_product_p").each(function(){
 	var _npp = this;
 	$('.notify_product[pid]', _npp).each(function(){
@@ -147,7 +147,7 @@ $(".notify_product_p").each(function(){
 					$(__np).data('posted', false).fadeTo(0, 1);
 				},
 				success: function(data, textStatus, jqXHR){
-					$(_npp).html('Вам на email прийдет сообщение о поступлении товара на сайт.').css('top', '-20px').css('cursor', 'default');
+					$(_npp).html('Р’Р°Рј РЅР° email РїСЂРёР№РґРµС‚ СЃРѕРѕР±С‰РµРЅРёРµ Рѕ РїРѕСЃС‚СѓРїР»РµРЅРёРё С‚РѕРІР°СЂР° РЅР° СЃР°Р№С‚.').css('top', '-20px').css('cursor', 'default');
 				}
 			});
 
@@ -159,13 +159,13 @@ $(".notify_product_p").each(function(){
 
 
 <?
-// bitrix:search.page в файле result_modifier.php
+// bitrix:search.page РІ С„Р°Р№Р»Рµ result_modifier.php
 if (count($arResult["SEARCH"]) > 0) {
 
 	$arIDs = array();
 	foreach ($arResult["SEARCH"] as $si => $arItem) {
 		if ($arItem["MODULE_ID"] == "iblock" && substr($arItem["ITEM_ID"], 0, 1) !== "S") {
-			// связь: iblock_id => id : search_id
+			// СЃРІСЏР·СЊ: iblock_id => id : search_id
 			$arIDs[ $arItem['PARAM2'] ][ $arItem["ITEM_ID"] ] = $si;
 		}
 	}
@@ -173,7 +173,7 @@ if (count($arResult["SEARCH"]) > 0) {
 	CModule::IncludeModule('iblock');
 
 	foreach ($arIDs as $iblockId => $searchIds) {
-		// для инфоблоков 2.0 передавать IBLOCK_ID для выбора свойств обязательно
+		// РґР»СЏ РёРЅС„РѕР±Р»РѕРєРѕРІ 2.0 РїРµСЂРµРґР°РІР°С‚СЊ IBLOCK_ID РґР»СЏ РІС‹Р±РѕСЂР° СЃРІРѕР№СЃС‚РІ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ
 		$grab = CIBlockElement::GetList(array(), array(
 			"IBLOCK_ID" 	=> $iblockId,
 			"ID" 			=> array_keys($searchIds)
@@ -197,7 +197,7 @@ if (count($arResult["SEARCH"]) > 0) {
 
 
 <?
-// Наиболее частые SQL запросы
+// РќР°РёР±РѕР»РµРµ С‡Р°СЃС‚С‹Рµ SQL Р·Р°РїСЂРѕСЃС‹
 "SHOW CREATE TABLE `we_custom_settings`";
 
 "ALTER TABLE `we_custom_settings` CHANGE `UF_CODE` `UF_CODE` VARCHAR( 150 ) NULL DEFAULT NULL";
@@ -207,7 +207,7 @@ if (count($arResult["SEARCH"]) > 0) {
 
 
 <?
-// init.php - устранение слеша на конце
+// init.php - СѓСЃС‚СЂР°РЅРµРЅРёРµ СЃР»РµС€Р° РЅР° РєРѕРЅС†Рµ
 if (preg_match('#^(.*?[^/])$#', $_SERVER["REQUEST_URI"], $m) && !preg_match('#(\.php)|(\?)#', $_SERVER["REQUEST_URI"])) {
 	LocalRedirect($m[0] . '/', true, "301 Moved Permanently");
 }
@@ -252,4 +252,4 @@ $ipropTemplates->set(array(
 	"ELEMENT_META_TITLE" => $p['DETAIL_PARAMS']['SEO_TITLE'],
 	"ELEMENT_META_DESCRIPTION" => $p['DETAIL_PARAMS']['SEO_DESCRIPTION'],
 ));
-?>
+?> 
