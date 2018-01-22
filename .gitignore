@@ -1,0 +1,5 @@
+vendor
+composer.lock
+.idea
+import_to_delete
+cache
