@@ -2,80 +2,50 @@
 namespace Hipot\BitrixUtils;
 
 /**
- * Класс для работы с кешированием
+ * Класс для работы с кешированием (как обертка над логикой в виде анонимной функции, возвращающей данные)
+ * @version 2.0 beta
  */
 class PhpCacher
 {
 	/**
+	 * Последняя ошибка при попытке записи в кеш
+	 * @var string
+	 */
+	public static $LAST_ERROR = '';
+
+	/**
+	 * Сохранять ли пустые выборки в кеш
+	 */
+	const SAVE_EMPTY_DATA_TO_CACHE = false;
+
+	/**
 	 * Массив параметров функции для проброса параметров в анонимную функцию
-	 *
 	 * @var array
 	 */
 	public static $params = array();
 
 	/**
-	 * Последняя ошибка при попытке записи в кеш
+	 * Записываем и возвращает данные в кеш по пути /bitrix/cache/php/$tagName/ с возможностью указать
+	 * в функции $callbackFunction теги для кеша.
 	 *
-	 * @var string
-	 */
-	public static $LAST_ERROR = '';
-
-
-	/**
-	 * Удаление по тегу
+	 * В случае ошибки в статичной переменной $LAST_ERROR - будет строка с ошибкой
 	 *
-	 * @param string $tagName
+	 * @param string   $tagName - тег (массив тегов)
+	 * @param int      $cacheTime - время кеша
+	 * @param callable $callbackFunction в анонимной функции можно регистрировать и теги для управляемого кеша:
+	 * <pre>global $CACHE_MANAGER;
+	 * $CACHE_MANAGER->RegisterTag("iblock_id_43");
+	 * $CACHE_MANAGER->RegisterTag("iblock_id_new");</pre>
+	 * @param array    $params - массив параметров функции (deprecated, для старых версий php)
+	 * данные параметры влияют на идентификатор кеша $CACHE_ID
 	 *
-	 * @return bool
-	 */
-	public static function clearDirByTag($tagName)
-	{
-		$path = self::getCacheDir($tagName, true);
-		if ($path) {
-			return \DeleteDirFilesEx($path);
-		}
-
-		return false;
-	}
-
-	/**
-	 * Получить путь к папке для записи кеша
-	 *
-	 * @param string $tagName
-	 * @param bool $relRootPath - false - относительно '/bitrix/cache/', true - относительно корня сайта
-	 * @return boolean|string
-	 */
-	private static function getCacheDir($tagName, $relRootPath = false)
-	{
-		if (($tagName = trim($tagName)) == '') {
-			return false;
-		}
-
-		$path = '/php/' . $tagName . '/';
-
-		if ($relRootPath) {
-			$path = '/bitrix/cache' . $path;
-		}
-
-		return $path;
-	}
-
-	/**
-	 * Записываем данные в кеш
-	 *
-	 * В случае ошибки в переменной $LAST_ERROR - будет строка с ошибкой
-	 *
-	 * @param string $tagName - тег (массив тегов)
-	 * @param int $cacheTime - время кеша
-	 * @param callable function $callbackFunction
-	 * @param array $params - массив параметров функции
 	 * @return boolean|array
 	 */
 	public static function returnCacheDataAndSave($tagName, $cacheTime, $callbackFunction, $params = array())
 	{
 		self::$LAST_ERROR = '';
 
-		if (is_array($tagName)) {
+		if (! is_string($tagName)) {
 			self::$LAST_ERROR = 'BAD TAG NAME TO BE STRING...';
 			return false;
 		}
@@ -90,32 +60,42 @@ class PhpCacher
 			return false;
 		}
 
-		if (! is_callable($callbackFunction)) {
+		if (!is_callable($callbackFunction)) {
 			self::$LAST_ERROR = 'BAD CALLBACK FUNC ARGUMENT...';
 			return false;
 		}
 
-		if (! is_array($params) || empty($params)) {
+		if (!is_array($params) || empty($params)) {
 			$params = array();
 		}
 
-		$CACHE_ID = 'cacher_' . md5(
-			serialize($params) . $tagName . $cacheTime
-		);
-
-		// путь задается относительно папки /bitrix/cache/
-		$CACHE_DIR = self::getCacheDir( $tagName );
+		$CACHE_ID     = 'cacher_' . md5(serialize($params) . $tagName);
+		$CACHE_DIR    = self::getCacheDir($tagName);
 
 		$obCache = new \CPHPCache;
+
+		// clear cache now clear folder
+		if ($_REQUEST['clear_cache'] === 'Y' && self::canCurrentUserDropCache()) {
+			$obCache->CleanDir($CACHE_DIR);
+		}
+
 		if ($obCache->StartDataCache($cacheTime, $CACHE_ID, $CACHE_DIR)) {
+
+			if (defined('BX_COMP_MANAGED_CACHE')) {
+				$GLOBALS['CACHE_MANAGER']->StartTagCache($CACHE_DIR);
+			}
 
 			self::$params = $params;
 			// если передавать через array($params) получаем сразу захват всех параметров
 			$data = call_user_func_array($callbackFunction, array($params));
 			self::$params = array();
 
-			if (! empty($data)) {
-				$obCache->EndDataCache( $data );
+			if (defined('BX_COMP_MANAGED_CACHE')) {
+				$GLOBALS['CACHE_MANAGER']->EndTagCache();
+			}
+
+			if (($data !== null && self::SAVE_EMPTY_DATA_TO_CACHE) || !empty($data)) {
+				$obCache->EndDataCache($data);
 			} else {
 				$obCache->AbortDataCache();
 				self::$LAST_ERROR = 'NO DATA PUSH TO CACHE...';
@@ -127,8 +107,58 @@ class PhpCacher
 		return $data;
 	}
 
+	/**
+	 * Получить путь к папке для записи кеша
+	 * путь задается относительно папки /bitrix/cache/
+	 *
+	 * @param string $tagName
+	 * @return boolean|string
+	 */
+	private static function getCacheDir($tagName)
+	{
+		if (($tagName = trim($tagName)) == '') {
+			return false;
+		}
 
-}
+		$path = '/php/' . $tagName . '/';
+		return $path;
+	}
 
+	/**
+	 * Удаление кеша по тегу (через API и не только файлы удаляет)
+	 *
+	 * @param string $tagName
+	 */
+	public static function clearDirByTag($tagName)
+	{
+		$path = self::getCacheDir($tagName);
+
+		$obCache = new \CPHPCache();
+		$obCache->CleanDir($path);
+	}
+
+	/**
+	 * Удаление кеша по тегам из управляемого кеша
+	 *
+	 * @param string|array $tags
+	 */
+	public static function clearByManagedTags($tags)
+	{
+		if (defined('BX_COMP_MANAGED_CACHE')) {
+			if (! is_array($tags)) {
+				$tags = array($tags);
+			}
+			foreach ($tags as $tag) {
+				$GLOBALS['CACHE_MANAGER']->ClearByTag($tag);
+			}
+		}
+	}
+
+	private static function canCurrentUserDropCache()
+	{
+		return $GLOBALS['USER']->IsAdmin();
+	}
+
+} //end class
 
 
