@@ -111,6 +111,10 @@ class PhpCacher
 	 * Получить путь к папке для записи кеша
 	 * путь задается относительно папки /bitrix/cache/
 	 *
+	 * Далее определяется каталог относительно /bitrix/cache в котором будут сохранятся файлы кеша с разными значениями $params.
+	 * Важно, что этот путь начинается со слеша и им не заканчивается.
+	 * При использовании в качестве кеша memcached или APC это будет критичным при сбросе кеша.
+	 *
 	 * @param string $tagName
 	 * @return boolean|string
 	 */
@@ -120,7 +124,7 @@ class PhpCacher
 			return false;
 		}
 
-		$path = '/php/' . $tagName . '/';
+		$path = '/php/' . $tagName;
 		return $path;
 	}
 
@@ -160,5 +164,6 @@ class PhpCacher
 	}
 
 } //end class
+
 
 
