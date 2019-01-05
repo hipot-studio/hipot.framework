@@ -524,6 +524,151 @@ class IblockUtils
 		return $SectionIDS;
 	}
 
+	 /**
+	 * Добавляет фотки из ссылок, во множественное свойство типа файл
+	 *
+	 * @param $ID ID
+	 * @param $IBLOCK_ID ID
+	 * @param $arFiles Массив array('link.png'=>'description')
+	 * @param $prop_code Код
+	 *
+	 * @return bool|string
+	 */
+	public function AddMultipleFileValue($ID, $IBLOCK_ID, $arFiles, $prop_code)
+	{
+		$result = true;
+
+		$rsPr = CIBlockElement::GetProperty($IBLOCK_ID, $ID, ['sort', 'asc'], [
+			'CODE' => $prop_code,
+			'EMPTY' => 'N'
+		]);
+		while ($arPr = $rsPr->GetNext()) {
+			$far = CFile::GetFileArray($arPr['VALUE']);
+			$far = CFile::MakeFileArray($far['SRC']);
+			$ar[] = array(
+				'VALUE' => $far,
+				'DESCRIPTION' => $arPr['DESCRIPTION']
+			);
+		}
+
+		foreach ($arFiles as $l => $d) {
+			$art = false;
+			$gn = 0;
+			while (!$art || ($art['type'] == 'unknown' && $gn < 10)) {
+				$gn ++;
+				$art = CFile::MakeFileArray($l);
+			}
+			if ($art['tmp_name']) {
+				$ar[] = array(
+					'VALUE' => $art,
+					'DESCRIPTION' => $d
+				);
+			} else {
+				$result = 'partial';
+			}
+		}
+		\CIBlockElement::SetPropertyValuesEx($ID, $IBLOCK_ID, array(
+			$prop_code => $ar
+		));
+
+		return $result;
+	}
+
+	/**
+	 * По имени либо получает значение, либо если его нет - добавляет его в справочник.
+	 *
+	 * @param string $fieldVal = Значение, не может быть пустым (Dr.Pepper)
+	 * @param string $iblockId = инентификатор справочника
+	 *
+	 * @retrun возвращается значение ID значения в справочнике
+	 * @return bool|int
+	 */
+	static public function addToHelperAndReturnElementId($fieldVal, $iblockId)
+	{
+		$iblockId = (int)$iblockId;
+		if (($fieldVal = trim($fieldVal)) == '' || $iblockId <= 0) {
+			return false;
+		}
+
+		static $cacheProcess;
+		$cacheKey = $fieldVal . '|' . $iblockId;
+
+		if (isset($cacheProcess[$cacheKey])) {
+			return $cacheProcess[$cacheKey];
+		}
+
+		$checkBase = self::checkElementExistsByNameOrCode($fieldVal, $iblockId, 'name');
+		if ($checkBase) {
+			$cacheProcess[$cacheKey] = $checkBase;
+		} else {
+			$r = self::addElementToDb([
+				'ACTIVE'        => 'Y',
+				'NAME'          => $fieldVal,
+				'IBLOCK_ID'     => $iblockId,
+				'CODE'          => \Hipot\Utils\UnsortedUtils::TranslitText($fieldVal) . '-' . randString(3)
+			]);
+			if ($r->STATUS != 'OK') {
+				return false;
+			}
+			$cacheProcess[$cacheKey] = (int)$r->RESULT;
+		}
+
+		return $cacheProcess[$cacheKey];
+	}
+
+	/**
+	 * Получить новое сео у элемента
+	 *
+	 * @param int $IBLOCK_ID
+	 * @param int $ID
+	 *
+	 * @return array
+	 */
+	static function returnSeoValues($IBLOCK_ID, $ID)
+	{
+		$ipropValues = new \Bitrix\Iblock\InheritedProperty\ElementValues((int)$IBLOCK_ID, (int)$ID);
+		return $ipropValues->getValues();
+	}
+
+	/**
+	 * Установить новое сео у элементов
+	 * @param int   $IBLOCK_ID
+	 * @param int   $ID
+	 * @param array $arTemplates (обычно в ключах ELEMENT_META_DESCRIPTION, ELEMENT_META_TITLE)
+	 *
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	static function setSeoValues($IBLOCK_ID, $ID, $arTemplates = [])
+	{
+		$ipropTemplates = new\Bitrix\Iblock\InheritedProperty\ElementTemplates((int)$IBLOCK_ID, (int)$ID);
+		$ipropTemplates->set($arTemplates);
+	}
+
+	/**
+	 * Установить секцию у элемента
+	 *
+	 * @param int $elId
+	 * @param int $sectionId
+	 *
+	 * @return bool
+	 */
+	static function setGroupToElement($elId, $sectionId)
+	{
+		$elId = (int)$elId;
+		$sectionId = (int)$sectionId;
+		if ($elId <= 0 || $sectionId <= 0) {
+			return false;
+		}
+
+		$db_old_groups = \CIBlockElement::GetElementGroups($elId, true);
+		$ar_new_groups = [$sectionId];
+		while ($ar_group = $db_old_groups->Fetch()) {
+			$ar_new_groups[] = $ar_group["ID"];
+		}
+		\CIBlockElement::SetElementSection($elId, $ar_new_groups);
+		return true;
+	}
+
 } // end class
 
 
