@@ -14,7 +14,7 @@
   "extra": {
     "merge-plugin": {
       "require": [
-        "H:/www/pharma/www/bitrix/composer-bx.json"
+        "../bitrix/composer-bx.json"
       ]
     }
   }
