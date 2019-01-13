@@ -67,7 +67,7 @@ AddEventHandler("main", "OnBuildGlobalMenu", function (&$aGlobalMenu, &$aModuleM
 // верхняя постраничка в админке в лентах
 AddEventHandler("main", "OnAdminListDisplay", function ($this_al) {
 	/* @var $this_al CAdminList */
-	echo $this_al->sNavText;
+	//echo $this_al->sNavText;
 });
 
 // очищаем настройки формы по-умолчанию для всех админов
