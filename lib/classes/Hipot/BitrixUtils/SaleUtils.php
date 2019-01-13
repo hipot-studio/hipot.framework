@@ -220,17 +220,17 @@ class SaleUtils
 	 * @param array $orderProps свойства заказа, которые надо проставить (символьный код свойства 1 => значение 1, ..., также обрабатываются USER_DESCRIPTION -
 	 *                          комментарий пользователя, MANAGER_DESCRIPTION - комментарий администратора
 	 * @param array $goodIds массив, в ключах ID товаров, а в значении
-	 * @param null $goodsListCallback кел-бек функция, позволяет менять товары перед сохранением
+	 * @param null  $goodsListCallback кел-бек функция, позволяет менять товары перед сохранением
 	 * <code>
 	 *      function ($basket) {
 	 *          $basketItems = $basket->getBasketItems();
-	 *			foreach ($basketItems as $basketItem) {
-	 *			}
+	 *            foreach ($basketItems as $basketItem) {
+	 *            }
 	 *          return $basket;
 	 *      }
 	 * </code>
-	 * @param null $currencyCode = если null - берется с опции 'sale::default_currency'
-	 * @param int  $personTypeId = 1 обычно обычный физик, но завел на всякий
+	 * @param null  $currencyCode = если null - берется с опции 'sale::default_currency'
+	 * @param int   $personTypeId = 1 обычно обычный физик, но завел на всякий
 	 *
 	 * @return int
 	 * @throws \Bitrix\Main\ArgumentException
@@ -322,7 +322,6 @@ class SaleUtils
 				$arPaySystem = $arPaySystemServiceAll[$paySystemId];
 			} else {
 				reset($arPaySystemServiceAll);
-
 				$arPaySystem = current($arPaySystemServiceAll);
 			}
 
@@ -340,36 +339,36 @@ class SaleUtils
 		$propertyCollection = $order->getPropertyCollection();
 		foreach ($orderProps as $propCode => $value) {
 			$property = self::getPropertyByCode($propertyCollection, $propCode);
-			/** @var Bitrix\Sale\PropertyValue $property* /
-			if (is_callable($property, 'setValue')) {
-			$property->setValue($value);
-			}*/
+			/** @var Bitrix\Sale\PropertyValue $property * /
+			 * if (is_callable($property, 'setValue')) {
+			 * $property->setValue($value);
+			 * }*/
 		}
-
-		$order->setField('CURRENCY',                $currencyCode);
-		$order->setField('USER_DESCRIPTION',        $orderProps['USER_DESCRIPTION']);
-		$order->setField('COMMENTS',                $orderProps['MANAGER_DESCRIPTION']);
-
 		$order->doFinalAction(true);
-
 		$order->save();
 
 		$orderId = $order->GetId();
 
-		/*if ($orderId) {
-			self::setOrderProps($orderId, $propCode);
-		}*/
+		if ($orderId) {
+			\CSaleOrder::Update($orderId, [
+				'USER_ID' => $orderProps['USER_ID'],
+				'USER_DESCRIPTION' => $orderProps['USER_DESCRIPTION'],
+				'COMMENTS' => $orderProps['MANAGER_DESCRIPTION'],
+				'CURRENCY' => $currencyCode
+			]);
+		}
 
 		return $orderId;
 	}
 
 	/**
 	 * @param   $propertyCollection
-	 * @param $code
+	 * @param   $code
 	 *
 	 * @return \Bitrix\Sale\PropertyValueCollection
 	 */
-	static function getPropertyByCode($propertyCollection, $code)  {
+	static function getPropertyByCode($propertyCollection, $code)
+	{
 		foreach ($propertyCollection as $property) {
 			if ($property->getField('CODE') == $code) {
 				return $property;
@@ -410,8 +409,8 @@ class SaleUtils
 				'LID' => Bitrix\Main\Context::getCurrent()->getSite(),
 				'PRICE' => $customPrice,
 				'CUSTOM_PRICE' => 'Y',
-		   ));
-		   */
+			));
+			*/
 		}
 		$basket->save();
 	}
