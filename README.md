@@ -1,3 +1,6 @@
+![power php!](http://hipot.mooo.com/1fi1N5O-vvtJUgH4wqdM0ng.png)
+
+
 # Мини-фреймворк hipot.framework для работы.
 (с) hipot, 2019
 
