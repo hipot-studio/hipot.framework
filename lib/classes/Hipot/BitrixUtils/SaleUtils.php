@@ -11,7 +11,8 @@ use Bitrix\Sale\PaySystem;
 /**
  * Работа с заказами и корзиной
  *
- * @version 1.4
+ * @version 1.6
+ * @author hipot studio
  */
 class SaleUtils
 {
@@ -217,20 +218,132 @@ class SaleUtils
 	}
 
 	/**
+	 * Добавление заказа по-старинке со всеми параметрами (корзина, свойства заказа и т.д.)
+	 *
+	 * @param      $orderProps
+	 * @param      $goodIds
+	 * @param null $goodsListCallback
+	 * @param int  $personTypeId
+	 * @param null $paySystemId
+	 * @param null $deliveryId
+	 * @param null $currencyCode
+	 *
+	 * @return int
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function addOrder($orderProps, $goodIds, $goodsListCallback = null, $personTypeId = 1, $paySystemId = null, $deliveryId = null, $currencyCode = null)
+	{
+		global $USER;
+
+		if (!Loader::IncludeModule('sale')) {
+			throw new \Exception('Module sale not installed');
+		}
+
+		if ($currencyCode === null) {
+			$currencyCode = \COption::GetOptionString('sale', 'default_currency', 'RUB');
+		}
+
+		DiscountCouponsManager::init();
+
+		$siteId = \Bitrix\Main\Context::getCurrent()->getSite();
+		$deliveryPrice = false;
+
+		$anonimUser = $USER->GetByLogin('anonimus@wellmood.ru')->Fetch();
+
+		$arOrderAdd = [
+			'LID'               =>  $siteId,
+			'PERSON_TYPE_ID'    => $personTypeId,
+			'PAYED'             => 'N',
+			'DATE_PAYED'        => false,
+			'EMP_PAYED_ID'      => false,
+			'CANCELED'          => 'N',
+			'DATE_CANCELED'     => false,
+			'EMP_CANCELED_ID'   => false,
+			'REASON_CANCELED'   => '',
+			'STATUS_ID' => 'N',
+			'EMP_STATUS_ID' => false,
+			'PRICE_DELIVERY' => $deliveryPrice,
+			'ALLOW_DELIVERY' => 'N',
+			'DATE_ALLOW_DELIVERY'  => false,
+			'EMP_ALLOW_DELIVERY_ID' => false,
+			'PRICE' => $orderProps['PRICE'],
+			'CURRENCY'  => $currencyCode,
+			'DISCOUNT_VALUE' => false,
+			'USER_ID'   => !$orderProps['USER_ID'] ? $anonimUser['ID'] : $orderProps['USER_ID'],
+			'PAY_SYSTEM_ID' => $paySystemId,
+			'DELIVERY_ID' =>  $deliveryId,
+			'USER_DESCRIPTION' - $orderProps['USER_DESCRIPTION'],
+			'ADDITIONAL_INFO' => '',
+			'COMMENTS' => '',
+			'TAX_VALUE' => '',
+			'AFFILIATE_ID' => false,
+			'PS_STATUS' => 'N',
+		];
+
+		$ORDER_ID = \CSaleOrder::Add($arOrderAdd);
+		if ($ORDER_ID) {
+			self::setOrderProps($ORDER_ID, $orderProps);
+			foreach ($goodIds as $count => $good) {
+
+				$arBasketAdd = [
+					'FUSER_ID' => \CSaleUser::GetAnonymousUserID(),
+					'ORDER_ID' => $ORDER_ID,
+					'QUANTITY' => $count,
+					'CURRENCY' => \Bitrix\Currency\CurrencyManager::getBaseCurrency(),
+					'LID' => \Bitrix\Main\Context::getCurrent()->getSite(),
+					'PRODUCT_PROVIDER_CLASS' => 'CCatalogProductProvider',
+					'PRODUCT_ID' => $good['ID'],
+					"MODULE" => "catalog",
+					'PRICE' => $good['PRICE'],
+					'NAME' => $good['NAME'],
+					'DETAIL_PAGE_URL' => $good['DETAIL_PAGE_URL'],
+					'CUSTOM_PRICE' => 'Y'
+				];
+				if (is_callable($goodsListCallback)) {
+					$arBasketAdd = $goodsListCallback($arBasketAdd);
+				}
+				\CSaleBasket::Add($arBasketAdd);
+			}
+		}
+
+		return $ORDER_ID;
+	}
+
+	/**
+	 * Получить полный адрес по местоположению, если он есть в базе
+	 * @param int $CITY
+	 * @return string
+	 */
+	public static function GetFullLocationNameById($CITY)
+	{
+		$pr['CITY']['VALUE_FULL'] = '';
+		$cityLocation = \CSaleLocation::GetByID((int)$CITY);
+		$pr['CITY']['VALUE_FULL'] = $cityLocation['COUNTRY_NAME_LANG'] . ' ' . $cityLocation['REGION_NAME_LANG'] . ' ' . $cityLocation['CITY_NAME_LANG'];
+		unset($cityLocation);
+		return $pr['CITY']['VALUE_FULL'];
+	}
+
+
+	/************************** d7 test cases, wont work **************************/
+
+
+	/**
+	 * TODO
+	 *
 	 * @param array $orderProps свойства заказа, которые надо проставить (символьный код свойства 1 => значение 1, ..., также обрабатываются USER_DESCRIPTION -
 	 *                          комментарий пользователя, MANAGER_DESCRIPTION - комментарий администратора
 	 * @param array $goodIds массив, в ключах ID товаров, а в значении
-	 * @param null  $goodsListCallback кел-бек функция, позволяет менять товары перед сохранением
+	 * @param null $goodsListCallback кел-бек функция, позволяет менять товары перед сохранением
 	 * <code>
 	 *      function ($basket) {
 	 *          $basketItems = $basket->getBasketItems();
-	 *            foreach ($basketItems as $basketItem) {
-	 *            }
+	 *			foreach ($basketItems as $basketItem) {
+	 *			}
 	 *          return $basket;
 	 *      }
 	 * </code>
-	 * @param null  $currencyCode = если null - берется с опции 'sale::default_currency'
-	 * @param int   $personTypeId = 1 обычно обычный физик, но завел на всякий
+	 * @param null $currencyCode = если null - берется с опции 'sale::default_currency'
+	 * @param int  $personTypeId = 1 обычно обычный физик, но завел на всякий
 	 *
 	 * @return int
 	 * @throws \Bitrix\Main\ArgumentException
@@ -244,7 +357,7 @@ class SaleUtils
 	 * @throws \Bitrix\Main\ObjectNotFoundException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function addOrderD7($orderProps, $goodIds, $goodsListCallback = null, $currencyCode = null, $personTypeId = 1)
+	public static function addOrderD7($orderProps, $goodIds, $goodsListCallback = null, $personTypeId = 1, $paySystemId = null, $deliveryId = null, $currencyCode = null)
 	{
 		if (!Loader::IncludeModule('sale')) {
 			throw new \Exception('Module sale not installed');
@@ -278,6 +391,7 @@ class SaleUtils
 		$shipment = $shipmentCollection->createItem();
 		$shipmentItemCollection = $shipment->getShipmentItemCollection();
 		$shipment->setField('CURRENCY', $order->getCurrency());
+		$shipment->setField('DELIVERY_ID', $deliveryId);
 		foreach ($order->getBasket() as $item) {
 			$shipmentItem = $shipmentItemCollection->createItem($item);
 			$shipmentItem->setQuantity($item->getQuantity());
@@ -296,7 +410,7 @@ class SaleUtils
 			}
 
 			$shipment->setFields(array(
-				'DELIVERY_ID' => $deliveryObj->getId(),
+				'DELIVERY_ID' => $deliveryId, // $deliveryObj->getId(),
 				'DELIVERY_NAME' => $name,
 				'CURRENCY' => $order->getCurrency(),
 			));
@@ -305,9 +419,11 @@ class SaleUtils
 		}
 		/**/
 
+
+
 		/*Payment*/
 		$arPaySystemServiceAll = [];
-		$paySystemId = 1;
+		$paySystemId = (int)$paySystemId;
 		$paymentCollection = $order->getPaymentCollection();
 
 		$remainingSum = $order->getPrice() - $paymentCollection->getSum();
@@ -336,13 +452,15 @@ class SaleUtils
 		}
 		/**/
 
+
 		$propertyCollection = $order->getPropertyCollection();
 		foreach ($orderProps as $propCode => $value) {
+			$propCode = str_replace([']', 'PROPS['], '', $propCode);
 			$property = self::getPropertyByCode($propertyCollection, $propCode);
-			/** @var Bitrix\Sale\PropertyValue $property * /
-			 * if (is_callable($property, 'setValue')) {
-			 * $property->setValue($value);
-			 * }*/
+			/** @var Bitrix\Sale\PropertyValue $property */
+			if (is_callable($property, 'setValue')) {
+				$property->offsetSet($property->offsetGet($propCode), $propCode);
+			}
 		}
 		$order->doFinalAction(true);
 		$order->save();
@@ -351,10 +469,10 @@ class SaleUtils
 
 		if ($orderId) {
 			\CSaleOrder::Update($orderId, [
-				'USER_ID' => $orderProps['USER_ID'],
-				'USER_DESCRIPTION' => $orderProps['USER_DESCRIPTION'],
-				'COMMENTS' => $orderProps['MANAGER_DESCRIPTION'],
-				'CURRENCY' => $currencyCode
+				'USER_ID'               => $orderProps['USER_ID'],
+				'USER_DESCRIPTION'      => $orderProps['USER_DESCRIPTION'],
+				'COMMENTS'              => $orderProps['MANAGER_DESCRIPTION'],
+				'CURRENCY'              => $currencyCode
 			]);
 		}
 
@@ -362,13 +480,13 @@ class SaleUtils
 	}
 
 	/**
+	 * TODO
 	 * @param   $propertyCollection
-	 * @param   $code
+	 * @param $code
 	 *
 	 * @return \Bitrix\Sale\PropertyValueCollection
 	 */
-	static function getPropertyByCode($propertyCollection, $code)
-	{
+	static function getPropertyByCode($propertyCollection, $code)  {
 		foreach ($propertyCollection as $property) {
 			if ($property->getField('CODE') == $code) {
 				return $property;
@@ -389,7 +507,7 @@ class SaleUtils
 	 * @throws \Bitrix\Main\NotImplementedException
 	 * @throws \Bitrix\Main\NotSupportedException
 	 */
-	static function updateBasketd7($basket, $productId, $quantity)
+	static function updateBasketD7($basket, $productId, $quantity)
 	{
 		if ($item = $basket->getExistsItem('catalog', $productId)) {
 			$item->setField('QUANTITY', $item->getQuantity() + $quantity);
@@ -400,6 +518,7 @@ class SaleUtils
 				'CURRENCY' => \Bitrix\Currency\CurrencyManager::getBaseCurrency(),
 				'LID' => \Bitrix\Main\Context::getCurrent()->getSite(),
 				'PRODUCT_PROVIDER_CLASS' => 'CCatalogProductProvider',
+				'PRODUCT_ID' => $productId
 			));
 			/*
 			Если вы хотите добавить товар с произвольной ценой, нужно сделать так:
@@ -409,9 +528,11 @@ class SaleUtils
 				'LID' => Bitrix\Main\Context::getCurrent()->getSite(),
 				'PRICE' => $customPrice,
 				'CUSTOM_PRICE' => 'Y',
-			));
-			*/
+		   ));
+		   */
 		}
 		$basket->save();
 	}
-} // \\ end class
+
+
+} // end class
