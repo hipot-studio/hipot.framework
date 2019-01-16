@@ -4,6 +4,7 @@ namespace Hipot\BitrixUtils;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use \Hipot\Utils\IblockUpdateResult;
+use \Hipot\Utils\UnsortedUtils;
 
 try {
 	Loader::includeModule('iblock');
@@ -346,8 +347,18 @@ class IblockUtils
 	{
 		global $DB;
 
+		$fieldType = ToLower($fieldType);
+
+		$iblockFieldsBase = ['code', 'xml_id', 'name', 'preview_text'];
+		$fields = UnsortedUtils::getTableFieldsFromDB($table);
+		foreach ($fields as &$f) {
+			$f = ToLower($f);
+			$iblockFields[] = $f;
+		}
+		unset($f);
+
 		if (trim($field) == '' || (int)$iblockId == 0
-			|| !in_array($fieldType, array('code', 'xml_id', 'name'))
+			|| !in_array(trim($fieldType, '?=%!<> '), $iblockFields)
 		) {
 			return false;
 		}
@@ -357,6 +368,8 @@ class IblockUtils
 			$fw = 'CODE = "' . $DB->ForSql($field) . '"';
 		} else if ($fieldType == 'xml_id') {
 			$fw = 'XML_ID = "' . $DB->ForSql($field) . '"';
+		} else if (! in_array($fieldType, $iblockFieldsBase)) {
+			$fw = $fieldType . ' = "' . $DB->ForSql($field) . '"';
 		} else {
 			$fw = 'NAME = "' . $DB->ForSql($field) . '"';
 		}
