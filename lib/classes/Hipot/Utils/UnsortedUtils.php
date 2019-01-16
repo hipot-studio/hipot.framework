@@ -1,7 +1,8 @@
 <?
 namespace Hipot\Utils;
 
-use \Bitrix\Main\Application;
+use \Bitrix\Main\Application,
+	\Bitrix\Main\Grid\Declension;
 
 /**
  * Различные утилиты
@@ -21,21 +22,8 @@ class UnsortedUtils
 		if (is_string($forms)) {
 			$forms = explode('|', $forms);
 		}
-		if ((int)$n != $n) {
-			return $forms[1];
-		}
-		$n = abs($n) % 100;
-		$n1 = $n % 10;
-		if ($n > 10 && $n < 20) {
-			return $forms[2];
-		}
-		if ($n1 > 1 && $n1 < 5) {
-			return $forms[1];
-		}
-		if ($n1 == 1) {
-			return $forms[0];
-		}
-		return $forms[2];
+		$declens = new Declension($forms[0], $forms[1], $forms[2]);
+		echo $declens->get($n);
 	}
 
 	/**
@@ -196,6 +184,41 @@ class UnsortedUtils
 		} else {
 			return $left1_ts <= $right2_ts;
 		}
+	}
+	
+	/**
+	 * Получить содержимое по урлу
+	 * @param $url
+	 * @return bool|false|string
+	 */
+	static public function getPageContentByUrl($url)
+	{
+		/*$arUrl = parse_url($url);
+		$cont = QueryGetData($arUrl['host'], 80, $arUrl['path'], $QUERY_STR, $errno, $errstr);
+		return file_get_contents($url);*/
+
+		$el = new \Bitrix\Main\Web\HttpClient();
+		$cont = $el->get( $url );
+		return $cont;
+	}
+
+	/**
+	 * Получить список колонок SQL-запросом, либо если уже был получен, то просто вернуть
+	 * @param string $tableName имя таблицы
+	 * @return array
+	 */
+	static public function getTableFieldsFromDB($tableName)
+	{
+		$a = array();
+		if (trim($tableName) != '') {
+			$query	= "SHOW COLUMNS FROM " . $tableName;
+			$res	= $GLOBALS['DB']->Query($query);
+
+			while ($row = $res->Fetch()) {
+				$a[] = $row['Field'];
+			}
+		}
+		return $a;
 	}
 
 
