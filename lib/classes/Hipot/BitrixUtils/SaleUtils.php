@@ -11,11 +11,16 @@ use Bitrix\Sale\PaySystem;
 /**
  * Работа с заказами и корзиной
  *
- * @version 1.6
+ * @version 1.85
  * @author hipot studio
  */
 class SaleUtils
 {
+	/**
+	 * должен быть создан в базе
+	 */
+	const ANONIM_ORDER_USER_EMAIL = 'anonimus@supersite.ru';
+
 	/**
 	 * Получаем массив свойств заказа по ID
 	 *
@@ -218,6 +223,42 @@ class SaleUtils
 	}
 
 	/**
+	 * Добавить цену продукту
+	 *
+	 * @param int $PRODUCT_ID код продукта, обязательно
+	 * @param int $PRICE_TYPE_ID код цены, обязательно
+	 * @param int $PRICE = 0 если цена нулевая, то она удаляется из базы
+	 * @param string $CURRENCY = RUB код валюты цены
+	 */
+	public static function updatePrice($PRODUCT_ID, $PRICE_TYPE_ID, $PRICE = 0, $CURRENCY = "RUB")
+	{
+		global $APPLICATION;
+
+		$arFields = [
+			"PRODUCT_ID"        => (int)$PRODUCT_ID,
+			"CATALOG_GROUP_ID"  => (int)$PRICE_TYPE_ID,
+			"PRICE"             => (float)$PRICE,
+			"CURRENCY"          => $CURRENCY
+		];
+
+		$res = \CPrice::GetList(array(), array(
+			"PRODUCT_ID"        => $arFields['PRODUCT_ID'],
+			"CATALOG_GROUP_ID"  => $arFields['CATALOG_GROUP_ID']
+		));
+		if ($arr = $res->Fetch()) {
+			if ((int)$PRICE == 0) {
+				\CPrice::Delete($arr["ID"]);
+			} else {
+				if (! \CPrice::Update($arr["ID"], $arFields)) {
+					echo('Error update price ' . $APPLICATION->GetException()->GetString());
+				}
+			}
+		} else {
+			\CPrice::Add($arFields);
+		}
+	}
+
+	/**
 	 * Добавление заказа по-старинке со всеми параметрами (корзина, свойства заказа и т.д.)
 	 *
 	 * @param      $orderProps
@@ -248,7 +289,7 @@ class SaleUtils
 		$siteId = \Bitrix\Main\Context::getCurrent()->getSite();
 		$deliveryPrice = false;
 
-		$anonimUser = $USER->GetByLogin('anonimus@wellmood.ru')->Fetch();
+		$anonimUser = $USER->GetByLogin( self::ANONIM_ORDER_USER_EMAIL )->Fetch();
 
 		$arOrderAdd = [
 			'LID'               =>  $siteId,
@@ -269,7 +310,7 @@ class SaleUtils
 			'PRICE' => $orderProps['PRICE'],
 			'CURRENCY'  => $currencyCode,
 			'DISCOUNT_VALUE' => false,
-			'USER_ID'   => !$orderProps['USER_ID'] ? $anonimUser['ID'] : $orderProps['USER_ID'],
+			'USER_ID'   => (int)$orderProps['USER_ID'] <= 0 ? $anonimUser['ID'] : $orderProps['USER_ID'],
 			'PAY_SYSTEM_ID' => $paySystemId,
 			'DELIVERY_ID' =>  $deliveryId,
 			'USER_DESCRIPTION' - $orderProps['USER_DESCRIPTION'],
@@ -279,6 +320,12 @@ class SaleUtils
 			'AFFILIATE_ID' => false,
 			'PS_STATUS' => 'N',
 		];
+		foreach ($orderProps as $prop => $propV) {
+			if (trim($propV) == '' || in_array($prop, ['USER_ID'])) {
+				continue;
+			}
+			$arOrderAdd[ $prop ] = $propV;
+		}
 
 		$ORDER_ID = \CSaleOrder::Add($arOrderAdd);
 		if ($ORDER_ID) {
