@@ -2,10 +2,14 @@
 namespace Hipot\Utils;
 
 use \Bitrix\Main\Application,
-	\Bitrix\Main\Grid\Declension;
+	\Bitrix\Main\Grid\Declension,
+	\Bitrix\Main\Loader;
 
 /**
- * Различные утилиты
+ * Различные не-структурированные утилиты
+ *
+ * @version 1.0
+ * @author hipot studio
  */
 class UnsortedUtils
 {
@@ -43,52 +47,6 @@ class UnsortedUtils
 			'delete_repeat_replace' => true
 		));
 	}
-
-	/**
-	 * Является ли текущая страница в данный момент страницей постраничной навигации
-	 * @return bool
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public static function isPageNavigation()
-	{
-		$request = Application::getInstance()->getContext()->getRequest();
-		foreach ([1, 2, 3] as $pnCheck) {
-			$req_name = 'PAGEN_' . $pnCheck;
-			if ((int)$request->getPost($req_name) > 1 || (int)$request->getQuery($req_name) > 1) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Возвращает элемент подмассива используя точечную нотацию item.sub_item
-	 *
-	 * @param array $array Массив
-	 * @param string $key Ключ
-	 * @param mixed $default Значение "по умалчанию"
-	 *
-	 * @return mixed
-	 */
-	function array_get($array, $key, $default = null)
-	{
-		if (is_null($key))
-			return $array;
-
-		if (isset($array[$key]))
-			return $array[$key];
-
-		foreach (explode('.', $key) as $segment) {
-			if (!is_array($array) or !array_key_exists($segment, $array)) {
-				return value($default);
-			}
-
-			$array = $array[$segment];
-		}
-
-		return $array;
-	}
-
 
 	/**
 	 * Функция определения кодировки строки
@@ -147,6 +105,22 @@ class UnsortedUtils
 		return $enc;
 	}
 
+	/**
+	 * Является ли текущая страница в данный момент страницей постраничной навигации
+	 * @return bool
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function isPageNavigation()
+	{
+		$request = Application::getInstance()->getContext()->getRequest();
+		foreach ([1, 2, 3] as $pnCheck) {
+			$req_name = 'PAGEN_' . $pnCheck;
+			if ((int)$request->getPost($req_name) > 1 || (int)$request->getQuery($req_name) > 1) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * Выполняет команду в OS в фоне и без получения ответа
@@ -154,7 +128,7 @@ class UnsortedUtils
 	 * @see exec()
 	 * @return NULL
 	 */
-	function execInBackground($cmd)
+	static function execInBackground($cmd)
 	{
 		if (substr(php_uname(), 0, 7) == "Windows") {
 			pclose(popen("start /B " . $cmd, "r"));
@@ -187,22 +161,6 @@ class UnsortedUtils
 	}
 	
 	/**
-	 * Получить содержимое по урлу
-	 * @param $url
-	 * @return bool|false|string
-	 */
-	static public function getPageContentByUrl($url)
-	{
-		/*$arUrl = parse_url($url);
-		$cont = QueryGetData($arUrl['host'], 80, $arUrl['path'], $QUERY_STR, $errno, $errstr);
-		return file_get_contents($url);*/
-
-		$el = new \Bitrix\Main\Web\HttpClient();
-		$cont = $el->get( $url );
-		return $cont;
-	}
-
-	/**
 	 * Получить список колонок SQL-запросом, либо если уже был получен, то просто вернуть
 	 * @param string $tableName имя таблицы
 	 * @return array
@@ -219,6 +177,101 @@ class UnsortedUtils
 			}
 		}
 		return $a;
+	}
+
+	/**
+	 * Получить содержимое по урлу
+	 * @param $url
+	 * @return bool|false|string
+	 */
+	static public function getPageContentByUrl($url)
+	{
+		/*$arUrl = parse_url($url);
+		$cont = QueryGetData($arUrl['host'], 80, $arUrl['path'], $QUERY_STR, $errno, $errstr);
+		return file_get_contents($url);*/
+
+		$el = new \Bitrix\Main\Web\HttpClient();
+		$cont = $el->get( $url );
+		return $cont;
+	}
+
+	/**
+	 * Возвращает размер удаленного файла
+	 *
+	 * @param $path Путь к удаленному файлу
+	 * @return bool
+	 */
+	public static function remote_filesize($path)
+	{
+		preg_match('#(ht|f)tp(s)?://(?P<host>[a-zA-Z-_]+.[a-zA-Z]{2,4})(?P<name>/[\S]+)#', $path, $m);
+		$x = 0;
+		$stop = false;
+		$fp = fsockopen($m['host'], 80, &$errno, &$errstr, 30);
+		fwrite($fp, "HEAD $m[name] HTTP/1.0\nHOST: $m[host]\n\n");
+		while (!feof($fp) && !$stop) {
+			$y = fgets($fp, 2048);
+			if ($y == "\r\n") {
+				$stop = true;
+			}
+			$x .= $y;
+		}
+		fclose($fp);
+
+		if (preg_match("#Content-Length: ([0-9]+)#", $x, $size)) {
+			return $size[1];
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Добавить в модуль веб-формы в форму данные
+	 *
+	 * @param int   $WEB_FORM_ID id формы, для которой пришел ответ
+	 * @param array $arrVALUES = <pre>array (
+	 * [WEB_FORM_ID] => 3
+	 * [web_form_submit] => Отправить
+	 *
+	 * [form_text_18] => aafafsfasdf
+	 * [form_text_19] => q1241431342
+	 * [form_text_21] => afsafasdfdsaf
+	 * [form_textarea_20] =>
+	 * [form_text_22] => fasfdfasdf
+	 * [form_text_23] => 31243123412впывапвыапывпыв аывпывпыв
+	 *
+	 * 18, 19, 21 - ID ответов у вопросов https://yadi.sk/i/_9fwfZMvO2kblA
+	 * )</pre>
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function formResultAddSimple($WEB_FORM_ID, $arrVALUES)
+	{
+		if (! Loader::includeModule('form')) {
+			return false;
+		}
+
+		// add result bitrix:form.result.new
+		$arrVALUES['WEB_FORM_ID'] = (int)$WEB_FORM_ID;
+		if ($arrVALUES['WEB_FORM_ID'] <= 0) {
+			return false;
+		}
+		$arrVALUES["web_form_submit"] = "Отправить";
+
+		/*$arrVALUES = */
+
+		if ($RESULT_ID = \CFormResult::Add($WEB_FORM_ID, $arrVALUES)) {
+			// send email notifications
+			\CFormCRM::onResultAdded($WEB_FORM_ID, $RESULT_ID);
+			\CFormResult::SetEvent($RESULT_ID);
+			\CFormResult::Mail($RESULT_ID);
+
+			if ($RESULT_ID) {
+				return new IblockUpdateResult(array('RESULT' => $RESULT_ID,			     'STATUS' => 'OK'));
+			} else {
+				return new IblockUpdateResult(array('RESULT' => 'Не опознанная ошибка',  'STATUS' => 'ERROR'));
+			}
+		}
 	}
 
 
