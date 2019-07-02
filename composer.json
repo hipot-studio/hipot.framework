@@ -1,0 +1,21 @@
+{
+  "require": {
+    "php": ">=7.0.0",
+    "intervention/image": "dev-master"
+  },
+  "config": {
+    "vendor-dir": "../local/vendor"
+  },
+  "autoload": {
+    "psr-4": {
+      "Hipot\\": "../local/php_interface/include/lib/classes/Hipot",
+    }
+  },
+  "extra": {
+    "merge-plugin": {
+      "require": [
+        "../bitrix/composer-bx.json"
+      ]
+    }
+  }
+}
