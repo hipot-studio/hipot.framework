@@ -135,7 +135,7 @@ class HiBlock
 			));
 		}
 
-		return true;
+		return $ID_props;
 	}
 
 	/**
@@ -170,6 +170,36 @@ class HiBlock
 		});
 
 		return $arParams;
+	}
+
+	/**
+	 * Показать постер по активной дате UF_DATE_FROM до UF_DATE_TO
+	 * @param string $hlBlockname = 'SupportPoster'
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	static function ShowPostersHtml($hlBlockname = 'SupportPoster')
+	{
+		$dm			= __getHl($hlBlockname);
+		$arPosters 	= $dm::getList(array(
+			'select' 	=> array('*'),
+			'filter' 	=> array(
+				">=UF_DATE_TO" 				=> array(date('d.m.Y H:i:s'), false),
+				"<=UF_DATE_FROM"			=> array(date('d.m.Y H:i:s'), false)
+			),
+			'order'		=> array('ID' => 'DESC'),
+			'limit'		=> 1
+		))->fetchAll();
+
+		if (count($arPosters) > 0) {
+			echo '<div class="global_alert_message">';
+		}
+		foreach ($arPosters as $poster) {
+			echo $poster['UF_MESSAGE'];
+		}
+		if (count($arPosters) > 0) {
+			echo '</div>';
+		}
 	}
 
 } // end class

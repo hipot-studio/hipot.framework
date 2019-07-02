@@ -43,7 +43,7 @@ AddEventHandler("main", "OnBeforeProlog", function () {
 			});
 		</script>
 		<?
-		$APPLICATION->AddHeadString( ob_get_clean() );
+		$APPLICATION->oAsset->addString( ob_get_clean() );
 	}
 
 });
@@ -67,7 +67,10 @@ AddEventHandler("main", "OnBuildGlobalMenu", function (&$aGlobalMenu, &$aModuleM
 // верхняя постраничка в админке в лентах
 AddEventHandler("main", "OnAdminListDisplay", function ($this_al) {
 	/* @var $this_al CAdminList */
-	echo $this_al->sNavText;
+	if (in_array($this_al->table_id, ['tbl_user'])) {
+		return;
+	}
+	//echo $this_al->sNavText;
 });
 
 // очищаем настройки формы по-умолчанию для всех админов
@@ -96,7 +99,7 @@ AddEventHandler('main', 'OnEndBufferContent', function (&$cont) {
 	global $APPLICATION;
 
 	// process 404 in content part
-	if (constant('ERROR_404') == 'Y' && $APPLICATION->GetCurPage() != '/404.php') {
+	if (defined('ERROR_404') && constant('ERROR_404') == 'Y' && $APPLICATION->GetCurPage() != '/404.php') {
 		$contCacheFile  = $_SERVER['DOCUMENT_ROOT'] . '/404_cache.html';
 
 		if (is_file($contCacheFile) && ((time() - filemtime($contCacheFile)) > 3600)) {
@@ -105,7 +108,9 @@ AddEventHandler('main', 'OnEndBufferContent', function (&$cont) {
 
 		$cont = file_get_contents($contCacheFile);
 		if (trim($cont) == '') {
-			$cont = \QueryGetData($_SERVER['HTTP_HOST'], 80, '/404.php', '', $errno, $errstr);
+			//$cont = QueryGetData($_SERVER['HTTP_HOST'], 80, '/404.php', '', $errno, $errstr);
+			$el = new \Bitrix\Main\Web\HttpClient();
+			$cont = $el->get((CMain::IsHTTPS() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . '/404.php');
 			file_put_contents($contCacheFile, $cont);
 		}
 
