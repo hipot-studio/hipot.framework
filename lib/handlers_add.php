@@ -8,8 +8,7 @@
  */
 
 // определяем глобальные константы, которые могут зависеть от $APPLICATION и $USER
-AddEventHandler("main", "OnBeforeProlog", function () {
-
+AddEventHandler("main", "OnBeforeProlog", static function () {
 	global $APPLICATION, $USER;
 
 	foreach (
@@ -45,11 +44,10 @@ AddEventHandler("main", "OnBeforeProlog", function () {
 		<?
 		$APPLICATION->oAsset->addString( ob_get_clean() );
 	}
-
 });
 
 // проставляем id инфоблоков в административном меню
-AddEventHandler("main", "OnBuildGlobalMenu", function (&$aGlobalMenu, &$aModuleMenu) {
+AddEventHandler("main", "OnBuildGlobalMenu", static function (&$aGlobalMenu, &$aModuleMenu) {
 	if (! $GLOBALS['USER']->IsAdmin() || !defined("ADMIN_SECTION")) {
 		return;
 	}
@@ -65,7 +63,7 @@ AddEventHandler("main", "OnBuildGlobalMenu", function (&$aGlobalMenu, &$aModuleM
 });
 
 // верхняя постраничка в админке в лентах
-AddEventHandler("main", "OnAdminListDisplay", function ($this_al) {
+AddEventHandler("main", "OnAdminListDisplay", static function ($this_al) {
 	/* @var $this_al CAdminList */
 	if (in_array($this_al->table_id, ['tbl_user'])) {
 		return;
@@ -74,8 +72,8 @@ AddEventHandler("main", "OnAdminListDisplay", function ($this_al) {
 });
 
 // очищаем настройки формы по-умолчанию для всех админов
-// @see http://hipot.mooo.com/Codex/form_iblock_element_settings/
-AddEventHandler('main', 'OnEndBufferContent', function (&$content) {
+// @see https://hipot.socialmatrix.net/Codex/form_iblock_element_settings/
+AddEventHandler('main', 'OnEndBufferContent', static function (&$content) {
 	if (count($_POST['p']) <= 0) {
 		return;
 	}
@@ -95,7 +93,7 @@ AddEventHandler('main', 'OnEndBufferContent', function (&$content) {
 	$CACHE_MANAGER->CleanDir("user_option");
 });
 
-AddEventHandler('main', 'OnEndBufferContent', function (&$cont) {
+AddEventHandler('main', 'OnEndBufferContent', static function (&$cont) {
 	global $APPLICATION;
 
 	// process 404 in content part

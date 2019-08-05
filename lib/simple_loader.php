@@ -19,7 +19,7 @@
 
 // add custom __autoload in stack after \Bitrix\Main\Loader::autoLoad()
 // see: var_dump( spl_autoload_functions() );
-spl_autoload_register(function ($className) {
+spl_autoload_register(static function ($className) {
 	//echo $className; die();
 
 	$libDirs = array(
@@ -31,7 +31,6 @@ spl_autoload_register(function ($className) {
 		__DIR__ . '/classes'
 		// ...
 	);
-
 	foreach ($libDirs as $libDir) {
 		// to work with other frameworks, case sensitive UNIX folders
 		$checkPaths = array(
@@ -41,6 +40,7 @@ spl_autoload_register(function ($className) {
 		);
 		foreach ($checkPaths as $classFile) {
 			if (file_exists($classFile) && is_readable($classFile)) {
+				/** @noinspection PhpIncludeInspection */
 				require $classFile;
 				return;
 			}
@@ -52,7 +52,6 @@ spl_autoload_register(function ($className) {
 	}
 
 });
-
 //var_dump( spl_autoload_functions() );
 
 

@@ -3,7 +3,7 @@ namespace Hipot\BitrixUtils;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
-use \Hipot\Utils\IblockUpdateResult;
+use \Hipot\Utils\UpdateResult;
 use \Hipot\Utils\UnsortedUtils;
 
 try {
@@ -26,7 +26,7 @@ class IblockUtils
 	 * Добавление секции в инфоблок, возвращает ошибку либо ID результата, см. return
 	 *
 	 * @param array $arAddFields массив к добавлению
-	 * @return \Hipot\Utils\IblockUpdateResult
+	 * @return \Hipot\Utils\UpdateResult
 	 * @see \CIBlockSection::Add()
 	 */
 	public static function addSectionToDb($arAddFields = array())
@@ -39,9 +39,9 @@ class IblockUtils
 		$ID = $el->Add($arAddFields);
 
 		if ($ID) {
-			return new IblockUpdateResult(array('RESULT' => $ID,				'STATUS' => 'OK'));
+			return new UpdateResult(array('RESULT' => $ID,				'STATUS' => 'OK'));
 		} else {
-			return new IblockUpdateResult(array('RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR'));
+			return new UpdateResult(array('RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR'));
 		}
 	}
 
@@ -49,7 +49,7 @@ class IblockUtils
 	 * Обновление секции в инфоблоке, возвращает ошибку либо ID результата, см. return
 	 *
 	 * @param array $arAddFields массив к добавлению
-	 * @return \Hipot\BitrixUtils\IblockUpdateResult
+	 * @return \Hipot\BitrixUtils\UpdateResult
 	 * @see \CIBlockSection::Add()
 	 */
 	public static function updateSectionToDb($ID, $arAddFields = array())
@@ -64,9 +64,9 @@ class IblockUtils
 		$res	= $el->Update($ID, $arAddFields);
 
 		if ($res) {
-			return new IblockUpdateResult(array('RESULT' => $ID,				'STATUS' => 'OK'));
+			return new UpdateResult(array('RESULT' => $ID,				'STATUS' => 'OK'));
 		} else {
-			return new IblockUpdateResult(array('RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR'));
+			return new UpdateResult(array('RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR'));
 		}
 	}
 
@@ -74,7 +74,7 @@ class IblockUtils
 	 * Добавление элемента в инфоблок, возвращает ошибку либо ID результата, см. return
 	 *
 	 * @param array $arAddFields массив к добавлению
-	 * @return \Hipot\Utils\IblockUpdateResult
+	 * @return \Hipot\Utils\UpdateResult
 	 * @see \CIBlockElement::Add()
 	 */
 	public static function addElementToDb($arAddFields = array())
@@ -87,9 +87,9 @@ class IblockUtils
 		$ID = $el->Add($arAddFields);
 
 		if ($ID) {
-			return new IblockUpdateResult(array('RESULT' => $ID,				'STATUS' => 'OK'));
+			return new UpdateResult(array('RESULT' => $ID,				'STATUS' => 'OK'));
 		} else {
-			return new IblockUpdateResult(array('RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR'));
+			return new UpdateResult(array('RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR'));
 		}
 	}
 
@@ -98,7 +98,7 @@ class IblockUtils
 	 *
 	 * @param int $ID массив к добавлению
 	 * @param array $arAddFields массив к добавлению
-	 * @return \Hipot\Utils\IblockUpdateResult
+	 * @return \Hipot\Utils\UpdateResult
 	 * @see \CIBlockElement::Update()
 	 */
 	public static function updateElementToDb($ID, $arAddFields)
@@ -121,9 +121,9 @@ class IblockUtils
 		}
 
 		if ($bUpd) {
-			return new IblockUpdateResult(array('RESULT' => $ID,				'STATUS' => 'OK'));
+			return new UpdateResult(array('RESULT' => $ID,				'STATUS' => 'OK'));
 		} else {
-			return new IblockUpdateResult(array('RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR'));
+			return new UpdateResult(array('RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR'));
 		}
 	}
 

@@ -186,10 +186,6 @@ class UnsortedUtils
 	 */
 	static public function getPageContentByUrl($url)
 	{
-		/*$arUrl = parse_url($url);
-		$cont = QueryGetData($arUrl['host'], 80, $arUrl['path'], $QUERY_STR, $errno, $errstr);
-		return file_get_contents($url);*/
-
 		$el = new \Bitrix\Main\Web\HttpClient();
 		$cont = $el->get( $url );
 		return $cont;
@@ -267,9 +263,9 @@ class UnsortedUtils
 			\CFormResult::Mail($RESULT_ID);
 
 			if ($RESULT_ID) {
-				return new IblockUpdateResult(array('RESULT' => $RESULT_ID,			     'STATUS' => 'OK'));
+				return new UpdateResult(array('RESULT' => $RESULT_ID,			     'STATUS' => 'OK'));
 			} else {
-				return new IblockUpdateResult(array('RESULT' => 'Не опознанная ошибка',  'STATUS' => 'ERROR'));
+				return new UpdateResult(array('RESULT' => 'Не опознанная ошибка',  'STATUS' => 'ERROR'));
 			}
 		}
 	}

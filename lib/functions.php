@@ -125,7 +125,7 @@ if (! function_exists('TransformImagesInHtml')) {
 
 		$htmlEx = preg_replace('#width\s*=(["\'])?([0-9]+)(["\'])?#is', '', $html);
 		$htmlEx = preg_replace('#height\s*=(["\'])?([0-9]+)(["\'])?#is', '', $htmlEx);
-		$htmlEx = preg_replace_callback('#<img(.*?)src=["\']?([^"\']+)["\']?(.*?)>#is', function ($matches) use ($maxImgWidth, $linkToOrigClass) {
+		$htmlEx = preg_replace_callback('#<img(.*?)src=["\']?([^"\']+)["\']?(.*?)>#is', static function ($matches) use ($maxImgWidth, $linkToOrigClass) {
 			$transformSrc = $matches[2];
 			$origSrc = $matches[2];
 
@@ -141,7 +141,6 @@ if (! function_exists('TransformImagesInHtml')) {
 
 // в PHP 5.5 такая фукнция будет по дефолту
 if (! function_exists('array_column')) {
-
 	/**
 	 * Returns the values from a single column of the input array, identified by the columnKey.
 	 *
@@ -227,22 +226,17 @@ if (! function_exists('array_get')) {
 		if (is_null($key)) {
 			return $array;
 		}
-
 		if (isset($array[$key])) {
 			return $array[$key];
 		}
-
 		foreach (explode('.', $key) as $segment) {
 			if (!is_array($array) || !array_key_exists($segment, $array)) {
-				return value($default);
+				return $default;
 			}
-
 			$array = $array[$segment];
 		}
-
 		return $array;
 	}
-
 }
 
 // \/EOF

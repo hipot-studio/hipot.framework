@@ -9,9 +9,9 @@
 namespace Hipot\Utils;
 
 /**
- * Результат добавления или обновления сущностей инфоблока
+ * Результат добавления или обновления сущностей (напр. инфоблока)
  */
-class IblockUpdateResult extends ObjectArItem
+class UpdateResult extends ObjectArItem
 {
 	/**
 	 * идентификатор записи или текст ошибки

@@ -47,7 +47,7 @@ class ObjectArItem implements \ArrayAccess
 	public function offsetSet($offset, $value)
 	{
 		if (trim($offset) == '') {
-			$offset = 'AUTOINDEX_' . self::$cnt_append++;
+			$offset = 'AUTOINDEX_' . $this->cnt_append++;
 		}
 
 		$this->{$offset} = $value;
