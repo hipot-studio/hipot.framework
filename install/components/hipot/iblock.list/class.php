@@ -15,10 +15,10 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
  */
 class HiIblockListComponent extends CBitrixComponent
 {
-	const LINKED_CHAINS_CLASS = '\\Hipot\\IbAbstractLayer\\Types\\IblockElemLinkedChains';
+	const LINKED_CHAINS_CLASS = '\\Hipot\\IbAbstractLayer\\IblockElemLinkedChains';
 
 	/**
-	 * @var \Hipot\IbAbstractLayer\Types\IblockElemLinkedChains
+	 * @var \Hipot\IbAbstractLayer\IblockElemLinkedChains
 	 */
 	private $obChainBuilder;
 

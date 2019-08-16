@@ -9,7 +9,7 @@
 use \Intervention\Image\ImageManagerStatic as iiImage;
 
 if (extension_loaded('imagick') && class_exists('Imagick')) {
-	iiImage::configure(array('driver' => 'imagick'));
+	iiImage::configure(['driver' => 'imagick']);
 }
 
 /**
@@ -20,15 +20,15 @@ if (extension_loaded('imagick') && class_exists('Imagick')) {
  * Использует библиотеку трансформации \Intervention\Image 2.X
  *
  * Необходимо:
- * php 7.0, Fileinfo Extension, GD (лучше Imagick)
+ * php 7.1, Fileinfo Extension, GD (лучше Imagick)
  *
  * @see http://image.intervention.io/
- * @see http://hipot.mooo.com/Codex/cimg-constantly-integrable-modifier-of-graphics/
+ * @see https://hipot.socialmatrix.net/Codex/cimg-constantly-integrable-modifier-of-graphics/
  *
  * @throws 		Intervention\Image\Exception\*
  *
  * @author		(c) hipot
- * @version		2.0, 2018
+ * @version		3.0, 2019
  */
 class Img
 {
@@ -127,7 +127,7 @@ class Img
 	 * @param $img Путь к картинке относительно корня сайта,<br>
 	 *        либо относительно корня диска, либо битрикс ID
 	 *
-	 * @throws \Exception
+	 * @throws \RuntimeException
 	 */
 	protected function load($img)
 	{
@@ -141,7 +141,7 @@ class Img
 			$this->src				= $_SERVER['DOCUMENT_ROOT'] . $this->r_src;
 		} elseif (strpos($img, $_SERVER['DOCUMENT_ROOT']) !== false) { 			// если входит абсолютный путь к картинке на диске
 			if (! is_file($img)) {
-				throw new \Exception('wrong_input_img_type');
+				throw new \RuntimeException('wrong_input_img_type');
 			}
 			$this->path_type		= 'abs';
 			$this->src				= $img;
@@ -151,7 +151,7 @@ class Img
 			$this->r_src			= $img;
 			$this->src				= $_SERVER['DOCUMENT_ROOT'] . $this->r_src;
 		} else {
-			throw new \Exception('wrong_input_img_type');
+			throw new \RuntimeException('wrong_input_img_type');
 		}
 	}
 
@@ -178,11 +178,11 @@ class Img
 		$this->r_path = '/upload/weimg_cache/' . $cimgPath . '/' . $this->postfix . '/' . basename($this->src);
 
 		if (self::$saveAlpha && in_array($this->method, array(self::M_FULL, self::M_FULL_S))) {
-			$this->r_path = preg_replace('#(jpe?g)|(gif)$#is', 'png', $this->r_path);
+			$this->r_path = preg_replace('#(jpe?g)|(gif)$#i', 'png', $this->r_path);
 		}
 		// gif has bug in this methods
 		if (in_array($this->method, array(self::M_FULL, self::M_FULL_S))) {
-			$this->r_path = preg_replace('#gif$#is', 'png', $this->r_path);
+			$this->r_path = preg_replace('#gif$#i', 'png', $this->r_path);
 		}
 
 		$this->path = $_SERVER['DOCUMENT_ROOT'] . $this->r_path;
@@ -206,12 +206,12 @@ class Img
 	 * @param int    $h = null
 	 * @param string $method = self::M_CROP Метод трансформации, см. self::M_
 	 *
-	 * @throws \Exception
+	 * @throws \RuntimeException
 	 */
 	protected function do_resize($w = null, $h = null, $method = self::M_CROP)
 	{
 		if ($method === false) {
-			throw new \Exception('no_resize_method_set');
+			throw new \RuntimeException('no_resize_method_set');
 		}
 
 		$aspectRatio = function ($constraint) {
@@ -325,9 +325,8 @@ class Img
 		if (! $mi->wasCached()) {
 			$mi->do_resize($w, $h, $m);
 
-			// TODO сделать возможность использовать анонимную функцию (уйти от сериализации параметров)
 			if (is_callable($callbackMi)) {
-				call_user_func_array($callbackMi, array($mi));
+				$callbackMi($mi);
 			}
 
 			$mi->imagesave();
@@ -374,7 +373,7 @@ class Img
 			$to = $_SERVER['DOCUMENT_ROOT'] . $to;
 		}
 		if (! is_file($to)) {
-			throw new \Exception('wrong_image_wm ' . $to);
+			throw new \RuntimeException('wrong_image_wm ' . $to);
 			return false;
 		}
 
@@ -382,7 +381,7 @@ class Img
 		self::$lastWm		= $to;
 		self::$lastWmPos	= $pos;
 
-		return self::Resize($f, $w, $h, $m, $retAr, array(self, 'insertOverlay'));
+		return self::Resize($f, $w, $h, $m, $retAr, [self, 'insertOverlay']);
 	}
 
 

@@ -27,6 +27,7 @@ trait EO_Utils
 
 	/**
 	 * Обновить поля сушьности после добавления его в getMap()
+	 * удаленные из getMap удаляются из базы, а добавленные в него - добавляются
 	 */
 	public static function updateDataTable()
 	{

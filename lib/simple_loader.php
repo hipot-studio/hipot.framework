@@ -48,8 +48,8 @@ spl_autoload_register(static function ($className) {
 		}
 	}
 	if (! class_exists($className)) {
-		// IGNORE, to be fatal
-		//throw new Exception('no class in wexpert simple autoloader: ' . $className);
+		// to be fatal
+		throw new \RuntimeException('no class in hipot simple autoloader: ' . $className);
 	}
 
 });
