@@ -11,8 +11,8 @@ use \Hipot\IbAbstractLayer\GenerateSxem\IblockGenerateSxemManager;
 
 if (! defined('ABSTRACT_LAYER_SAULT')) {
 	/**
-	 * Соль в именах генерируемых классов, разрешены символы [0-9a-zA-Z_]
-	 * по-умолчанию, устанавливается в трансформированное имя домена, напр.
+	 * РЎРѕР»СЊ РІ РёРјРµРЅР°С… РіРµРЅРµСЂРёСЂСѓРµРјС‹С… РєР»Р°СЃСЃРѕРІ, СЂР°Р·СЂРµС€РµРЅС‹ СЃРёРјРІРѕР»С‹ [0-9a-zA-Z_]
+	 * РїРѕ-СѓРјРѕР»С‡Р°РЅРёСЋ, СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РІ С‚СЂР°РЅСЃС„РѕСЂРјРёСЂРѕРІР°РЅРЅРѕРµ РёРјСЏ РґРѕРјРµРЅР°, РЅР°РїСЂ.
 	 * www.good-site.hipot.ru --> GOOD_SITE_HIPOT_RU
 	 * @var string
 	 */
@@ -20,7 +20,7 @@ if (! defined('ABSTRACT_LAYER_SAULT')) {
 }
 
 /**
- * Файл с сгенерированной схемой элементов инфоблоков
+ * Р¤Р°Р№Р» СЃ СЃРіРµРЅРµСЂРёСЂРѕРІР°РЅРЅРѕР№ СЃС…РµРјРѕР№ СЌР»РµРјРµРЅС‚РѕРІ РёРЅС„РѕР±Р»РѕРєРѕРІ
  * @var string
  * @global
  */
@@ -28,7 +28,7 @@ $fileToGenerateSxema = $GLOBAL['fileToGenerateSxema'] = $_SERVER['DOCUMENT_ROOT'
 if (! file_exists($fileToGenerateSxema)) {
 	IblockGenerateSxemManager::updateSxem();
 }
-// устанавливаем обработку событий
+// СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РѕР±СЂР°Р±РѕС‚РєСѓ СЃРѕР±С‹С‚РёР№
 IblockGenerateSxemManager::setUpdateHandlers();
 
 /*** END Abstract Iblock Elements Layer ***/
