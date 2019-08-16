@@ -35,3 +35,21 @@ function RemoveLongSelectAgent()
 	}
 	return __FUNCTION__ . '();';
 }
+
+// check agents run log
+if (! defined('BX_AGENTS_LOG_FUNCTION')) {
+	define('BX_AGENTS_LOG_FUNCTION', 'HipotAgentsLogFunction');
+
+	function HipotAgentsLogFunction($arAgent, $point)
+	{
+		@file_put_contents(
+			$_SERVER["DOCUMENT_ROOT"] . '/agents_executions_points.log',
+
+			PHP_EOL . date('d-m-Y H:i:s') . PHP_EOL .
+			print_r($point, 1) . PHP_EOL .
+			print_r($arAgent, 1) . PHP_EOL,
+
+			FILE_APPEND
+		);
+	}
+}

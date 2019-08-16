@@ -24,6 +24,7 @@ spl_autoload_register(static function ($className) {
 
 	$libDirs = array(
 		$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/include/lib/classes',
+		$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/lib/classes',
 		$_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/include/lib/classes',
 		$_SERVER['DOCUMENT_ROOT'] . '/_tests/classes',
 		$_SERVER['DOCUMENT_ROOT'] . '/local/modules/hipot.framework/lib',
