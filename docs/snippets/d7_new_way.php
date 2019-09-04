@@ -1,6 +1,8 @@
 <?
 
 /** @see http://www.intervolga.ru/blog/projects/d7-analogi-lyubimykh-funktsiy-v-1s-bitriks/ */
+/** @see https://github.com/SidiGi/bitrix-info/wiki */
+
 
 // Old school
 $APPLICATION->AddHeadScript(SITE_TEMPLATE_PATH . "/js/fix.js");
@@ -189,7 +191,6 @@ $_SERVER["DOCUMENT_ROOT"] = Bitrix\Main\Application::getDocumentRoot();
 
 
 // Old school
-global $APPLICATION;
 $APPLICATION->ResetException();
 $APPLICATION->ThrowException("Error");
 //...
@@ -329,4 +330,46 @@ Debug::writeToFile($record);
 // Используйте \Bitrix\Iblock\PropertyTable::getList. Расширять CIBlockProperty::GetList не планируется.
 \Bitrix\Iblock\PropertyTable::getList();
 
+
+///////////////////////////// sale /////////////////////////////////////////////////
+
+\Bitrix\Main\EventManager::getInstance()->addEventHandler(
+	'sale',
+	'OnSaleOrderBeforeSaved',
+	'saleOrderBeforeSaved'
+);
+function saleOrderBeforeSaved(\Bitrix\Main\Event $event)
+{
+	/** @var \Bitrix\Sale\Order $order */
+	$order = $event->getParameter("ENTITY");
+
+	/** @var \Bitrix\Sale\PropertyValueCollection $propertyCollection */
+	$propertyCollection = $order->getPropertyCollection();
+
+	$propsData = [];
+
+	/**
+	 * Собираем все свойства и их значения в массив
+	 * @var \Bitrix\Sale\PropertyValue $propertyItem
+	 */
+	foreach ($propertyCollection as $propertyItem) {
+		if (!empty($propertyItem->getField("CODE"))) {
+			$propsData[$propertyItem->getField("CODE")] = trim($propertyItem->getValue());
+		}
+	}
+
+	/**
+	 * Перебираем свойства и изменяем нужные значения
+	 * @var \Bitrix\Sale\PropertyValue $propertyItem
+	 */
+	foreach ($propertyCollection as $propertyItem) {
+		switch ($propertyItem->getField("CODE")) {
+			// Прописываем ФИО в одно поле
+			case 'FIO_HIDDEN':
+				$val = $propsData['SURNAME'] . ' ' . $propsData['NAME'] . ' ' . $propsData['PATRONYMIC'];
+				$propertyItem->setField("VALUE", $val);
+				break;
+		}
+	}
+}
 ?>

@@ -15,14 +15,15 @@ class PhpCacher
 
 	/**
 	 * Сохранять ли пустые выборки в кеш
+	 * @var boolean
 	 */
-	const SAVE_EMPTY_DATA_TO_CACHE = false;
+	public static $SAVE_EMPTY_DATA_TO_CACHE = false;
 
 	/**
 	 * Массив параметров функции для проброса параметров в анонимную функцию
 	 * @var array
 	 */
-	public static $params = array();
+	public static $params = [];
 
 	/**
 	 * Записываем и возвращает данные в кеш по пути /bitrix/cache/php/$tagName/ с возможностью указать
@@ -41,7 +42,7 @@ class PhpCacher
 	 *
 	 * @return boolean|array
 	 */
-	public static function returnCacheDataAndSave($tagName, $cacheTime, $callbackFunction, $params = array())
+	public static function returnCacheDataAndSave($tagName, $cacheTime, $callbackFunction, $params = [])
 	{
 		self::$LAST_ERROR = '';
 
@@ -86,15 +87,16 @@ class PhpCacher
 			}
 
 			self::$params = $params;
-			// если передавать через array($params) получаем сразу захват всех параметров
-			$data = call_user_func_array($callbackFunction, array($params));
+			if (is_callable($callbackFunction)) {
+				$data = $callbackFunction($params);
+			}
 			self::$params = array();
 
 			if (defined('BX_COMP_MANAGED_CACHE')) {
 				$GLOBALS['CACHE_MANAGER']->EndTagCache();
 			}
 
-			if (($data !== null && self::SAVE_EMPTY_DATA_TO_CACHE) || !empty($data)) {
+			if (($data !== null && self::$SAVE_EMPTY_DATA_TO_CACHE) || !empty($data)) {
 				$obCache->EndDataCache($data);
 			} else {
 				$obCache->AbortDataCache();

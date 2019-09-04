@@ -2,9 +2,9 @@
 //preg_replace_callback example
 echo preg_replace_callback('|#H2#(.*?)#/H2#|is', function ($matches) {
 	return '<h2>' . strip_tags($matches[1]) . '</h2>';
-}, $CurPost["TEXT_FORMATED"]);?>
+}, $CurPost["TEXT_FORMATED"]); ?>
 
-<span><?=ToLower(FormatDate('d F Y', MakeTimeStamp($item['DATE_ACTIVE_FROM'])))?></span>
+<span><?= ToLower(FormatDate('d F Y', MakeTimeStamp($item['DATE_ACTIVE_FROM']))) ?></span>
 
 <?
 //dbconn composite debug
@@ -22,7 +22,7 @@ define('BX_NO_ACCELERATOR_RESET', true); // ?
 
 <?
 // bx csv
-require_once $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/csv_data.php";
+require_once $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/csv_data.php";
 $csvFile = new CCSVData('R', true);
 $csvFile->LoadFile($_FILES['csv']['tmp_name']);
 $csvFile->SetDelimiter(',');
@@ -36,8 +36,8 @@ while ($arRes = $csvFile->Fetch()) {
 CModule::IncludeModule('iblock');
 
 
-$arOrder	= array('SORT' => 'ASC');
-$arFilter	= array("IBLOCK_ID" => $arParams["IBLOCK_ID"], "ACTIVE" => "Y");
+$arOrder = array('SORT' => 'ASC');
+$arFilter = array("IBLOCK_ID" => $arParams["IBLOCK_ID"], "ACTIVE" => "Y");
 
 $arNavParams = false;
 //$arNavParams = array('nTopCount' => 1);
@@ -63,9 +63,9 @@ while ($arItem = $rsItems->GetNext()) {
 		}
 
 		if ($ar_props['MULTIPLE'] == "Y") {
-			$arItem['PROPERTIES'][ $ar_props['CODE'] ][] = $ar_props;
+			$arItem['PROPERTIES'][$ar_props['CODE']][] = $ar_props;
 		} else {
-			$arItem['PROPERTIES'][ $ar_props['CODE'] ] = $ar_props;
+			$arItem['PROPERTIES'][$ar_props['CODE']] = $ar_props;
 		}
 	}
 
@@ -119,43 +119,42 @@ if ($_SERVER['HTTP_X_REQUESTED_WITH'] != 'XMLHttpRequest') {
 
 
 <script type="text/javascript">
-// $.ajax пример
-$(".notify_product_p").each(function(){
-	var _npp = this;
-	$('.notify_product[pid]', _npp).each(function(){
-		var __np = this;
-		$(__np).click(function(){
-			var pid = parseInt($(__np).attr('pid'));
-			if (pid < 0 || $(__np).data('posted') == true) {
-				return;
-			}
-			// get all post data
-			var js_data = {'ID' : pid};
-
-			// lock click
-			$(__np).data('posted', true).fadeTo(0, 0.3);
-
-			$.ajax({
-				async: true,
-				cache: false,
-				data:  js_data,
-				dataType: 'html',
-				timeout: 8000,
-				type: 'POST',
-				url: '/bitrix/templates/esky/ajax_php/absent_message.php',
-				error: function(jqXHR, textStatus, errorThrown){
-					$(__np).data('posted', false).fadeTo(0, 1);
-				},
-				success: function(data, textStatus, jqXHR){
-					$(_npp).html('Вам на email прийдет сообщение о поступлении товара на сайт.').css('top', '-20px').css('cursor', 'default');
+	// $.ajax пример
+	$(".notify_product_p").each(function () {
+		var _npp = this;
+		$('.notify_product[pid]', _npp).each(function () {
+			var __np = this;
+			$(__np).click(function () {
+				var pid = parseInt($(__np).attr('pid'));
+				if (pid < 0 || $(__np).data('posted') == true) {
+					return;
 				}
-			});
+				// get all post data
+				var js_data = {'ID': pid};
 
+				// lock click
+				$(__np).data('posted', true).fadeTo(0, 0.3);
+
+				$.ajax({
+					async: true,
+					cache: false,
+					data: js_data,
+					dataType: 'html',
+					timeout: 8000,
+					type: 'POST',
+					url: '/bitrix/templates/esky/ajax_php/absent_message.php',
+					error: function (jqXHR, textStatus, errorThrown) {
+						$(__np).data('posted', false).fadeTo(0, 1);
+					},
+					success: function (data, textStatus, jqXHR) {
+						$(_npp).html('Вам на email прийдет сообщение о поступлении товара на сайт.').css('top', '-20px').css('cursor', 'default');
+					}
+				});
+
+			});
 		});
 	});
-});
 </script>
-
 
 
 <?
@@ -166,7 +165,7 @@ if (count($arResult["SEARCH"]) > 0) {
 	foreach ($arResult["SEARCH"] as $si => $arItem) {
 		if ($arItem["MODULE_ID"] == "iblock" && substr($arItem["ITEM_ID"], 0, 1) !== "S") {
 			// связь: iblock_id => id : search_id
-			$arIDs[ $arItem['PARAM2'] ][ $arItem["ITEM_ID"] ] = $si;
+			$arIDs[$arItem['PARAM2']][$arItem["ITEM_ID"]] = $si;
 		}
 	}
 
@@ -175,8 +174,8 @@ if (count($arResult["SEARCH"]) > 0) {
 	foreach ($arIDs as $iblockId => $searchIds) {
 		// для инфоблоков 2.0 передавать IBLOCK_ID для выбора свойств обязательно
 		$grab = CIBlockElement::GetList(array(), array(
-			"IBLOCK_ID" 	=> $iblockId,
-			"ID" 			=> array_keys($searchIds)
+			"IBLOCK_ID" => $iblockId,
+			"ID" => array_keys($searchIds)
 		), false, false, array(
 			"ID",
 			"IBLOCK_ID",
@@ -187,24 +186,12 @@ if (count($arResult["SEARCH"]) > 0) {
 		while ($ar = $grab->Fetch()) {
 			$ar['PICTURE'] = CFile::GetFileArray($ar["PREVIEW_PICTURE"]);
 
-			$si = $arIDs[ $iblockId ][ $ar["ID"] ];
-			$arResult["SEARCH"][ $si ]["ELEMENT"] = $ar;
+			$si = $arIDs[$iblockId][$ar["ID"]];
+			$arResult["SEARCH"][$si]["ELEMENT"] = $ar;
 		}
 	}
 }
 ?>
-
-
-
-<?
-// Наиболее частые SQL запросы
-"SHOW CREATE TABLE `we_custom_settings`";
-
-"ALTER TABLE `we_custom_settings` CHANGE `UF_CODE` `UF_CODE` VARCHAR( 150 ) NULL DEFAULT NULL";
-
-"ALTER TABLE `we_custom_settings` ADD INDEX ( `UF_CODE` )";
-?>
-
 
 <?
 // init.php - устранение слеша на конце
@@ -230,18 +217,18 @@ if (trim($_REQUEST['ORDER_ID']) != '') {
 // get cloud backup pass when lost
 define('BX_BUFFER_USED', true);
 require $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php";
-require $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/backup.php";
+require $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/backup.php";
 var_dump(CPasswordStorage::Get('dump_temporary_cache'));
 ?>
 
 <?
 // csv bitrix
-require_once ($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/csv_data.php";);
+require_once $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/csv_data.php";
 $csvFile = new CCSVData('R', true);
 $csvFile->LoadFile($_FILES['csv']['tmp_name']);
 $csvFile->SetDelimiter(',');
 while ($arRes = $csvFile->Fetch()) {
-	ec($arRes);
+	//ec($arRes);
 }
 ?>
 
@@ -252,4 +239,38 @@ $ipropTemplates->set(array(
 	"ELEMENT_META_TITLE" => $p['DETAIL_PARAMS']['SEO_TITLE'],
 	"ELEMENT_META_DESCRIPTION" => $p['DETAIL_PARAMS']['SEO_DESCRIPTION'],
 ));
-?> 
+?>
+
+<?
+// restore agents
+COption::SetOptionString("main", "agents_use_crontab", "Y");
+echo COption::GetOptionString("main", "agents_use_crontab", "N");
+
+COption::SetOptionString("main", "check_agents", "Y");
+echo COption::GetOptionString("main", "check_agents", "N");
+
+COption::SetOptionString("main", "mail_event_bulk", "20");
+echo COption::GetOptionString("main", "mail_event_bulk", "5");
+?>
+
+<?
+CJSCore::Init(array("jquery"));
+$arJqueryExt = CJSCore::getExtInfo("jquery");
+?>
+
+<?
+// 2. Как отменить композитное кеширование в любом месте страницы (проголосовать "против") ?
+\Bitrix\Main\Data\StaticHtmlCache::getInstance()->markNonCacheable();
+?>
+
+<?
+// Вывод штрихкода, добавление штрихкода и изменение штрихкода.
+
+$dbBarCode = CCatalogStoreBarCode::getList(array(), array("PRODUCT_ID" => $arResult["ID"]));
+$arBarCode = $dbBarCode->GetNext();
+if ($arBarCode === false) {
+	$dbBarCode = CCatalogStoreBarCode::Add(array("PRODUCT_ID" => $arResult["ID"], "BARCODE" => $barcode, "CREATED_BY" => $USER->GetID()));
+} elseif ($arBarCode["ID"]["BARCODE"] != $barcode) {
+	$dbBarCode = CCatalogStoreBarCode::Update($arBarCode["ID"], array("BARCODE" => $barcode, "MODIFIED_BY" => $USER->GetID()));
+}
+?>
