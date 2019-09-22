@@ -3,7 +3,7 @@ namespace Hipot\BitrixUtils;
 
 /**
  * Класс для работы с кешированием (как обертка над логикой в виде анонимной функции, возвращающей данные)
- * @version 2.0 beta
+ * @version 2.2 beta
  */
 class PhpCacher
 {
@@ -26,6 +26,20 @@ class PhpCacher
 	public static $params = [];
 
 	/**
+	 * @param       $tagName
+	 * @param       $cacheTime
+	 * @param       $callbackFunction
+	 * @param array $params
+	 *
+	 * @return array|bool
+	 * @deprecated use cache
+	 */
+	public static function returnCacheDataAndSave($tagName, $cacheTime, $callbackFunction, $params = [])
+	{
+		return self::cache($tagName, $cacheTime, $callbackFunction, $params);
+	}
+
+	/**
 	 * Записываем и возвращает данные в кеш по пути /bitrix/cache/php/$tagName/ с возможностью указать
 	 * в функции $callbackFunction теги для кеша.
 	 *
@@ -42,7 +56,7 @@ class PhpCacher
 	 *
 	 * @return boolean|array
 	 */
-	public static function returnCacheDataAndSave($tagName, $cacheTime, $callbackFunction, $params = [])
+	public static function cache($tagName, $cacheTime, $callbackFunction, $params = [])
 	{
 		self::$LAST_ERROR = '';
 
@@ -67,7 +81,7 @@ class PhpCacher
 		}
 
 		if (!is_array($params) || empty($params)) {
-			$params = array();
+			$params = [];
 		}
 
 		$CACHE_ID     = 'cacher_' . md5(serialize($params) . $tagName);
@@ -90,7 +104,7 @@ class PhpCacher
 			if (is_callable($callbackFunction)) {
 				$data = $callbackFunction($params);
 			}
-			self::$params = array();
+			self::$params = [];
 
 			if (defined('BX_COMP_MANAGED_CACHE')) {
 				$GLOBALS['CACHE_MANAGER']->EndTagCache();
