@@ -21,13 +21,13 @@ class UnsortedUtils
 	 *      или массив с такой же историей
 	 * @return string
 	 */
-	public static function Suffix($n, $forms)
+	public static function Suffix($n, $forms): string
 	{
 		if (is_string($forms)) {
 			$forms = explode('|', $forms);
 		}
 		$declens = new Declension($forms[0], $forms[1], $forms[2]);
-		echo $declens->get($n);
+		return $declens->get($n);
 	}
 
 	/**
@@ -37,7 +37,7 @@ class UnsortedUtils
 	 *
 	 * @return string
 	 */
-	function TranslitText($text, $lang = 'ru')
+	function TranslitText($text, $lang = 'ru'): string
 	{
 		return \CUtil::translit(trim($text), $lang, array(
 			'max_len' => 100,
@@ -55,7 +55,7 @@ class UnsortedUtils
 	 * Почему не mb_detect_encoding()? Если кратко — он не работает.
 	 *
 	 * @param string $string строка в неизвестной кодировке
-	 * @param number $pattern_size = 50
+	 * @param int $pattern_size = 50
 	 *        если строка больше этого размера, то определение кодировки будет
 	 *        производиться по шаблону из $pattern_size символов, взятых из середины
 	 *        переданной строки. Это сделано для увеличения производительности на больших текстах.
@@ -65,7 +65,7 @@ class UnsortedUtils
 	 * @see http://forum.dklab.ru/viewtopic.php?t=37833
 	 * @see http://forum.dklab.ru/viewtopic.php?t=37830
 	 */
-	function detect_encoding($string, $pattern_size = 50)
+	public static function detect_encoding($string, $pattern_size = 50): string
 	{
 		$list = array(
 			'cp1251',
@@ -110,7 +110,7 @@ class UnsortedUtils
 	 * @return bool
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function isPageNavigation()
+	public static function isPageNavigation(): bool
 	{
 		$request = Application::getInstance()->getContext()->getRequest();
 		foreach ([1, 2, 3] as $pnCheck) {
@@ -125,18 +125,18 @@ class UnsortedUtils
 	/**
 	 * Выполняет команду в OS в фоне и без получения ответа
 	 *
+	 * @param string $cmd команда на выполнение
 	 * @see exec()
 	 * @return NULL
 	 */
-	static function execInBackground($cmd)
+	public static function execInBackground($cmd): void
 	{
-		if (substr(php_uname(), 0, 7) == "Windows") {
+		if (strpos(php_uname(), "Windows") === 0) {
 			pclose(popen("start /B " . $cmd, "r"));
 		} else {
 			exec($cmd . " > /dev/null &");
 		}
 	}
-
 
 	/**
 	 * Пересекаются ли времена заданные unix-таймштампами.
@@ -150,7 +150,7 @@ class UnsortedUtils
 	 * @param int $right2_ts
 	 * @return boolean
 	 */
-	function IsIntervalsTsIncl($left1_ts, $right1_ts, $left2_ts, $right2_ts)
+	public static function IsIntervalsTsIncl($left1_ts, $right1_ts, $left2_ts, $right2_ts): bool
 	{
 		// echo $left1_ts . ' ' . $right1_ts . ' ' . $left2_ts . ' ' . $right2_ts . '<br />';
 		if ($left1_ts <= $left2_ts) {
@@ -165,9 +165,9 @@ class UnsortedUtils
 	 * @param string $tableName имя таблицы
 	 * @return array
 	 */
-	static public function getTableFieldsFromDB($tableName)
+	public static function getTableFieldsFromDB($tableName): array
 	{
-		$a = array();
+		$a = [];
 		if (trim($tableName) != '') {
 			$query	= "SHOW COLUMNS FROM " . $tableName;
 			$res	= $GLOBALS['DB']->Query($query);
@@ -184,7 +184,7 @@ class UnsortedUtils
 	 * @param $url
 	 * @return bool|false|string
 	 */
-	static public function getPageContentByUrl($url)
+	public static function getPageContentByUrl($url)
 	{
 		$el = new \Bitrix\Main\Web\HttpClient();
 		$cont = $el->get( $url );
@@ -195,7 +195,7 @@ class UnsortedUtils
 	 * Возвращает размер удаленного файла
 	 *
 	 * @param $path Путь к удаленному файлу
-	 * @return bool
+	 * @return int | bool
 	 */
 	public static function remote_filesize($path)
 	{
@@ -238,7 +238,7 @@ class UnsortedUtils
 	 * 18, 19, 21 - ID ответов у вопросов https://yadi.sk/i/_9fwfZMvO2kblA
 	 * )</pre>
 	 *
-	 * @return bool
+	 * @return bool | UpdateResult
 	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function formResultAddSimple($WEB_FORM_ID, $arrVALUES)
@@ -263,9 +263,9 @@ class UnsortedUtils
 			\CFormResult::Mail($RESULT_ID);
 
 			if ($RESULT_ID) {
-				return new UpdateResult(array('RESULT' => $RESULT_ID,			     'STATUS' => 'OK'));
+				return new UpdateResult(['RESULT' => $RESULT_ID,			     'STATUS' => 'OK']);
 			} else {
-				return new UpdateResult(array('RESULT' => 'Не опознанная ошибка',  'STATUS' => 'ERROR'));
+				return new UpdateResult(['RESULT' => 'Не опознанная ошибка',  'STATUS' => 'ERROR']);
 			}
 		}
 	}

@@ -1,10 +1,12 @@
 <?
 namespace Hipot\BitrixUtils;
 
-use Bitrix\Main\Loader;
-use Bitrix\Main\LoaderException;
-use \Hipot\Utils\UpdateResult;
-use \Hipot\Utils\UnsortedUtils;
+use Bitrix\Main\Loader,
+	Bitrix\Main\LoaderException,
+	Bitrix\Iblock\InheritedProperty\ElementTemplates,
+	Bitrix\Iblock\InheritedProperty\ElementValues,
+	Hipot\Utils\UpdateResult,
+	Hipot\Utils\UnsortedUtils;
 
 try {
 	Loader::includeModule('iblock');
@@ -26,47 +28,56 @@ class IblockUtils
 	 * Добавление секции в инфоблок, возвращает ошибку либо ID результата, см. return
 	 *
 	 * @param array $arAddFields массив к добавлению
+	 * @param bool $bResort = false перестроить ли дерево, лучше отдельно вызывать CIBlockSection::Resort(int IBLOCK_ID);
+	 * @param bool $bUpdateSearch = false обновить ли поиск
+	 *
 	 * @return \Hipot\Utils\UpdateResult
 	 * @see \CIBlockSection::Add()
 	 */
-	public static function addSectionToDb($arAddFields = array())
+	public static function addSectionToDb($arAddFields = [], $bResort = false, $bUpdateSearch = false): UpdateResult
 	{
 		if (! is_array($arAddFields)) {
 			$arAddFields = array();
 		}
 
 		$el = new \CIBlockSection();
-		$ID = $el->Add($arAddFields);
+		$ID = $el->Add($arAddFields, $bResort, $bUpdateSearch);
 
 		if ($ID) {
-			return new UpdateResult(array('RESULT' => $ID,				'STATUS' => 'OK'));
+			return new UpdateResult(['RESULT' => $ID,				'STATUS' => 'OK']);
 		} else {
-			return new UpdateResult(array('RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR'));
+			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR']);
 		}
 	}
 
 	/**
 	 * Обновление секции в инфоблоке, возвращает ошибку либо ID результата, см. return
 	 *
+	 * @param int $ID код секции
 	 * @param array $arAddFields массив к добавлению
-	 * @return \Hipot\BitrixUtils\UpdateResult
+	 * @param bool $bResort = false перестроить ли дерево, лучше отдельно вызывать CIBlockSection::Resort(int IBLOCK_ID);
+	 * @param bool $bUpdateSearch = false обновить ли поиск
+	 *
+	 * @return bool | \Hipot\Utils\UpdateResult
 	 * @see \CIBlockSection::Add()
 	 */
-	public static function updateSectionToDb($ID, $arAddFields = array())
+	public static function updateSectionToDb($ID, $arAddFields = [], $bResort = false, $bUpdateSearch = false)
 	{
 		if (! is_array($arAddFields)) {
-			$arAddFields = array();
+			$arAddFields = [];
 		}
 
 		$ID = (int)$ID;
+		if ($ID <= 0) {
+			return false;
+		}
 
 		$el		= new \CIBlockSection();
-		$res	= $el->Update($ID, $arAddFields);
-
+		$res	= $el->Update($ID, $arAddFields, $bResort, $bUpdateSearch);
 		if ($res) {
-			return new UpdateResult(array('RESULT' => $ID,				'STATUS' => 'OK'));
+			return new UpdateResult(['RESULT' => $ID,				'STATUS' => 'OK']);
 		} else {
-			return new UpdateResult(array('RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR'));
+			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR']);
 		}
 	}
 
@@ -74,22 +85,24 @@ class IblockUtils
 	 * Добавление элемента в инфоблок, возвращает ошибку либо ID результата, см. return
 	 *
 	 * @param array $arAddFields массив к добавлению
+	 * @param bool $bUpdateSearch = false обновить ли поиск
+	 *
 	 * @return \Hipot\Utils\UpdateResult
 	 * @see \CIBlockElement::Add()
 	 */
-	public static function addElementToDb($arAddFields = array())
+	public static function addElementToDb($arAddFields = [], $bUpdateSearch = false): UpdateResult
 	{
 		if (! is_array($arAddFields)) {
-			$arAddFields = array();
+			$arAddFields = [];
 		}
 
 		$el = new \CIBlockElement();
-		$ID = $el->Add($arAddFields);
+		$ID = $el->Add($arAddFields, false, $bUpdateSearch);
 
 		if ($ID) {
-			return new UpdateResult(array('RESULT' => $ID,				'STATUS' => 'OK'));
+			return new UpdateResult(['RESULT' => $ID,				'STATUS' => 'OK']);
 		} else {
-			return new UpdateResult(array('RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR'));
+			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR']);
 		}
 	}
 
@@ -98,15 +111,20 @@ class IblockUtils
 	 *
 	 * @param int $ID массив к добавлению
 	 * @param array $arAddFields массив к добавлению
-	 * @return \Hipot\Utils\UpdateResult
+	 * @param bool $bUpdateSearch = false обновить ли поиск
+	 *
+	 * @return bool | \Hipot\Utils\UpdateResult
 	 * @see \CIBlockElement::Update()
 	 */
-	public static function updateElementToDb($ID, $arAddFields)
+	public static function updateElementToDb($ID, $arAddFields, $bUpdateSearch = false)
 	{
 		if (! is_array($arAddFields)) {
-			$arAddFields = array();
+			$arAddFields = [];
 		}
 		$ID = (int)$ID;
+		if ($ID <= 0) {
+			return false;
+		}
 
 		if (isset($arAddFields["PROPERTY_VALUES"])) {
 			$PROPS = $arAddFields["PROPERTY_VALUES"];
@@ -114,16 +132,16 @@ class IblockUtils
 		}
 
 		$el 	= new \CIBlockElement();
-		$bUpd 	= $el->Update($ID, $arAddFields);
+		$bUpd 	= $el->Update($ID, $arAddFields, false, $bUpdateSearch);
 
 		if (isset($PROPS) && $bUpd) {
 			\CIBlockElement::SetPropertyValuesEx($ID, false, $PROPS);
 		}
 
 		if ($bUpd) {
-			return new UpdateResult(array('RESULT' => $ID,				'STATUS' => 'OK'));
+			return new UpdateResult(['RESULT' => $ID,				'STATUS' => 'OK']);
 		} else {
-			return new UpdateResult(array('RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR'));
+			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR']);
 		}
 	}
 
@@ -135,11 +153,10 @@ class IblockUtils
 	 * @param bool $arGroupBy
 	 * @param bool $arNavParams
 	 * @param array $arSelect
-	 * @return \CIBlockResult
+	 * @return \CIBlockResult | int
 	 */
-	public static function selectElementsByFilter(
-										$arOrder, $arFilter, $arGroupBy = false,
-										$arNavParams = false, $arSelect = array())
+	public static function selectElementsByFilter($arOrder, $arFilter, $arGroupBy = false,
+										$arNavParams = false, $arSelect = [])
 	{
 		$rsItems = \CIBlockElement::GetList($arOrder, $arFilter, $arGroupBy, $arNavParams, $arSelect);
 		return $rsItems;
@@ -155,27 +172,26 @@ class IblockUtils
 	 * @param array $arSelect
 	 * @param bool $SelectAllProps = false
 	 * @param bool $OnlyPropsValue = true
-	 * @return Ambigous <unknown, mixed, multitype:unknown NULL string , string, boolean, multitype:, NULL>
+	 * @return array | int
 	 */
-	public static function selectElementsByFilterArray(
-							$arOrder, $arFilter, $arGroupBy = false, $arNavParams = false,
-							$arSelect = array(), $SelectAllProps = false, $OnlyPropsValue = true)
+	public static function selectElementsByFilterArray($arOrder, $arFilter, $arGroupBy = false, $arNavParams = false,
+														$arSelect = [], $SelectAllProps = false, $OnlyPropsValue = true)
 	{
+		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (! in_array('IBLOCK_ID', $arSelect)) {
 			$arSelect[] = 'IBLOCK_ID';
 		}
+		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (! in_array('ID', $arSelect)) {
 			$arSelect[] = 'ID';
 		}
 
+		$arResult = [];
 		$rsItems = self::selectElementsByFilter($arOrder, $arFilter, $arGroupBy, $arNavParams, $arSelect);
-		
 		if (! is_object($rsItems)) {
 			return $rsItems;
 		}
-
 		while ($arItem = $rsItems->GetNext()) {
-
 			if ($SelectAllProps === true) {
 				$arItem['PROPERTIES'] = self::selectElementProperties(
 					$arItem['ID'],
@@ -183,10 +199,8 @@ class IblockUtils
 					$OnlyPropsValue
 				);
 			}
-
 			$arResult[] = $arItem;
 		}
-
 		return $arResult;
 	}
 
@@ -196,17 +210,22 @@ class IblockUtils
 	 * @param int  $ID элемент инфоблока
 	 * @param int  $IBLOCK_ID = 0 код инфоблока, если не указан, то будет выбран (желательно указывать для быстродействия!)
 	 * @param bool $onlyValue = false возвращать только значение свойства
+	 * @param array $exFilter = [] дополнительный фильтр при выборке свойств через CIBlockElement::GetProperty()
 	 *
-	 * @return array
+	 * @return array | bool
 	 */
-	public static function selectElementProperties($ID, $IBLOCK_ID = 0, $onlyValue = false)
+	public static function selectElementProperties($ID, $IBLOCK_ID = 0, $onlyValue = false, $exFilter = [])
 	{
 		global $DB;
 
 		$IBLOCK_ID	= (int)$IBLOCK_ID;
 		$ID			= (int)$ID;
+		if ($ID <= 0) {
+			return false;
+		}
 
 		if ($IBLOCK_ID <= 0) {
+			/** @noinspection SqlNoDataSourceInspection */
 			$rs = $DB->Query("select IBLOCK_ID from b_iblock_element where ID=" . $ID);
 			if ($ar = $rs->Fetch()) {
 				$IBLOCK_ID = $ar["IBLOCK_ID"];
@@ -215,28 +234,23 @@ class IblockUtils
 			}
 		}
 
-		$PROPERTIES = array();
-
+		$PROPERTIES = [];
 		// QUERY 2
-		$db_props = \CIBlockElement::GetProperty(
-			$IBLOCK_ID,
-			$ID,
-			array("sort" => "asc"),
-			array("EMPTY" => "N")
-		);
+		$arFilter = ["EMPTY" => "N"];
+		foreach ($exFilter as $f => $v) {
+			$arFilter[$f] = $v;
+		}
+		$db_props = \CIBlockElement::GetProperty($IBLOCK_ID, $ID, ["sort" => "asc"], $arFilter);
 		while ($ar_props = $db_props->Fetch()) {
-
 			if (trim($ar_props['CODE']) == '') {
 				$ar_props['CODE'] = $ar_props['ID'];
 			}
-
 			if ($ar_props['MULTIPLE'] == "Y") {
 				$PROPERTIES[ $ar_props['CODE'] ][]	= ($onlyValue) ? $ar_props['VALUE'] : $ar_props;
 			} else {
 				$PROPERTIES[ $ar_props['CODE'] ]	= ($onlyValue) ? $ar_props['VALUE'] : $ar_props;
 			}
 		}
-
 		return $PROPERTIES;
 	}
 
@@ -246,25 +260,25 @@ class IblockUtils
 	 *
 	 * @see CIBlockSection::GetList()
 	 *
-	 * @param unknown                            $arOrder
-	 * @param unknown                            $arFilter
-	 * @param bool|string                        $bIncCnt
+	 * @param array                              $arOrder
+	 * @param array                              $arFilter
+	 * @param bool|string                        $bIncCnt = false
 	 * @param array|\Hipot\BitrixUtils\unknown   $arSelect
 	 * @param bool|string                        $arNavStartParams
 	 *
-	 * @return \CIBlockResult
+	 * @return \CIBlockResult | int
 	 */
-	public static function selectSectionsByFilter(
-										$arOrder, $arFilter, $bIncCnt = false,
-										$arSelect = array(), $arNavStartParams=false)
+	public static function selectSectionsByFilter($arOrder, $arFilter, $bIncCnt = false,
+													$arSelect = [], $arNavStartParams = false)
 	{
+		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (! in_array('ID', $arSelect)) {
 			$arSelect[] = 'ID';
 		}
+		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (! in_array('IBLOCK_ID', $arSelect)) {
 			$arSelect[] = 'IBLOCK_ID';
 		}
-
 		$rsSect = \CIBlockSection::GetList($arOrder, $arFilter, $bIncCnt, $arSelect, $arNavStartParams);
 		return $rsSect;
 	}
@@ -280,17 +294,14 @@ class IblockUtils
 	 *
 	 * @return array|boolean
 	 */
-	public static function selectSectionsByFilterArray(
-										$arOrder, $arFilter, $bIncCnt = false,
-										$arSelect = array(), $arNavStartParams = false)
+	public static function selectSectionsByFilterArray($arOrder, $arFilter, $bIncCnt = false,
+															$arSelect = [], $arNavStartParams = false): array
 	{
-		$arResult = array();
-
+		$arResult = [];
 		$rsSect = self::selectSectionsByFilter($arOrder, $arFilter, $bIncCnt, $arSelect, $arNavStartParams);
 		while ($arSect = $rsSect->GetNext()) {
 			$arResult[] = $arSect;
 		}
-
 		return $arResult;
 	}
 
@@ -302,30 +313,26 @@ class IblockUtils
 	 * @param array $arFilterEx = array() фильтр по выборке вариантов
 	 * @param array $aSort = array("DEF"=>"DESC", "SORT"=>"ASC")
 	 *
-	 * @return void|boolean
+	 * @return array | bool
 	 */
-	public static function selectPropertyEnumArray(
-										$propCode, $arFilterEx = array(),
-										$aSort = array("DEF"=>"DESC", "SORT"=>"ASC"))
+	public static function selectPropertyEnumArray($propCode, $arFilterEx = [], $aSort = ["DEF" => "DESC", "SORT" => "ASC"])
 	{
 		if (trim($propCode) == '') {
 			return false;
 		}
 
-		$arFilter = array();
+		$arFilter = [];
 
 		if (is_numeric($propCode)) {
 			$arFilter['ID']		= (int)$propCode;
 		} else {
 			$arFilter['CODE']	= $propCode;
 		}
-
 		foreach ($arFilterEx as $f => $filter) {
 			$arFilter[ $f ] = $filter;
 		}
-		unset($f, $filter);
 
-		$arRes = array();
+		$arRes = [];
 
 		$property_enums = \CIBlockPropertyEnum::GetList($aSort, $arFilter);
 		while ($enum_fields = $property_enums->GetNext()) {
@@ -341,7 +348,7 @@ class IblockUtils
 	 * @param int $iblockId
 	 * @param string $fieldType
 	 * @param string $table = b_iblock_element | b_iblock_section
-	 * @return boolean|number
+	 * @return boolean | int возвращает ID найденного элемента
 	 */
 	public static function checkExistsByNameOrCode($field, $iblockId, $fieldType = 'name', $table = 'b_iblock_element')
 	{
@@ -363,17 +370,18 @@ class IblockUtils
 			return false;
 		}
 
-		$fw = '';
 		if ($fieldType == 'code') {
 			$fw = 'CODE = "' . $DB->ForSql($field) . '"';
 		} else if ($fieldType == 'xml_id') {
 			$fw = 'XML_ID = "' . $DB->ForSql($field) . '"';
+
 		} else if (! in_array($fieldType, $iblockFieldsBase)) {
 			$fw = $fieldType . ' = "' . $DB->ForSql($field) . '"';
 		} else {
 			$fw = 'NAME = "' . $DB->ForSql($field) . '"';
 		}
 
+		/** @noinspection SqlNoDataSourceInspection */
 		$sqlCheck = 'SELECT ID FROM ' . $table . ' WHERE ' . $fw . ' AND IBLOCK_ID = ' . (int)$iblockId;
 		$el = $DB->Query($sqlCheck)->Fetch();
 
@@ -431,13 +439,8 @@ class IblockUtils
 	 *
 	 * @return array
 	 */
-	public static function getNextPrevElemetsByElementId(
-													$ELEMENT_ID,
-													$rowSort = array(),
-													$prevNextSelect = array(),
-													$dopFilter = array('ACTIVE' => 'Y'),
-													$cntSelect = 1
-												)
+	public static function getNextPrevElementsByElementId($ELEMENT_ID, $rowSort = [], $prevNextSelect = [],
+															$dopFilter = ['ACTIVE' => 'Y'], $cntSelect = 1): array
 	{
 		$ELEMENT_ID = (int)$ELEMENT_ID;
 		if ($ELEMENT_ID <= 0) {
@@ -472,16 +475,9 @@ class IblockUtils
 			$arNavStartParams['nPageSize'] = (int)$cntSelect;
 		}
 
-		$rsList = CIBlockElement::GetList(
-			$arSort,
-			$arFilter,
-			false,
-			$arNavStartParams,
-			$arFields
-		);
+		$rsList = CIBlockElement::GetList($arSort, $arFilter, false, $arNavStartParams, $arFields);
 
-		$arResult = array();
-
+		$arResult = [];
 		while ($arItem = $rsList->GetNext()) {
 			if ($arItem['ID'] != $ELEMENT_ID) {
 				$arResult['PREV_NEXT'][$arItem['RANK']] = $arItem;
@@ -489,7 +485,6 @@ class IblockUtils
 				$arResult['CURRENT'] = $arItem;
 			}
 		}
-
 		foreach ($arResult['PREV_NEXT'] as $key => $val) {
 			if ($key < $arResult['CURRENT']['RANK']) {
 				$arResult['PREV'][] = $val;
@@ -498,7 +493,6 @@ class IblockUtils
 				$arResult['NEXT'][] = $val;
 			}
 		}
-
 		return $arResult;
 	}
 
@@ -507,7 +501,7 @@ class IblockUtils
 	 * Выбор секции с детьми. В итоговый массив попадает и $sectionId
 	 *
 	 * @param int $sectionId
-	 * @return array
+	 * @return array | bool
 	 */
 	public static function selectSubsectionByParentSection($sectionId)
 	{
@@ -515,25 +509,21 @@ class IblockUtils
 			return false;
 		}
 
-		$SectBorders = \CIBlockSection::GetList(array("SORT" => "ASC"), array(
+		$SectBorders = \CIBlockSection::GetList(["SORT" => "ASC"], [
 			"ACTIVE"    => "Y",
 			"ID"      	=> $sectionId,
-		), false, array('ID', 'IBLOCK_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'IBLOCK_ID'))->GetNext();
+		], false, ['ID', 'IBLOCK_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'IBLOCK_ID'])->GetNext();
 
-		$rsSections = \CIBlockSection::GetList(
-			array( "SORT"=>"ASC" ),
-			array(
-				"ACTIVE"        => "Y",
-				"IBLOCK_ID"     => $SectBorders['IBLOCK_ID'],
-				">LEFT_MARGIN"  => $SectBorders["LEFT_MARGIN"],
-				"<RIGHT_MARGIN" => $SectBorders["RIGHT_MARGIN"],
-			)
-		);
+		$rsSections = \CIBlockSection::GetList(["SORT"=>"ASC"], [
+			"ACTIVE"        => "Y",
+			"IBLOCK_ID"     => $SectBorders['IBLOCK_ID'],
+			">LEFT_MARGIN"  => $SectBorders["LEFT_MARGIN"],
+			"<RIGHT_MARGIN" => $SectBorders["RIGHT_MARGIN"],
+		]);
 		$SectionIDS = array();
 		while ($Section = $rsSections->GetNext()) {
 			$SectionIDS[] = $Section["ID"];
 		}
-
 		return $SectionIDS;
 	}
 
@@ -550,6 +540,7 @@ class IblockUtils
 	public function AddMultipleFileValue($ID, $IBLOCK_ID, $arFiles, $prop_code)
 	{
 		$result = true;
+		$ar = [];
 
 		$rsPr = CIBlockElement::GetProperty($IBLOCK_ID, $ID, ['sort', 'asc'], [
 			'CODE' => $prop_code,
@@ -563,7 +554,6 @@ class IblockUtils
 				'DESCRIPTION' => $arPr['DESCRIPTION']
 			);
 		}
-
 		foreach ($arFiles as $l => $d) {
 			$art = false;
 			$gn = 0;
@@ -596,7 +586,7 @@ class IblockUtils
 	 * @retrun возвращается значение ID значения в справочнике
 	 * @return bool|int
 	 */
-	static public function addToHelperAndReturnElementId($fieldVal, $iblockId)
+	public static function addToHelperAndReturnElementId($fieldVal, $iblockId)
 	{
 		$iblockId = (int)$iblockId;
 		if (($fieldVal = trim($fieldVal)) == '' || $iblockId <= 0) {
@@ -618,7 +608,7 @@ class IblockUtils
 				'ACTIVE'        => 'Y',
 				'NAME'          => $fieldVal,
 				'IBLOCK_ID'     => $iblockId,
-				'CODE'          => \Hipot\Utils\UnsortedUtils::TranslitText($fieldVal) . '-' . randString(3)
+				'CODE'          => UnsortedUtils::TranslitText($fieldVal) . '-' . randString(3)
 			]);
 			if ($r->STATUS != 'OK') {
 				return false;
@@ -637,9 +627,9 @@ class IblockUtils
 	 *
 	 * @return array
 	 */
-	static function returnSeoValues($IBLOCK_ID, $ID)
+	public static function returnSeoValues($IBLOCK_ID, $ID): array
 	{
-		$ipropValues = new \Bitrix\Iblock\InheritedProperty\ElementValues((int)$IBLOCK_ID, (int)$ID);
+		$ipropValues = new ElementValues((int)$IBLOCK_ID, (int)$ID);
 		return $ipropValues->getValues();
 	}
 
@@ -651,9 +641,9 @@ class IblockUtils
 	 *
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	static function setSeoValues($IBLOCK_ID, $ID, $arTemplates = [])
+	public static function setSeoValues($IBLOCK_ID, $ID, $arTemplates = []): void
 	{
-		$ipropTemplates = new\Bitrix\Iblock\InheritedProperty\ElementTemplates((int)$IBLOCK_ID, (int)$ID);
+		$ipropTemplates = new ElementTemplates((int)$IBLOCK_ID, (int)$ID);
 		$ipropTemplates->set($arTemplates);
 	}
 
@@ -665,7 +655,7 @@ class IblockUtils
 	 *
 	 * @return bool
 	 */
-	static function setGroupToElement($elId, $sectionId)
+	public static function setGroupToElement($elId, $sectionId): bool
 	{
 		$elId = (int)$elId;
 		$sectionId = (int)$sectionId;
@@ -683,6 +673,4 @@ class IblockUtils
 	}
 
 } // end class
-
-
 

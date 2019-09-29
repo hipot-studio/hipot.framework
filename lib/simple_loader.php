@@ -47,10 +47,10 @@ spl_autoload_register(static function ($className) {
 			}
 		}
 	}
-	if (! class_exists($className)) {
-		// to be fatal
-		throw new \RuntimeException('no class in hipot simple autoloader: ' . $className);
-	}
+	/*if (! class_exists($className)) {
+		// maybe to be fatal
+		//throw new \RuntimeException('no class in hipot simple autoloader: ' . $className);
+	}*/
 
 });
 //var_dump( spl_autoload_functions() );

@@ -563,20 +563,21 @@ class SaleUtils
 	 * @throws \Bitrix\Main\ArgumentTypeException
 	 * @throws \Bitrix\Main\NotImplementedException
 	 * @throws \Bitrix\Main\NotSupportedException
+	 * @throws \Bitrix\Main\ObjectNotFoundException
 	 */
-	static function updateBasketD7($basket, $productId, $quantity)
+	public static function updateBasketD7($basket, $productId, $quantity)
 	{
 		if ($item = $basket->getExistsItem('catalog', $productId)) {
 			$item->setField('QUANTITY', $item->getQuantity() + $quantity);
 		} else {
 			$item = $basket->createItem('catalog', $productId);
-			$item->setFields(array(
+			$item->setFields([
 				'QUANTITY' => $quantity,
 				'CURRENCY' => \Bitrix\Currency\CurrencyManager::getBaseCurrency(),
 				'LID' => \Bitrix\Main\Context::getCurrent()->getSite(),
 				'PRODUCT_PROVIDER_CLASS' => 'CCatalogProductProvider',
 				'PRODUCT_ID' => $productId
-			));
+			]);
 			/*
 			Если вы хотите добавить товар с произвольной ценой, нужно сделать так:
 			$item->setFields(array(
@@ -591,5 +592,39 @@ class SaleUtils
 		$basket->save();
 	}
 
+	/**
+	 * Получить время изменения акций модуля sale
+	 *
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 * @return int timestamp
+	 */
+	public static function getSaleDiscountModTs()
+	{
+		$getListParams = [
+			'select' => ['TIMESTAMP_X'],
+			'filter' => [],
+			'order' => ['TIMESTAMP_X' => 'DESC']
+		];
+		if (\Bitrix\Main\Config\Option::get('sale', 'use_sale_discount_only', false) === 'Y'
+			&& \Bitrix\Main\Loader::includeModule('catalog')) {
+			$getListParams['runtime'] = [
+				new \Bitrix\Main\Entity\ReferenceField(
+					"CATALOG_DISCOUNT",
+					'Bitrix\Catalog\DiscountTable',
+					["=this.ID" => "ref.SALE_ID"]
+				)
+			];
+			$getListParams['select']['CATALOG_DISCOUNT_ID'] = 'CATALOG_DISCOUNT.ID';
+		}
+		$getListParams['limit'] = 1;
+
+		$discount = \Bitrix\Sale\Internals\DiscountTable::getList($getListParams)->fetch();
+		$discountTs = $discount['TIMESTAMP_X'];
+		/* @var $discountTs \Bitrix\Main\Type\DateTime */
+		return $discountTs->format('U');
+	}
 
 } // end class

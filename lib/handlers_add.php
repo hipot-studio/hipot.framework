@@ -12,13 +12,16 @@ AddEventHandler("main", "OnBeforeProlog", static function () {
 	global $APPLICATION, $USER;
 
 	foreach (
-		array(
-			$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/include/lib/',
-			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/include/lib/',
+		[
+			$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/include/constants.php',
+			$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/include/lib/constants.php',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/include/constants.php',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/include/lib/constants.php',
 			__DIR__ . '/constants.php'
-		) as $constFile) {
+		] as $constFile) {
 		if (is_file($constFile)) {
 			include $constFile;
+			break;
 		}
 	}
 
@@ -72,9 +75,9 @@ AddEventHandler("main", "OnAdminListDisplay", static function ($this_al) {
 });
 
 // очищаем настройки формы по-умолчанию для всех админов
-// @see https://hipot.socialmatrix.net/Codex/form_iblock_element_settings/
+// @see http://hipot.mooo.com/Codex/form_iblock_element_settings/
 AddEventHandler('main', 'OnEndBufferContent', static function (&$content) {
-	if (count($_POST['p']) <= 0) {
+	if (!isset($_POST['p']) || !is_array($_POST['p']) || count($_POST['p']) <= 0) {
 		return;
 	}
 
@@ -84,7 +87,7 @@ AddEventHandler('main', 'OnEndBufferContent', static function (&$content) {
 
 	if ($APPLICATION->GetCurPage() != '/bitrix/admin/user_options.php'
 		|| $pCfg['c'] != 'form' || $pCfg['d'] != 'Y'
-		|| !preg_match('#^form_((section)|(element))_[0-9]+$#', $pCfg['n'])
+		|| !preg_match('#^form_((section)|(element))_[\d]+$#', $pCfg['n'])
 	) {
 		return;
 	}

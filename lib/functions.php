@@ -138,56 +138,6 @@ if (! function_exists('TransformImagesInHtml')) {
 	}
 }
 
-
-// в PHP 5.5 такая фукнция будет по дефолту
-if (! function_exists('array_column')) {
-	/**
-	 * Returns the values from a single column of the input array, identified by the columnKey.
-	 *
-	 * Optionally, you may provide an indexKey to index the values in the returned array by the values from the
-	 * indexKey column in the input array.
-	 *
-	 * @param array[] $input A multi-dimensional array (record set) from which to pull a column of values.
-	 * @param int|string $columnKey The column of values to return. This value may be the
-	 *        integer key of the column you wish to retrieve, or it may be the string key name for an associative array.
-	 * @param int|string $indexKey The column to use as the index/keys for the returned array.
-	 *        This value may be the integer key of the column, or it may be the string key name.
-	 *
-	 * @return mixed[]
-	 *
-	 * @see http://habrahabr.ru/post/173943/
-	 */
-	function array_column($input, $columnKey, $indexKey = null)
-	{
-		if (!is_array($input)) {
-			return false;
-		}
-		if ($indexKey === null) {
-			foreach ($input as $i => &$in) {
-				if (is_array($in) && isset($in[$columnKey])) {
-					$in = $in[$columnKey];
-				} else {
-					unset($input[$i]);
-				}
-			}
-		} else {
-			$result = array();
-			foreach ($input as $i => $in) {
-				if (is_array($in) && isset($in[$columnKey])) {
-					if (isset($in[$indexKey])) {
-						$result[$in[$indexKey]] = $in[$columnKey];
-					} else {
-						$result[] = $in[$columnKey];
-					}
-					unset($input[$i]);
-				}
-			}
-			$input = &$result;
-		}
-		return $input;
-	}
-}
-
 if (! function_exists('array_trim_r')) {
 	/**
 	 * Удаляет из массива пустые элементы с пустыми значениями рекурсивно.

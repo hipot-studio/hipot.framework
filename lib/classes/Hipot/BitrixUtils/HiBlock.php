@@ -13,7 +13,7 @@ class HiBlock
 	 *
 	 * @param int $hlblockId код HL-инфоблока
 	 *
-	 * @return \Bitrix\Main\Entity\DataManager
+	 * @return bool | \Bitrix\Main\Entity\DataManager
 	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getDataManagerByHiId($hlblockId)
@@ -50,7 +50,7 @@ class HiBlock
 
 		\CModule::IncludeModule('highloadblock');
 
-		$hlblock	= HL\HighloadBlockTable::getList( array('filter' => array('NAME' => $hiBlockName)) )->fetch();
+		$hlblock	= HL\HighloadBlockTable::getList( ['filter' => ['NAME' => $hiBlockName]] )->fetch();
 		$entity   	= HL\HighloadBlockTable::compileEntity( $hlblock );
 
 		/* @var $entity_data_class \Bitrix\Main\Entity\DataManager */
@@ -64,7 +64,7 @@ class HiBlock
 	 *
 	 * @param string $tableName = 'we_custom_settings'
 	 * @param string $hiBlockName = 'CustomSettings'
-	 * @return boolean
+	 * @return array
 	 *
 	 * @throws \Exception ERROR - VOID tableName, ERROR - VOID hiBlockName
 	 * @uses $DB
@@ -84,37 +84,37 @@ class HiBlock
 			throw new \Exception('ERROR - VOID hiBlockName');
 		}
 
-		$result = HL\HighloadBlockTable::add(array(
+		$result = HL\HighloadBlockTable::add([
 			'NAME'			=> $hiBlockName,
 			'TABLE_NAME'	=> $tableName
-		));
+		]);
 		$ID_hiBlock = $result->getId();
 
 		if ((int)$ID_hiBlock <= 0) {
 			throw new \Exception('ERROR - CREATE hiBlockName');
 		}
 
-		$arUfFields = array(
-			array(
+		$arUfFields = [
+			[
 				'CODE' => 'NAME', 'SORT' => 100, 'NAME' => 'Имя параметра', 'HELP' => '',
-				'SETTINGS' => array("SIZE" => 60, "ROWS" => 1), 'REQUIRED' => 'Y'
-			),
-			array(
+				'SETTINGS' => ["SIZE" => 60, "ROWS" => 1], 'REQUIRED' => 'Y'
+			],
+			[
 				'CODE' => 'CODE', 'SORT' => 200,
 				'NAME' => 'Код параметра (не менять!)', 'HELP' => 'Используется для идентификации параметра',
-				'SETTINGS' => array("SIZE" => 60, "ROWS" => 1), 'REQUIRED' => 'Y'
-			),
-			array(
+				'SETTINGS' => ["SIZE" => 60, "ROWS" => 1], 'REQUIRED' => 'Y'
+			],
+			[
 				'CODE' => 'VALUE', 'SORT' => 300, 'NAME' => 'Значение параметра', 'HELP' => '',
-				'SETTINGS' => array("SIZE" => 60, "ROWS" => 3), 'REQUIRED' => 'N'
-			),
-		);
+				'SETTINGS' => ["SIZE" => 60, "ROWS" => 3], 'REQUIRED' => 'N'
+			],
+		];
 
-		$ID_props = array();
+		$ID_props = [];
 
 		foreach ($arUfFields as $arFields) {
 			$obUserField 	= new \CUserTypeEntity;
-			$ID_props[ $arFields['CODE'] ]	= $obUserField->Add(array(
+			$ID_props[ $arFields['CODE'] ]	= $obUserField->Add([
 				"ENTITY_ID"			=> 'HLBLOCK_' . $ID_hiBlock,
 				"FIELD_NAME"		=> 'UF_' . $arFields['CODE'],
 				"USER_TYPE_ID"		=> 'string',
@@ -127,12 +127,12 @@ class HiBlock
 				"EDIT_IN_LIST"		=> 'Y',
 				"IS_SEARCHABLE"		=> 'N',
 				"SETTINGS"			=> $arFields['SETTINGS'],
-				"EDIT_FORM_LABEL"	=> array("ru" => $arFields['NAME']),
-				"LIST_COLUMN_LABEL" => array("ru" => $arFields['NAME']),
-				"LIST_FILTER_LABEL" => array("ru" => $arFields['NAME']),
-				"ERROR_MESSAGE"		=> array("ru" => $arFields['NAME']),
-				"HELP_MESSAGE"		=> array("ru" => $arFields['HELP']),
-			));
+				"EDIT_FORM_LABEL"	=> ["ru" => $arFields['NAME']],
+				"LIST_COLUMN_LABEL" => ["ru" => $arFields['NAME']],
+				"LIST_FILTER_LABEL" => ["ru" => $arFields['NAME']],
+				"ERROR_MESSAGE"		=> ["ru" => $arFields['NAME']],
+				"HELP_MESSAGE"		=> ["ru" => $arFields['HELP']],
+			]);
 		}
 
 		return $ID_props;
@@ -153,15 +153,15 @@ class HiBlock
 	{
 		$self = __CLASS__;
 
-		$arParams = PhpCacher::returnCacheDataAndSave('hi_custom_settings', $cacheTime, function() use ($hiBlockName, $self) {
-			$arParams = array();
+		$arParams = PhpCacher::cache('hi_custom_settings', $cacheTime, static function() use ($hiBlockName, $self) {
+			$arParams = [];
 
 			/* @var $dm \Bitrix\Main\Entity\DataManager */
 			$dm		= $self::getDataManagerByHiCode($hiBlockName);
-			$res	= $dm::getList(array(
-				'select' 	=> array('UF_CODE', 'UF_VALUE'),
-				'order'		=> array('UF_CODE' => 'ASC')
-			));
+			$res	= $dm::getList([
+				'select' 	=> ['UF_CODE', 'UF_VALUE'],
+				'order'		=> ['UF_CODE' => 'ASC']
+			]);
 
 			while ($ar = $res->fetch()) {
 				$arParams[ $ar['UF_CODE'] ] = $ar['UF_VALUE'];
@@ -182,12 +182,12 @@ class HiBlock
 	{
 		$dm			= __getHl($hlBlockname);
 		$arPosters 	= $dm::getList(array(
-			'select' 	=> array('*'),
-			'filter' 	=> array(
-				">=UF_DATE_TO" 				=> array(date('d.m.Y H:i:s'), false),
-				"<=UF_DATE_FROM"			=> array(date('d.m.Y H:i:s'), false)
-			),
-			'order'		=> array('ID' => 'DESC'),
+			'select' 	=> ['*'],
+			'filter' 	=> [
+				">=UF_DATE_TO" 				=> [date('d.m.Y H:i:s'), false],
+				"<=UF_DATE_FROM"			=> [date('d.m.Y H:i:s'), false]
+			],
+			'order'		=> ['ID' => 'DESC'],
 			'limit'		=> 1
 		))->fetchAll();
 

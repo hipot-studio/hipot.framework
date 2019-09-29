@@ -30,7 +30,7 @@ class ObjectArItem implements \ArrayAccess
 
 	//// ArrayAccess interface init:
 
-	public function offsetExists($offset)
+	public function offsetExists($offset): bool
 	{
 		return isset($this->{$offset});
 	}
@@ -44,16 +44,15 @@ class ObjectArItem implements \ArrayAccess
 		}
 	}
 
-	public function offsetSet($offset, $value)
+	public function offsetSet($offset, $value): void
 	{
 		if (trim($offset) == '') {
 			$offset = 'AUTOINDEX_' . $this->cnt_append++;
 		}
-
 		$this->{$offset} = $value;
 	}
 
-	public function offsetUnset($offset)
+	public function offsetUnset($offset): void
 	{
 		if ($this->offsetExists($offset)) {
 			unset($this->{$offset});
