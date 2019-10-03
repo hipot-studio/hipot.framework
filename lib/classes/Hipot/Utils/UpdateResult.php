@@ -13,6 +13,9 @@ namespace Hipot\Utils;
  */
 class UpdateResult extends ObjectArItem
 {
+	const STATUS_OK         = 'OK';
+	const STATUS_ERROR      = 'ERROR';
+
 	/**
 	 * идентификатор записи или текст ошибки
 	 * @var int|string

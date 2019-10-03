@@ -2,25 +2,23 @@
 namespace Hipot\BitrixUtils;
 
 use Bitrix\Main\Loader,
-	Bitrix\Main\LoaderException,
-	Bitrix\Iblock\InheritedProperty\ElementTemplates,
-	Bitrix\Iblock\InheritedProperty\ElementValues,
 	Hipot\Utils\UpdateResult,
 	Hipot\Utils\UnsortedUtils;
 
-try {
-	Loader::includeModule('iblock');
-} catch (LoaderException $e) {
-	return false;
-}
+Loader::includeModule('iblock');
+
+use Bitrix\Iblock\InheritedProperty\ElementTemplates,
+	Bitrix\Iblock\InheritedProperty\ElementValues,
+	Bitrix\Iblock\PropertyIndex\Manager;
 
 /**
  * Дополнительные утилиты для работы с инфоблоками
  *
- *
  * IMPORTANT:
  * Некоторые методы выборки избыточны (лучше использовать bitrix api).
  * В основном необходимы для построения быстрых решений: к примеру, отчетов.
+ *
+ * @version 2.X
  */
 class IblockUtils
 {
@@ -44,9 +42,9 @@ class IblockUtils
 		$ID = $el->Add($arAddFields, $bResort, $bUpdateSearch);
 
 		if ($ID) {
-			return new UpdateResult(['RESULT' => $ID,				'STATUS' => 'OK']);
+			return new UpdateResult(['RESULT' => $ID,				'STATUS' => UpdateResult::STATUS_OK]);
 		} else {
-			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR']);
+			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
 		}
 	}
 
@@ -75,9 +73,9 @@ class IblockUtils
 		$el		= new \CIBlockSection();
 		$res	= $el->Update($ID, $arAddFields, $bResort, $bUpdateSearch);
 		if ($res) {
-			return new UpdateResult(['RESULT' => $ID,				'STATUS' => 'OK']);
+			return new UpdateResult(['RESULT' => $ID,				'STATUS' => UpdateResult::STATUS_OK]);
 		} else {
-			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR']);
+			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
 		}
 	}
 
@@ -100,9 +98,9 @@ class IblockUtils
 		$ID = $el->Add($arAddFields, false, $bUpdateSearch);
 
 		if ($ID) {
-			return new UpdateResult(['RESULT' => $ID,				'STATUS' => 'OK']);
+			return new UpdateResult(['RESULT' => $ID,				'STATUS' => UpdateResult::STATUS_OK]);
 		} else {
-			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR']);
+			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
 		}
 	}
 
@@ -135,13 +133,15 @@ class IblockUtils
 		$bUpd 	= $el->Update($ID, $arAddFields, false, $bUpdateSearch);
 
 		if (isset($PROPS) && $bUpd) {
-			\CIBlockElement::SetPropertyValuesEx($ID, false, $PROPS);
+			$iblockId = self::getElementIblockId($ID);
+			\CIBlockElement::SetPropertyValuesEx($ID, $iblockId, $PROPS);
+			Manager::updateElementIndex($iblockId, $ID);
 		}
 
 		if ($bUpd) {
-			return new UpdateResult(['RESULT' => $ID,				'STATUS' => 'OK']);
+			return new UpdateResult(['RESULT' => $ID,				'STATUS' => UpdateResult::STATUS_OK]);
 		} else {
-			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => 'ERROR']);
+			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
 		}
 	}
 
@@ -201,6 +201,9 @@ class IblockUtils
 			}
 			$arResult[] = $arItem;
 		}
+		if (count($arResult) == 1) {
+			$arResult = current($arResult);
+		}
 		return $arResult;
 	}
 
@@ -216,8 +219,6 @@ class IblockUtils
 	 */
 	public static function selectElementProperties($ID, $IBLOCK_ID = 0, $onlyValue = false, $exFilter = [])
 	{
-		global $DB;
-
 		$IBLOCK_ID	= (int)$IBLOCK_ID;
 		$ID			= (int)$ID;
 		if ($ID <= 0) {
@@ -225,11 +226,8 @@ class IblockUtils
 		}
 
 		if ($IBLOCK_ID <= 0) {
-			/** @noinspection SqlNoDataSourceInspection */
-			$rs = $DB->Query("select IBLOCK_ID from b_iblock_element where ID=" . $ID);
-			if ($ar = $rs->Fetch()) {
-				$IBLOCK_ID = $ar["IBLOCK_ID"];
-			} else {
+			$IBLOCK_ID = self::getElementIblockId($ID);
+			if (! $IBLOCK_ID) {
 				return false;
 			}
 		}
@@ -252,6 +250,29 @@ class IblockUtils
 			}
 		}
 		return $PROPERTIES;
+	}
+
+	/**
+	 * Получить инфоблок элемента
+	 * @param $ID код элемента
+	 * @return bool|integer
+	 */
+	public static function getElementIblockId($ID)
+	{
+		global $DB;
+
+		if (($ID = (int)$ID) <= 0) {
+			return false;
+		}
+
+		/** @noinspection SqlNoDataSourceInspection */
+		$rs = $DB->Query("select IBLOCK_ID from b_iblock_element where ID=" . $ID);
+		if ($ar = $rs->Fetch()) {
+			$IBLOCK_ID = $ar["IBLOCK_ID"];
+			return $IBLOCK_ID;
+		} else {
+			return false;
+		}
 	}
 
 	/**
@@ -322,7 +343,6 @@ class IblockUtils
 		}
 
 		$arFilter = [];
-
 		if (is_numeric($propCode)) {
 			$arFilter['ID']		= (int)$propCode;
 		} else {
@@ -333,7 +353,6 @@ class IblockUtils
 		}
 
 		$arRes = [];
-
 		$property_enums = \CIBlockPropertyEnum::GetList($aSort, $arFilter);
 		while ($enum_fields = $property_enums->GetNext()) {
 			$arRes[] = $enum_fields;
@@ -364,7 +383,7 @@ class IblockUtils
 		}
 		unset($f);
 
-		if (trim($field) == '' || (int)$iblockId == 0
+		if ((int)$iblockId == 0 || trim($field) == ''
 			|| !in_array(trim($fieldType, '?=%!<> '), $iblockFields)
 		) {
 			return false;
@@ -437,45 +456,43 @@ class IblockUtils
 	 *
 	 * @param int|number $cntSelect = 1 по скольку элементов справа и слева выбрать
 	 *
-	 * @return array
+	 * @return array|bool
 	 */
 	public static function getNextPrevElementsByElementId($ELEMENT_ID, $rowSort = [], $prevNextSelect = [],
-															$dopFilter = ['ACTIVE' => 'Y'], $cntSelect = 1): array
+															$dopFilter = ['ACTIVE' => 'Y'], $cntSelect = 1)
 	{
 		$ELEMENT_ID = (int)$ELEMENT_ID;
 		if ($ELEMENT_ID <= 0) {
 			return false;
 		}
 
-		global $DB;
-		if ($ar = $DB->Query("select IBLOCK_ID from b_iblock_element where ID=" . $ELEMENT_ID)->Fetch()) {
-			$IBLOCK_ID = $ar["IBLOCK_ID"];
-		} else {
+		$IBLOCK_ID = self::getElementIblockId($ELEMENT_ID);
+		if (! $IBLOCK_ID) {
 			return false;
 		}
 
-		$arFilter = array(
-			'IBLOCK_ID' => (int)$IBLOCK_ID,
-		);
-		$arSort   = array('SORT' => 'ASC');
+		$arSort   = ['SORT' => 'ASC'];
 		if (!empty( $rowSort )) {
 			$arSort = $rowSort;
 		}
-		$arFields = array('ID', 'NAME', 'DETAIL_PAGE_URL', 'DATE_ACTIVE_FROM');
+		$arFields = ['ID', 'NAME', 'DETAIL_PAGE_URL', 'DATE_ACTIVE_FROM'];
 		if ($prevNextSelect) {
 			$arFields = array_merge($arFields, $prevNextSelect);
 		}
+		$arFilter = [
+			'IBLOCK_ID' => (int)$IBLOCK_ID,
+		];
 		if ($dopFilter) {
 			$arFilter = array_merge($arFilter, $dopFilter);
 		}
-		$arNavStartParams = array(
+		$arNavStartParams = [
 			'nElementID' => $ELEMENT_ID
-		);
+		];
 		if ($cntSelect) {
 			$arNavStartParams['nPageSize'] = (int)$cntSelect;
 		}
 
-		$rsList = CIBlockElement::GetList($arSort, $arFilter, false, $arNavStartParams, $arFields);
+		$rsList = \CIBlockElement::GetList($arSort, $arFilter, false, $arNavStartParams, $arFields);
 
 		$arResult = [];
 		while ($arItem = $rsList->GetNext()) {
@@ -530,11 +547,10 @@ class IblockUtils
 	 /**
 	 * Добавляет фотки из ссылок, во множественное свойство типа файл
 	 *
-	 * @param $ID ID
-	 * @param $IBLOCK_ID ID
-	 * @param $arFiles Массив array('link.png'=>'description')
-	 * @param $prop_code Код
-	 *
+	 * @param int $ID
+	 * @param int $IBLOCK_ID ID
+	 * @param array $arFiles Массив файлов в виде ['link.png'=>'description']
+	 * @param string $prop_code Код свойства
 	 * @return bool|string
 	 */
 	public function AddMultipleFileValue($ID, $IBLOCK_ID, $arFiles, $prop_code)
@@ -542,30 +558,30 @@ class IblockUtils
 		$result = true;
 		$ar = [];
 
-		$rsPr = CIBlockElement::GetProperty($IBLOCK_ID, $ID, ['sort', 'asc'], [
+		$rsPr = \CIBlockElement::GetProperty($IBLOCK_ID, $ID, ['sort', 'asc'], [
 			'CODE' => $prop_code,
 			'EMPTY' => 'N'
 		]);
 		while ($arPr = $rsPr->GetNext()) {
-			$far = CFile::GetFileArray($arPr['VALUE']);
-			$far = CFile::MakeFileArray($far['SRC']);
-			$ar[] = array(
+			$far = \CFile::GetFileArray($arPr['VALUE']);
+			$far = \CFile::MakeFileArray($far['SRC']);
+			$ar[] = [
 				'VALUE' => $far,
 				'DESCRIPTION' => $arPr['DESCRIPTION']
-			);
+			];
 		}
 		foreach ($arFiles as $l => $d) {
 			$art = false;
 			$gn = 0;
 			while (!$art || ($art['type'] == 'unknown' && $gn < 10)) {
-				$gn ++;
-				$art = CFile::MakeFileArray($l);
+				$gn++;
+				$art = \CFile::MakeFileArray($l);
 			}
 			if ($art['tmp_name']) {
-				$ar[] = array(
+				$ar[] = [
 					'VALUE' => $art,
 					'DESCRIPTION' => $d
-				);
+				];
 			} else {
 				$result = 'partial';
 			}
@@ -573,7 +589,6 @@ class IblockUtils
 		\CIBlockElement::SetPropertyValuesEx($ID, $IBLOCK_ID, array(
 			$prop_code => $ar
 		));
-
 		return $result;
 	}
 
@@ -589,7 +604,7 @@ class IblockUtils
 	public static function addToHelperAndReturnElementId($fieldVal, $iblockId)
 	{
 		$iblockId = (int)$iblockId;
-		if (($fieldVal = trim($fieldVal)) == '' || $iblockId <= 0) {
+		if ($iblockId <= 0 || ($fieldVal = trim($fieldVal)) == '') {
 			return false;
 		}
 
@@ -610,12 +625,11 @@ class IblockUtils
 				'IBLOCK_ID'     => $iblockId,
 				'CODE'          => UnsortedUtils::TranslitText($fieldVal) . '-' . randString(3)
 			]);
-			if ($r->STATUS != 'OK') {
+			if ($r->STATUS != UpdateResult::STATUS_OK) {
 				return false;
 			}
 			$cacheProcess[$cacheKey] = (int)$r->RESULT;
 		}
-
 		return $cacheProcess[$cacheKey];
 	}
 

@@ -138,6 +138,17 @@ class UnsortedUtils
 		}
 	}
 
+	public static function getPhpPath(): string
+	{
+		$phpPath = 'php';
+		if (! defined('BX_UTF')) {
+			$phpPath .= ' -d mbstring.func_overload=0 -d mbstring.internal_encoding=CP1251 ';
+		} else {
+			$phpPath .= ' -d mbstring.func_overload=2 -d mbstring.internal_encoding=UTF-8 ';
+		}
+		return $phpPath;
+	}
+
 	/**
 	 * Пересекаются ли времена заданные unix-таймштампами.
 	 *
