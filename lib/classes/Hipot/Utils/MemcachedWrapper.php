@@ -23,7 +23,7 @@ class MemcachedWrapper implements \ArrayAccess
 	 * Memcached methods that take key(s) as arguments, and the argument
 	 * position of those key(s).
 	 */
-	protected $keyArgMethods = array(
+	protected $keyArgMethods = [
 		'add'           => 0,
 		'addByKey'      => 1,
 		'append'        => 0,
@@ -48,7 +48,7 @@ class MemcachedWrapper implements \ArrayAccess
 		'setByKey'      => 1,
 		'setMulti'      => 0,
 		'setMultiByKey' => 1,
-	);
+	];
 	protected $prefix;
 
 	/**

@@ -37,7 +37,7 @@ class UnsortedUtils
 	 *
 	 * @return string
 	 */
-	function TranslitText($text, $lang = 'ru'): string
+	public static function TranslitText($text, $lang = 'ru'): string
 	{
 		return \CUtil::translit(trim($text), $lang, array(
 			'max_len' => 100,
@@ -64,10 +64,11 @@ class UnsortedUtils
 	 * @see http://habrahabr.ru/post/107945/
 	 * @see http://forum.dklab.ru/viewtopic.php?t=37833
 	 * @see http://forum.dklab.ru/viewtopic.php?t=37830
+	 * @use iconv
 	 */
 	public static function detect_encoding($string, $pattern_size = 50): string
 	{
-		$list = array(
+		$list = [
 			'cp1251',
 			'utf-8',
 			'ascii',
@@ -76,7 +77,7 @@ class UnsortedUtils
 			'ISO-IR-111',
 			'CP866',
 			'KOI8U'
-		);
+		];
 		$c = strlen($string);
 		if ($c > $pattern_size) {
 			$string = substr($string, floor(($c - $pattern_size) / 2), $pattern_size);
@@ -138,6 +139,10 @@ class UnsortedUtils
 		}
 	}
 
+	/**
+	 * Получить путь к php с учетом особенностей utf8 битрикс
+	 * @return string
+	 */
 	public static function getPhpPath(): string
 	{
 		$phpPath = 'php';
@@ -163,7 +168,6 @@ class UnsortedUtils
 	 */
 	public static function IsIntervalsTsIncl($left1_ts, $right1_ts, $left2_ts, $right2_ts): bool
 	{
-		// echo $left1_ts . ' ' . $right1_ts . ' ' . $left2_ts . ' ' . $right2_ts . '<br />';
 		if ($left1_ts <= $left2_ts) {
 			return $right1_ts >= $left2_ts;
 		} else {
@@ -224,7 +228,7 @@ class UnsortedUtils
 		}
 		fclose($fp);
 
-		if (preg_match("#Content-Length: ([0-9]+)#", $x, $size)) {
+		if (preg_match("#Content-Length:\s*([\d]+)#i", $x, $size)) {
 			return $size[1];
 		} else {
 			return false;
@@ -252,31 +256,30 @@ class UnsortedUtils
 	 * @return bool | UpdateResult
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function formResultAddSimple($WEB_FORM_ID, $arrVALUES)
+	public static function formResultAddSimple($WEB_FORM_ID, $arrVALUES = [])
 	{
 		if (! Loader::includeModule('form')) {
 			return false;
 		}
 
-		// add result bitrix:form.result.new
+		// add result like bitrix:form.result.new
 		$arrVALUES['WEB_FORM_ID'] = (int)$WEB_FORM_ID;
 		if ($arrVALUES['WEB_FORM_ID'] <= 0) {
 			return false;
 		}
 		$arrVALUES["web_form_submit"] = "Отправить";
 
-		/*$arrVALUES = */
-
 		if ($RESULT_ID = \CFormResult::Add($WEB_FORM_ID, $arrVALUES)) {
-			// send email notifications
-			\CFormCRM::onResultAdded($WEB_FORM_ID, $RESULT_ID);
-			\CFormResult::SetEvent($RESULT_ID);
-			\CFormResult::Mail($RESULT_ID);
-
 			if ($RESULT_ID) {
-				return new UpdateResult(['RESULT' => $RESULT_ID,			     'STATUS' => 'OK']);
+				// send email notifications
+				\CFormCRM::onResultAdded($WEB_FORM_ID, $RESULT_ID);
+				\CFormResult::SetEvent($RESULT_ID);
+				\CFormResult::Mail($RESULT_ID);
+
+				return new UpdateResult(['RESULT' => $RESULT_ID,    'STATUS' => UpdateResult::STATUS_OK]);
 			} else {
-				return new UpdateResult(['RESULT' => 'Не опознанная ошибка',  'STATUS' => 'ERROR']);
+				global $strError;
+				return new UpdateResult(['RESULT' => $strError,     'STATUS' => UpdateResult::STATUS_ERROR]);
 			}
 		}
 	}

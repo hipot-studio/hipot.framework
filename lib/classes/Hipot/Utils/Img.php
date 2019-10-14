@@ -37,17 +37,11 @@ class Img
 	////////////////////
 
 	/* методы ресайза */
-
 	const M_CROP			= 'CROP';
-
 	const M_CROP_TOP		= 'CROP_TOP';
-
 	const M_FULL			= 'FULL';
-
 	const M_FULL_S			= 'FULL_S';
-
 	const M_PROPORTIONAL	= 'PROPORTIONAL';
-
 	const M_STRETCH			= 'STRETCH';
 
 	////////////////////
@@ -338,11 +332,11 @@ class Img
 
 		if ($retAr) {
 			$par = getimagesize($mi->path);
-			$return = array(
+			$return = [
 				'SRC'		=> $r_path,
 				'WIDTH'		=> $par[0],
 				'HEIGHT'	=> $par[1]
-			);
+			];
 		} else {
 			$return			= $r_path;
 		}

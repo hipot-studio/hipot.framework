@@ -148,6 +148,7 @@ if (! function_exists('array_trim_r')) {
 	 */
 	function array_trim_r($ar)
 	{
+		$res = [];
 		foreach ($ar as $k => $v) {
 			if (is_array($v)) {
 				$res[$k] = array_trim_r($v);

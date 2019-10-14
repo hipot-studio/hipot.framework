@@ -1,9 +1,5 @@
 <?
 /**
- * @copyright 2011, WebExpert
- */
-
-/**
  * Работаем с банковскими (рабочими) днями
  * Класс позволяет получить кол-во рабочий дней диапазона дат, либо проверить еще некоторые моменты
  *
@@ -11,14 +7,13 @@
  * @see http://habrahabr.ru/blogs/php/67092/
  *
  * @example
- * $oBankDay = new BankDay($arNoWorkCustomDays, $arWorkHollydays);<br />
+ * $oBankDay = new BankDayCalc($arNoWorkCustomDays, $arWorkHollydays);<br />
  * // можно передавать таймштампы<br />
  * $countWorkDays = $oBankDay->getNumDays($arTask['Start'], $arTask['Finish']);<br />
  *
  */
 class BankDayCalc
 {
-
 	/**
 	 * Массив выходных (формат m-d)
 	 *
@@ -34,8 +29,7 @@ class BankDayCalc
 	 *
 	 * @var array
 	 */
-	static $def_holidays = array('01-01', '01-02', '01-03', '01-04', '01-05', '01-07', '02-23', '03-08',
-		'05-01', '05-09', '06-12', '11-04');
+	static $def_holidays = ['01-01', '01-02', '01-03', '01-04', '01-05', '01-07', '02-23', '03-08', '05-01', '05-09', '06-12', '11-04'];
 
 	/**
 	 * Выходные в неделе
@@ -44,39 +38,34 @@ class BankDayCalc
 	 *
 	 * @var array
 	 */
-	static $def_weekends = array(0, 6);
-
+	static $def_weekends = [0, 6];
 
 	/**
 	 * массив рабочих выходных (исключения, формат Y-m-d)
 	 *
 	 * @var array
 	 */
-	var $work_exceptions;
-
+	private $work_exceptions;
 
 	/**
 	 * Текущие выходные, либо берется значение по умолчанию из $def_holidays
-	 *
 	 * @var array
 	 */
-	var $holidays;
+	private $holidays;
 
 	/**
 	 * Держит настройку выходных
-	 *
 	 * @var array
 	 */
-	var $weekends;
-
+	private $weekends;
 
 	/**
-	 * конструктор php4
+	 * Конструктор
 	 *
 	 * @param array $holidays массив выходных, если false, то берется из $def_holidays
 	 * @param array $work_exceptions массив рабочих дней (исключения)
 	 */
-	function BankDay($holidays = false, $work_exceptions = array())
+	function __construct($holidays = false, $work_exceptions = [])
 	{
 		if ($holidays === false) {
 			$this->holidays = self::$def_holidays;
@@ -89,31 +78,18 @@ class BankDayCalc
 	}
 
 	/**
-	 * Конструктор
-	 *
-	 * @param array $holidays массив выходных, если false, то берется из $def_holidays
-	 * @param array $work_exceptions массив рабочих дней (исключения)
-	 */
-	function __construct($holidays = false, $work_exceptions = array())
-	{
-		$this->BankDay($holidays, $work_exceptions);
-	}
-
-
-	/**
 	 * Подготавливает дату для дальнейшей работы
 	 *
 	 * @param string $date Дата отсчета
-	 *
-	 * @return timestamp
+	 * @return integer
+	 * @throws \Exception
 	 */
 	function prepareDate($s)
 	{
 		if ($s !== null && !is_int($s)) {
 			$ts = strtotime($s);
 			if ($ts === -1 || $ts === false) {
-				// throw new Exception('Unable to parse date/time value from input: ' . var_export($s, true));
-				return false;
+				throw new Exception('Unable to parse date/time value from input: ' . var_export($s, true));
 			}
 		} else {
 			$ts = $s;
@@ -125,8 +101,8 @@ class BankDayCalc
 	 * Определяет выходной ли день
 	 *
 	 * @param string $date Дата
-	 *
 	 * @return boolean
+	 * @throws \Exception
 	 */
 	function isWeekend($date)
 	{
@@ -136,10 +112,9 @@ class BankDayCalc
 
 	/**
 	 * Определяет праздничный ли день
-	 *
 	 * @param string $date Дата
-	 *
 	 * @return boolean
+	 * @throws \Exception
 	 */
 	function isHoliday($date)
 	{
@@ -149,10 +124,9 @@ class BankDayCalc
 
 	/**
 	 * Определяет рабочий ли день
-	 *
 	 * @param string $date Дата
-	 *
 	 * @return boolean
+	 * @throws \Exception
 	 */
 	function isWorkDay($date)
 	{
@@ -166,14 +140,13 @@ class BankDayCalc
 	 *
 	 * @param string  $date Дата отсчета
 	 * @param integer $interval Интервал (дней)
-	 *
 	 * @return array
+	 * @throws \Exception
 	 */
 	function getHolidays($date, $interval = 30)
 	{
 		$ts = $this->prepareDate($date);
-		$holidays = array();
-
+		$holidays = [];
 		for ($i = -$interval; $i <= $interval; $i++) {
 			$curr = strtotime($i . ' days', $ts);
 
@@ -181,10 +154,9 @@ class BankDayCalc
 				$holidays[] = date('Y-m-d', $curr);
 			}
 		}
-
 		// Перенос праздников
-		foreach ($holidays as $date) {
-			$ts = $this->prepareDate($date);
+		foreach ($holidays as $dateIt) {
+			$ts = $this->prepareDate($dateIt);
 			if ($this->isHoliday($ts) && $this->isWeekend($ts)) {
 				$i = 0;
 				while (in_array(date('Y-m-d', strtotime($i . ' days', $ts)), $holidays)) {
@@ -193,7 +165,6 @@ class BankDayCalc
 				$holidays[] = date('Y-m-d', strtotime($i . ' days', $ts));
 			}
 		}
-
 		return $holidays;
 	}
 
@@ -203,8 +174,8 @@ class BankDayCalc
 	 * @param string  $start Дата отсчета
 	 * @param integer $days Кол-во банковских дней
 	 * @param string  $format Формат date()
-	 *
-	 * @return integer, string
+	 * @return integer|string
+	 * @throws \Exception
 	 */
 	function getEndDate($start, $days, $format = null)
 	{
@@ -230,8 +201,8 @@ class BankDayCalc
 	 *
 	 * @param string $start_in Дата отсчета
 	 * @param string $end_in Кол-во банковских дней
-	 *
 	 * @return integer
+	 * @throws \Exception
 	 */
 	function getNumDays($start_in, $end_in)
 	{
@@ -239,8 +210,7 @@ class BankDayCalc
 		$end = $this->prepareDate($end_in);
 
 		if ($start > $end) {
-			//throw new Exception(sprintf('Start date ("%s") bust be greater then end date ("%s"). ', $start_in, $end_in));
-			return false;
+			throw new Exception(sprintf('Start date ("%s") bust be greater then end date ("%s"). ', $start_in, $end_in));
 		}
 
 		$bank_days = 0;

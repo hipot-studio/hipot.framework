@@ -2,8 +2,8 @@
 /**
  * Very tiny simple autoloader with support of classes
  *
- * @author hipot, 2018
- * @version 2.1
+ * @author hipot, 2019
+ * @version 2.2
  *
  * HELP:
  * <classes root> is:
@@ -16,13 +16,11 @@
  * ...
  */
 
-
 // add custom __autoload in stack after \Bitrix\Main\Loader::autoLoad()
 // see: var_dump( spl_autoload_functions() );
 spl_autoload_register(static function ($className) {
 	//echo $className; die();
-
-	$libDirs = array(
+	$libDirs = [
 		$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/include/lib/classes',
 		$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/lib/classes',
 		$_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/include/lib/classes',
@@ -31,14 +29,16 @@ spl_autoload_register(static function ($className) {
 		$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/hipot.framework/lib',
 		__DIR__ . '/classes'
 		// ...
-	);
+	];
 	foreach ($libDirs as $libDir) {
-		// to work with other frameworks, case sensitive UNIX folders
-		$checkPaths = array(
+		// to work with other frameworks (psr-4), case sensitive UNIX folders
+		$checkPaths = [
 			$libDir . '/' . str_replace('\\', '/', $className) . '.php',
 			$libDir . '/' . str_replace('\\', '/', strtolower($className)) . '.php',
+			$libDir . '/' . str_replace(['\\', ''], ['/', 'Table'], $className) . '.php',
+			$libDir . '/' . str_replace(['\\', ''], ['/', 'table'], strtolower($className)) . '.php',
 			// ...
-		);
+		];
 		foreach ($checkPaths as $classFile) {
 			if (file_exists($classFile) && is_readable($classFile)) {
 				/** @noinspection PhpIncludeInspection */
@@ -47,13 +47,7 @@ spl_autoload_register(static function ($className) {
 			}
 		}
 	}
-	/*if (! class_exists($className)) {
-		// maybe to be fatal
-		//throw new \RuntimeException('no class in hipot simple autoloader: ' . $className);
-	}*/
-
 });
-//var_dump( spl_autoload_functions() );
-
+//\Bitrix\Main\Diag\Debug::dump( spl_autoload_functions() );
 
 ?>
