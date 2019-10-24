@@ -1,14 +1,14 @@
 {
   "require": {
     "php": ">=7.1.0",
-    "intervention/image": "dev-master"
+    "intervention/image": "^2.5"
   },
   "config": {
     "vendor-dir": "../local/vendor"
   },
   "autoload": {
     "psr-4": {
-      "Hipot\\": "../local/php_interface/lib/classes/Hipot",
+      "Hipot\\": "../local/php_interface/lib/classes/Hipot"
     }
   },
   "extra": {

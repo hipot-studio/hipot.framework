@@ -5,8 +5,10 @@
  * Date: 05.06.2018 22:18
  * @version pre 1.0
  */
+namespace Hipot\Utils;
 
 use \Intervention\Image\ImageManagerStatic as iiImage;
+use Bitrix\Main\IO;
 
 if (extension_loaded('imagick') && class_exists('Imagick')) {
 	iiImage::configure(['driver' => 'imagick']);
@@ -23,12 +25,12 @@ if (extension_loaded('imagick') && class_exists('Imagick')) {
  * php 7.1, Fileinfo Extension, GD (лучше Imagick)
  *
  * @see http://image.intervention.io/
- * @see https://hipot.socialmatrix.net/Codex/cimg-constantly-integrable-modifier-of-graphics/
+ * @see http://hipot.socialmatrix.net/Codex/cimg-constantly-integrable-modifier-of-graphics/
  *
  * @throws 		Intervention\Image\Exception\*
  *
  * @author		(c) hipot
- * @version		3.0, 2019
+ * @version		3.5, 2019
  */
 class Img
 {
@@ -111,6 +113,12 @@ class Img
 	 */
 	public static $saveAlpha = false;
 
+	/**
+	 * Можно переопределить в какой формат в итоге сохранить png|gif|jpeg
+	 * @var bool
+	 */
+	public static $decodeToFormat = false;
+
 	///////////////////////////
 	// service addons methods:
 	///////////////////////////
@@ -118,29 +126,38 @@ class Img
 	/**
 	 * Загружает картинку
 	 *
-	 * @param $img Путь к картинке относительно корня сайта,<br>
-	 *        либо относительно корня диска, либо битрикс ID
+	 * @param int|array|string $img Путь к картинке относительно корня сайта,<br>
+	 *        либо относительно корня диска, либо битрикс ID, либо массив из битрикс \CFile::GetByID()
 	 *
 	 * @throws \RuntimeException
 	 */
 	protected function load($img)
 	{
-		if ($_SERVER['SERVER_SOFTWARE'] == 'Microsoft-IIS/666.0' && constant('BX_UTF') === true) {
-			$img = mb_convert_encoding($img, 'WINDOWS-1251', 'UTF-8');
+		// если передан массив из битрикс \CFile::GetByID()
+		if (is_array($img) && isset($img["SRC"])) {
+			$img = $img["SRC"];
+		}
+		if (is_string($img)) {
+			$img = $this->normalizePath($img);
 		}
 
-		if (is_numeric($img)) { 												// если входит БитриксID картинки
+		if (!is_numeric($img) && !is_string($img)) {
+			throw new \RuntimeException('wrong_input_img_type');
+		} elseif (is_numeric($img)) {
+			// если входит БитриксID картинки
 			$this->path_type		= 'bxid';
 			$this->r_src			= \CFile::GetPath($img);
 			$this->src				= $_SERVER['DOCUMENT_ROOT'] . $this->r_src;
-		} elseif (strpos($img, $_SERVER['DOCUMENT_ROOT']) !== false) { 			// если входит абсолютный путь к картинке на диске
+		} elseif (strpos($img, $_SERVER['DOCUMENT_ROOT']) !== false) {
+			// если входит абсолютный путь к картинке на диске
 			if (! is_file($img)) {
 				throw new \RuntimeException('wrong_input_img_type');
 			}
 			$this->path_type		= 'abs';
 			$this->src				= $img;
 			$this->r_src			= str_replace($_SERVER['DOCUMENT_ROOT'], '', $this->src);
-		} elseif (is_file($_SERVER['DOCUMENT_ROOT'] . $img)) {					// если входит путь к картинке относительно корня сайта
+		} elseif (is_file($_SERVER['DOCUMENT_ROOT'] . $img)) {
+			// если входит путь к картинке относительно корня сайта
 			$this->path_type		= 'rel';
 			$this->r_src			= $img;
 			$this->src				= $_SERVER['DOCUMENT_ROOT'] . $this->r_src;
@@ -153,6 +170,7 @@ class Img
 	 * Формирует путь для сохранения изображения в дереве директорий Битрикс.
 	 *
 	 * @param bool $ssid = false ID сайта указывается при многосайтовости
+	 * @throws \Bitrix\Main\IO\InvalidPathException
 	 */
 	protected function makeSavePathForBx($ssid = false)
 	{
@@ -163,23 +181,33 @@ class Img
 		}
 
 		// 32000-2 folders can have unix folder (ext3)
-		$cimgPath = substr($this->postfix, 0, 3);
+		$imgPath = substr($this->postfix, 0, 3);
 		if (trim(self::$tagName) != '') {
-			$cimgPath = self::$tagName . '/' . $cimgPath;
-			self::SetTag('');
+			$imgPath = self::$tagName . '/' . $imgPath;
+			self::setTag('');
 		}
 
-		$this->r_path = '/upload/weimg_cache/' . $cimgPath . '/' . $this->postfix . '/' . basename($this->src);
+		$this->r_path = '/upload/himg_cache/' . $imgPath . '/' . $this->postfix . '/' . basename($this->src);
+		$this->r_path = $this->normalizePath($this->r_path);
+		$this->decodeFormat();
+		$this->path = $_SERVER['DOCUMENT_ROOT'] . $this->r_path;
+	}
 
-		if (self::$saveAlpha && in_array($this->method, array(self::M_FULL, self::M_FULL_S))) {
+	protected function decodeFormat()
+	{
+		/** @noinspection TypeUnsafeArraySearchInspection */
+		if (self::$saveAlpha && in_array($this->method, [self::M_FULL, self::M_FULL_S])) {
 			$this->r_path = preg_replace('#(jpe?g)|(gif)$#i', 'png', $this->r_path);
 		}
 		// gif has bug in this methods
-		if (in_array($this->method, array(self::M_FULL, self::M_FULL_S))) {
+		/** @noinspection TypeUnsafeArraySearchInspection */
+		if (in_array($this->method, [self::M_FULL, self::M_FULL_S])) {
 			$this->r_path = preg_replace('#gif$#i', 'png', $this->r_path);
 		}
-
-		$this->path = $_SERVER['DOCUMENT_ROOT'] . $this->r_path;
+		if (self::$decodeToFormat) {
+			$this->r_path = preg_replace('#(png)|(gif)$#i', self::$decodeToFormat, $this->r_path);
+		}
+		self::$decodeToFormat = false;
 	}
 
 	/**
@@ -187,9 +215,8 @@ class Img
 	 *
 	 * @return bool Если картинка закеширована, то возвращает true, иначе false
 	 */
-	protected function wasCached()
+	protected function wasCached(): bool
 	{
-		//return false;
 		return file_exists($this->path);
 	}
 
@@ -268,6 +295,16 @@ class Img
 		$this->iiImage->save($this->path, $jpgQuality);
 	}
 
+	protected function normalizePath($path)
+	{
+		// on winnt all paths is windows-1251 encoding
+		if (constant('BX_UTF') === true && strpos(ToLower(PHP_OS), 'win') !== false) {
+			$path = mb_convert_encoding($path, 'UTF-8', 'WINDOWS-1251');
+		}
+		$path = IO\Path::normalize($path);
+		return $path;
+	}
+
 	// used in ResizeOverlay
 	public static $lastWm;
 	public static $lastWmPos;
@@ -277,34 +314,63 @@ class Img
 		$mi->iiImage->insert(self::$lastWm, self::$lastWmPos);
 	}
 
-	///////////////////
+	//////////////////////////////////////////////////////////////////
 	// useful methods:
-	//////////////////
+	//////////////////////////////////////////////////////////////////
+
+	/**
+	 * Установить предварительные настройки для ОДНОГО последующего вызова Resize() или ResizeOverlay()
+	 * <pre>
+	 * [
+	 *   'tag'             => 'detail-pics',
+	 *   'decodeToFormat'  => 'jpg'              // принудительно выставить формат итогового изображения png|gif|jpeg
+	 *   'saveAlpha'       => false,             // M_FULL и M_FULL_S превращать в png
+	 * ]</pre>
+	 * @param array $params = []
+	 */
+	public static function oneResizeParams($params = [])
+	{
+		foreach ($params as $name => $value) {
+			$ln = ToLower($name);
+			if ($ln == 'tag') {
+				self::SetTag($value);
+			}
+			if ($ln == 'savealpha') {
+				self::$saveAlpha = $value;
+			}
+			if ($ln == 'savealpha') {
+				self::$saveAlpha = $value;
+			}
+			if ($ln == 'decodetoformat') {
+				self::$decodeToFormat = $value;
+			}
+		}
+	}
 
 	/**
 	 * Установка тега, ставить тег перед каждой трансформацией.
-	 * Для структурирования /upload/weimg_cache/<$tagName>/aaa/aaaaaaaaaaaaaaaaaaa/...
-	 * При этом можно удобно удалять кеш через удаление папки /upload/weimg_cache/<$tagName>
+	 * Для структурирования /upload/hiimg_cache/<$tagName>/aaa/aaaaaaaaaaaaaaaaaaa/...
+	 * При этом можно удобно удалять кеш через удаление папки /upload/himg_cache/<$tagName>
 	 *
 	 * @param string $tagName = '';
 	 */
 	public static function SetTag($tagName = '')
 	{
-		self::$tagName = $tagName;
+		self::$tagName = trim($tagName);
 	}
 
 	/**
 	 * Ресайзит изображение $f
 	 *
-	 * @param string|int   $f Картинка (rel_p|abs_p|bitrix_id)
+	 * @param string|int|array   $f Картинка (abs|bxid|rel) при массиве нужно чтобы был ключ SRC (тип загрузки rel)
 	 * @param int          $w Ширина = null
 	 * @param int          $h = null Высота (можно передать null для подгонки, <b>один параметр ширину или высоту надо задать!</b>)
-	 * @param string       $m = weImg::M_CROP Метод трансформации (см: weImg::M_*)
+	 * @param string       $m = Img::M_CROP Метод трансформации (см: Img::M_*)
 	 * @param bool         $retAr = false Возвращать массив или строку. По умолчанию строку с путем к файлу
 	 * @param array|string $callbackMi = null Метод, в который передается объект перед сохранением
 	 *                (использовать анонимные функции пока нельзя)
 	 *
-	 * @return array путь к результирующей картинке или массив (шир, выс, путь)
+	 * @return string|array путь к результирующей картинке или массив (шир, выс, путь)
 	 * @throws \Exception
 	 */
 	public static function Resize($f, $w = null, $h = null, $m = self::M_CROP, $retAr = false, $callbackMi = null)
@@ -326,16 +392,18 @@ class Img
 			$mi->imagesave();
 		}
 
-		if ($_SERVER['SERVER_SOFTWARE'] == 'Microsoft-IIS/666.0' && constant('BX_UTF') === true) {
-			$r_path = mb_convert_encoding($mi->r_path, 'UTF-8', 'WINDOWS-1251');
-		}
+		$r_path = $mi->normalizePath( $mi->r_path );
 
 		if ($retAr) {
 			$par = getimagesize($mi->path);
 			$return = [
 				'SRC'		=> $r_path,
 				'WIDTH'		=> $par[0],
-				'HEIGHT'	=> $par[1]
+				'HEIGHT'	=> $par[1],
+				// CFile::ResizeImageGet(...) compatibility
+				'src'		=> $r_path,
+				'width'		=> $par[0],
+				'height'	=> $par[1]
 			];
 		} else {
 			$return			= $r_path;
@@ -375,7 +443,7 @@ class Img
 		self::$lastWm		= $to;
 		self::$lastWmPos	= $pos;
 
-		return self::Resize($f, $w, $h, $m, $retAr, [self, 'insertOverlay']);
+		return self::Resize($f, $w, $h, $m, $retAr, [self::class, 'insertOverlay']);
 	}
 
 
