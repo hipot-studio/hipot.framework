@@ -1,10 +1,4 @@
 <?php
-/**
- * hipot studio source file
- * User: <hipot AT ya DOT ru>
- * Date: 05.06.2018 22:18
- * @version pre 1.0
- */
 namespace Hipot\Utils;
 
 use \Intervention\Image\ImageManagerStatic as iiImage;
@@ -416,14 +410,15 @@ class Img
 	/**
 	 * Ресайзит изображение $f и накладывает водный знак $to
 	 *
-	 * @param int|string $f Картинка (rel_p|abs_p|bitrix_id) на которую будет накладываться
-	 * @param string     $to Картинка которая будет накладываться (rel_p|abs_p)
+	 * @param int|string|array $f Картинка (bxid|rel|abs) на которую будет накладываться
+	 *                          при массиве нужно чтобы был ключ SRC (тип загрузки rel)
+	 * @param string     $to Картинка которая будет накладываться (rel|abs)
 	 * @param string     $pos = center (default)<br> top-left<br>
-	 *                top<br> top-right<br> left<br> right<br> bottom-left<br>
-	 *                bottom<br> bottom-right
+	 *                          top<br> top-right<br> left<br> right<br> bottom-left<br>
+	 *                          bottom<br> bottom-right
 	 * @param string     $w = null Ширина
 	 * @param string     $h = null Высота (можно передать null для подгонки, <b>один параметр ширину или высоту надо задать!</b>)
-	 * @param string     $m Метод трансформации (см: weImg::M_*)
+	 * @param string     $m Метод трансформации (см: hiImg::M_*)
 	 * @param bool       $retAr = false Возвращать массив или путь к результирующему файлу. По умолчанию путь
 	 *
 	 * @return array|string Путь к картинке или массив (шир, выс, путь)
