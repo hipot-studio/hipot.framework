@@ -332,9 +332,6 @@ class Img
 			if ($ln == 'savealpha') {
 				self::$saveAlpha = $value;
 			}
-			if ($ln == 'savealpha') {
-				self::$saveAlpha = $value;
-			}
 			if ($ln == 'decodetoformat') {
 				self::$decodeToFormat = $value;
 			}
