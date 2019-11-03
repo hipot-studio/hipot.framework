@@ -3,7 +3,8 @@ namespace Hipot\Utils;
 
 use \Bitrix\Main\Application,
 	\Bitrix\Main\Grid\Declension,
-	\Bitrix\Main\Loader;
+	\Bitrix\Main\Loader,
+	\Bitrix\Main\Web\HttpClient;
 
 /**
  * Различные не-структурированные утилиты
@@ -201,9 +202,20 @@ class UnsortedUtils
 	 */
 	public static function getPageContentByUrl($url)
 	{
-		$el = new \Bitrix\Main\Web\HttpClient();
+		$el = new HttpClient();
 		$cont = $el->get( $url );
 		return $cont;
+	}
+
+	public static function getHttpHeadersByUrl($url): array
+	{
+		$el = new HttpClient([
+			'redirect'                  => false,
+			'disableSslVerification'    => true
+		]);
+		$headers = $el->head( $url )->toArray();
+		$headers['status'] = $el->getStatus();
+		return $headers;
 	}
 
 	/**
