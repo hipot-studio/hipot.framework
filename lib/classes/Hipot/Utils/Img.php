@@ -10,13 +10,10 @@ if (extension_loaded('imagick') && class_exists('Imagick')) {
 
 /**
  * Обработка изображений aka CImg 2.0
- *
  * За основу взят класс CImg и сохранена некоторая совместимость c ним
+ * Использует библиотеку трансформации \Intervention\Image 2.X *
  *
- * Использует библиотеку трансформации \Intervention\Image 2.X
- *
- * Необходимо:
- * php 7.1, Fileinfo Extension, GD (лучше Imagick)
+ * Необходимо: php 7.1, Fileinfo Extension, GD (лучше Imagick)
  *
  * @see http://image.intervention.io/
  * @see http://hipot.socialmatrix.net/Codex/cimg-constantly-integrable-modifier-of-graphics/
@@ -45,7 +42,7 @@ class Img
 	////////////////////
 
 	/**
-	 * Тип пути изображения. <br/>
+	 * Тип пути изображения.
 	 * Путь к изображению относительно корня сайта, либо относительно корня документов, либо битрикс ID
 	 * @var string = bxid|abs|rel
 	 */
@@ -119,13 +116,12 @@ class Img
 
 	/**
 	 * Загружает картинку
-	 *
 	 * @param int|array|string $img Путь к картинке относительно корня сайта,<br>
 	 *        либо относительно корня диска, либо битрикс ID, либо массив из битрикс \CFile::GetByID()
-	 *
 	 * @throws \RuntimeException
+	 * @throws \Bitrix\Main\IO\InvalidPathException
 	 */
-	protected function load($img)
+	protected function load($img): void
 	{
 		// если передан массив из битрикс \CFile::GetByID()
 		if (is_array($img) && isset($img["SRC"])) {
@@ -166,7 +162,7 @@ class Img
 	 * @param bool $ssid = false ID сайта указывается при многосайтовости
 	 * @throws \Bitrix\Main\IO\InvalidPathException
 	 */
-	protected function makeSavePathForBx($ssid = false)
+	protected function makeSavePathForBx($ssid = false): void
 	{
 		// учет многосайтовости
 		if ($ssid) {
@@ -187,7 +183,7 @@ class Img
 		$this->path = $_SERVER['DOCUMENT_ROOT'] . $this->r_path;
 	}
 
-	protected function decodeFormat()
+	protected function decodeFormat(): void
 	{
 		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (self::$saveAlpha && in_array($this->method, [self::M_FULL, self::M_FULL_S])) {
@@ -223,7 +219,7 @@ class Img
 	 *
 	 * @throws \RuntimeException
 	 */
-	protected function do_resize($w = null, $h = null, $method = self::M_CROP)
+	protected function do_resize($w = null, $h = null, $method = self::M_CROP): void
 	{
 		if ($method === false) {
 			throw new \RuntimeException('no_resize_method_set');
@@ -277,7 +273,7 @@ class Img
 	 *
 	 * @param bool|int $jpgQuality = false Качество для jpeg (если false берет из настроек главного модуля)
 	 */
-	protected function imagesave($jpgQuality = false)
+	protected function imagesave($jpgQuality = false): void
 	{
 		CheckDirPath($this->path);
 
@@ -289,6 +285,11 @@ class Img
 		$this->iiImage->save($this->path, $jpgQuality);
 	}
 
+	/**
+	 * @param $path
+	 * @return string|null
+	 * @throws \Bitrix\Main\IO\InvalidPathException
+	 */
 	protected function normalizePath($path)
 	{
 		// on winnt all paths is windows-1251 encoding
@@ -303,7 +304,7 @@ class Img
 	public static $lastWm;
 	public static $lastWmPos;
 
-	public static function insertOverlay($mi)
+	public static function insertOverlay($mi): void
 	{
 		$mi->iiImage->insert(self::$lastWm, self::$lastWmPos);
 	}
@@ -322,7 +323,7 @@ class Img
 	 * ]</pre>
 	 * @param array $params = []
 	 */
-	public static function oneResizeParams($params = [])
+	public static function oneResizeParams($params = []): void
 	{
 		foreach ($params as $name => $value) {
 			$ln = ToLower($name);
@@ -345,7 +346,7 @@ class Img
 	 *
 	 * @param string $tagName = '';
 	 */
-	public static function SetTag($tagName = '')
+	public static function SetTag($tagName = ''): void
 	{
 		self::$tagName = trim($tagName);
 	}
@@ -440,3 +441,5 @@ class Img
 
 
 } // end class
+
+

@@ -32,7 +32,7 @@ class PhpCacher
 	 * @param array $params
 	 *
 	 * @return array|bool
-	 * @deprecated use cache
+	 * @deprecated use cache(...)
 	 */
 	public static function returnCacheDataAndSave($tagName, $cacheTime, $callbackFunction, $params = [])
 	{
@@ -87,7 +87,7 @@ class PhpCacher
 		$CACHE_ID     = 'cacher_' . md5(serialize($params) . $tagName);
 		$CACHE_DIR    = self::getCacheDir($tagName);
 
-		$obCache = new \CPHPCache;
+		$obCache = new \CPHPCache();
 
 		// clear cache now clear folder
 		if ($_REQUEST['clear_cache'] === 'Y' && self::canCurrentUserDropCache()) {
@@ -149,7 +149,7 @@ class PhpCacher
 	 *
 	 * @param string $tagName
 	 */
-	public static function clearDirByTag($tagName)
+	public static function clearDirByTag($tagName): void
 	{
 		$path = self::getCacheDir($tagName);
 
@@ -162,7 +162,7 @@ class PhpCacher
 	 *
 	 * @param string|array $tags
 	 */
-	public static function clearByManagedTags($tags)
+	public static function clearByManagedTags($tags): void
 	{
 		if (defined('BX_COMP_MANAGED_CACHE')) {
 			if (! is_array($tags)) {
