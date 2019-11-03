@@ -174,7 +174,7 @@ class UnsortedUtils
 			return $left1_ts <= $right2_ts;
 		}
 	}
-	
+
 	/**
 	 * Получить список колонок SQL-запросом, либо если уже был получен, то просто вернуть
 	 * @param string $tableName имя таблицы
@@ -217,7 +217,7 @@ class UnsortedUtils
 		preg_match('#(ht|f)tp(s)?://(?P<host>[a-zA-Z-_]+.[a-zA-Z]{2,4})(?P<name>/[\S]+)#', $path, $m);
 		$x = 0;
 		$stop = false;
-		$fp = fsockopen($m['host'], 80, &$errno, &$errstr, 30);
+		$fp = fsockopen($m['host'], 80, $errno, $errstr, 30);
 		fwrite($fp, "HEAD $m[name] HTTP/1.0\nHOST: $m[host]\n\n");
 		while (!feof($fp) && !$stop) {
 			$y = fgets($fp, 2048);

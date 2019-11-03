@@ -9,6 +9,8 @@ Loader::includeModule('iblock');
 
 use Bitrix\Iblock\InheritedProperty\ElementTemplates,
 	Bitrix\Iblock\InheritedProperty\ElementValues,
+	Bitrix\Iblock\InheritedProperty\SectionTemplates,
+	Bitrix\Iblock\InheritedProperty\SectionValues,
 	Bitrix\Iblock\PropertyIndex\Manager;
 
 /**
@@ -32,7 +34,7 @@ class IblockUtils
 	 * @return \Hipot\Utils\UpdateResult
 	 * @see \CIBlockSection::Add()
 	 */
-	public static function addSectionToDb($arAddFields = [], $bResort = false, $bUpdateSearch = false): UpdateResult
+	public static function addSectionToDb($arAddFields = [], $bResort = true, $bUpdateSearch = false): UpdateResult
 	{
 		if (! is_array($arAddFields)) {
 			$arAddFields = array();
@@ -59,7 +61,7 @@ class IblockUtils
 	 * @return bool | \Hipot\Utils\UpdateResult
 	 * @see \CIBlockSection::Add()
 	 */
-	public static function updateSectionToDb($ID, $arAddFields = [], $bResort = false, $bUpdateSearch = false)
+	public static function updateSectionToDb($ID, $arAddFields = [], $bResort = true, $bUpdateSearch = false)
 	{
 		if (! is_array($arAddFields)) {
 			$arAddFields = [];
@@ -156,7 +158,7 @@ class IblockUtils
 	 * @return \CIBlockResult | int
 	 */
 	public static function selectElementsByFilter($arOrder, $arFilter, $arGroupBy = false,
-										$arNavParams = false, $arSelect = [])
+	                                              $arNavParams = false, $arSelect = [])
 	{
 		$rsItems = \CIBlockElement::GetList($arOrder, $arFilter, $arGroupBy, $arNavParams, $arSelect);
 		return $rsItems;
@@ -175,7 +177,7 @@ class IblockUtils
 	 * @return array | int
 	 */
 	public static function selectElementsByFilterArray($arOrder, $arFilter, $arGroupBy = false, $arNavParams = false,
-														$arSelect = [], $SelectAllProps = false, $OnlyPropsValue = true)
+	                                                   $arSelect = [], $SelectAllProps = false, $OnlyPropsValue = true)
 	{
 		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (! in_array('IBLOCK_ID', $arSelect)) {
@@ -290,7 +292,7 @@ class IblockUtils
 	 * @return \CIBlockResult | int
 	 */
 	public static function selectSectionsByFilter($arOrder, $arFilter, $bIncCnt = false,
-													$arSelect = [], $arNavStartParams = false)
+	                                              $arSelect = [], $arNavStartParams = false)
 	{
 		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (! in_array('ID', $arSelect)) {
@@ -316,7 +318,7 @@ class IblockUtils
 	 * @return array|boolean
 	 */
 	public static function selectSectionsByFilterArray($arOrder, $arFilter, $bIncCnt = false,
-															$arSelect = [], $arNavStartParams = false): array
+	                                                   $arSelect = [], $arNavStartParams = false): array
 	{
 		$arResult = [];
 		$rsSect = self::selectSectionsByFilter($arOrder, $arFilter, $bIncCnt, $arSelect, $arNavStartParams);
@@ -459,7 +461,7 @@ class IblockUtils
 	 * @return array|bool
 	 */
 	public static function getNextPrevElementsByElementId($ELEMENT_ID, $rowSort = [], $prevNextSelect = [],
-															$dopFilter = ['ACTIVE' => 'Y'], $cntSelect = 1)
+	                                                      $dopFilter = ['ACTIVE' => 'Y'], $cntSelect = 1)
 	{
 		$ELEMENT_ID = (int)$ELEMENT_ID;
 		if ($ELEMENT_ID <= 0) {
@@ -518,9 +520,10 @@ class IblockUtils
 	 * Выбор секции с детьми. В итоговый массив попадает и $sectionId
 	 *
 	 * @param int $sectionId
+	 * @param array $arSelect = ["ID"]
 	 * @return array | bool
 	 */
-	public static function selectSubsectionByParentSection($sectionId)
+	public static function selectSubsectionByParentSection($sectionId, $arSelect = ["ID"])
 	{
 		if ((int)$sectionId <= 0) {
 			return false;
@@ -536,15 +539,15 @@ class IblockUtils
 			"IBLOCK_ID"     => $SectBorders['IBLOCK_ID'],
 			">LEFT_MARGIN"  => $SectBorders["LEFT_MARGIN"],
 			"<RIGHT_MARGIN" => $SectBorders["RIGHT_MARGIN"],
-		]);
+		], false, $arSelect);
 		$SectionIDS = array();
 		while ($Section = $rsSections->GetNext()) {
-			$SectionIDS[] = $Section["ID"];
+			$SectionIDS[] = $Section;
 		}
 		return $SectionIDS;
 	}
 
-	 /**
+	/**
 	 * Добавляет фотки из ссылок, во множественное свойство типа файл
 	 *
 	 * @param int $ID
@@ -651,7 +654,7 @@ class IblockUtils
 	 * Установить новое сео у элементов
 	 * @param int   $IBLOCK_ID
 	 * @param int   $ID
-	 * @param array $arTemplates (обычно в ключах ELEMENT_META_DESCRIPTION, ELEMENT_META_TITLE)
+	 * @param array $arTemplates (обычно в ключах ELEMENT_META_DESCRIPTION, ELEMENT_META_TITLE, ELEMENT_META_KEYWORDS)
 	 *
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
@@ -659,6 +662,32 @@ class IblockUtils
 	{
 		$ipropTemplates = new ElementTemplates((int)$IBLOCK_ID, (int)$ID);
 		$ipropTemplates->set($arTemplates);
+	}
+
+	/**
+	 * Установить новое сео у секций
+	 * @param int   $IBLOCK_ID
+	 * @param int   $ID
+	 * @param array $arTemplates (обычно в ключах SECTION_META_DESCRIPTION, SECTION_META_TITLE, SECTION_META_KEYWORDS)
+	 *
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public static function setSectionSeoValues($IBLOCK_ID, $ID, $arTemplates = []): void
+	{
+		$ipropTemplates = new SectionTemplates((int)$IBLOCK_ID, (int)$ID);
+		$ipropTemplates->set($arTemplates);
+	}
+
+	/**
+	 * Получить сео-поля секций
+	 * @param int $IBLOCK_ID
+	 * @param int $ID
+	 * @return array
+	 */
+	public static function returnSectionSeoValues($IBLOCK_ID, $ID): array
+	{
+		$ipropValues = new SectionValues((int)$IBLOCK_ID, (int)$ID);
+		return $ipropValues->getValues();
 	}
 
 	/**
