@@ -174,7 +174,7 @@ class PhpCacher
 		}
 	}
 
-	private static function canCurrentUserDropCache()
+	private static function canCurrentUserDropCache(): bool
 	{
 		return $GLOBALS['USER']->IsAdmin();
 	}

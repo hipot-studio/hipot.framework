@@ -28,7 +28,7 @@ class IblockUtils
 	 * Добавление секции в инфоблок, возвращает ошибку либо ID результата, см. return
 	 *
 	 * @param array $arAddFields массив к добавлению
-	 * @param bool $bResort = false перестроить ли дерево, лучше отдельно вызывать CIBlockSection::Resort(int IBLOCK_ID);
+	 * @param bool $bResort = true перестроить ли дерево, можно отдельно вызывать CIBlockSection::Resort(int IBLOCK_ID);
 	 * @param bool $bUpdateSearch = false обновить ли поиск
 	 *
 	 * @return \Hipot\Utils\UpdateResult
@@ -55,7 +55,7 @@ class IblockUtils
 	 *
 	 * @param int $ID код секции
 	 * @param array $arAddFields массив к добавлению
-	 * @param bool $bResort = false перестроить ли дерево, лучше отдельно вызывать CIBlockSection::Resort(int IBLOCK_ID);
+	 * @param bool $bResort = true перестроить ли дерево, можно отдельно вызывать CIBlockSection::Resort(int IBLOCK_ID);
 	 * @param bool $bUpdateSearch = false обновить ли поиск
 	 *
 	 * @return bool | \Hipot\Utils\UpdateResult
@@ -157,8 +157,7 @@ class IblockUtils
 	 * @param array $arSelect
 	 * @return \CIBlockResult | int
 	 */
-	public static function selectElementsByFilter($arOrder, $arFilter, $arGroupBy = false,
-	                                              $arNavParams = false, $arSelect = [])
+	public static function selectElementsByFilter($arOrder, $arFilter, $arGroupBy = false, $arNavParams = false, $arSelect = [])
 	{
 		$rsItems = \CIBlockElement::GetList($arOrder, $arFilter, $arGroupBy, $arNavParams, $arSelect);
 		return $rsItems;
@@ -177,7 +176,7 @@ class IblockUtils
 	 * @return array | int
 	 */
 	public static function selectElementsByFilterArray($arOrder, $arFilter, $arGroupBy = false, $arNavParams = false,
-	                                                   $arSelect = [], $SelectAllProps = false, $OnlyPropsValue = true)
+															$arSelect = [], $SelectAllProps = false, $OnlyPropsValue = true)
 	{
 		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (! in_array('IBLOCK_ID', $arSelect)) {
@@ -286,13 +285,12 @@ class IblockUtils
 	 * @param array                              $arOrder
 	 * @param array                              $arFilter
 	 * @param bool|string                        $bIncCnt = false
-	 * @param array|\Hipot\BitrixUtils\unknown   $arSelect
-	 * @param bool|string                        $arNavStartParams
+	 * @param array                              $arSelect = []
+	 * @param bool|string                        $arNavStartParams = false
 	 *
 	 * @return \CIBlockResult | int
 	 */
-	public static function selectSectionsByFilter($arOrder, $arFilter, $bIncCnt = false,
-	                                              $arSelect = [], $arNavStartParams = false)
+	public static function selectSectionsByFilter($arOrder, $arFilter, $bIncCnt = false, $arSelect = [], $arNavStartParams = false)
 	{
 		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (! in_array('ID', $arSelect)) {
@@ -318,7 +316,7 @@ class IblockUtils
 	 * @return array|boolean
 	 */
 	public static function selectSectionsByFilterArray($arOrder, $arFilter, $bIncCnt = false,
-	                                                   $arSelect = [], $arNavStartParams = false): array
+															$arSelect = [], $arNavStartParams = false): array
 	{
 		$arResult = [];
 		$rsSect = self::selectSectionsByFilter($arOrder, $arFilter, $bIncCnt, $arSelect, $arNavStartParams);
@@ -387,6 +385,7 @@ class IblockUtils
 
 		if ((int)$iblockId == 0 || trim($field) == ''
 			|| !in_array(trim($fieldType, '?=%!<> '), $iblockFields)
+			|| !in_array(ToLower($table), ['b_iblock_element', 'b_iblock_section'])
 		) {
 			return false;
 		}
@@ -403,6 +402,7 @@ class IblockUtils
 		}
 
 		/** @noinspection SqlNoDataSourceInspection */
+		/** @noinspection SqlResolve */
 		$sqlCheck = 'SELECT ID FROM ' . $table . ' WHERE ' . $fw . ' AND IBLOCK_ID = ' . (int)$iblockId;
 		$el = $DB->Query($sqlCheck)->Fetch();
 
@@ -461,7 +461,7 @@ class IblockUtils
 	 * @return array|bool
 	 */
 	public static function getNextPrevElementsByElementId($ELEMENT_ID, $rowSort = [], $prevNextSelect = [],
-	                                                      $dopFilter = ['ACTIVE' => 'Y'], $cntSelect = 1)
+																$dopFilter = ['ACTIVE' => 'Y'], $cntSelect = 1)
 	{
 		$ELEMENT_ID = (int)$ELEMENT_ID;
 		if ($ELEMENT_ID <= 0) {
@@ -528,23 +528,23 @@ class IblockUtils
 		if ((int)$sectionId <= 0) {
 			return false;
 		}
-
-		$SectBorders = \CIBlockSection::GetList(["SORT" => "ASC"], [
+		$arParentSection = \CIBlockSection::GetList(["SORT" => "ASC"], [
 			"ACTIVE"    => "Y",
 			"ID"      	=> $sectionId,
 		], false, ['ID', 'IBLOCK_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'IBLOCK_ID'])->GetNext();
 
-		$rsSections = \CIBlockSection::GetList(["SORT"=>"ASC"], [
+		$rsSections = \CIBlockSection::GetList(['LEFT_MARGIN' => 'ASC'], [
 			"ACTIVE"        => "Y",
-			"IBLOCK_ID"     => $SectBorders['IBLOCK_ID'],
-			">LEFT_MARGIN"  => $SectBorders["LEFT_MARGIN"],
-			"<RIGHT_MARGIN" => $SectBorders["RIGHT_MARGIN"],
+			"IBLOCK_ID"     => $arParentSection['IBLOCK_ID'],
+			">LEFT_MARGIN"  => $arParentSection["LEFT_MARGIN"],
+			"<RIGHT_MARGIN" => $arParentSection["RIGHT_MARGIN"],
+			'>DEPTH_LEVEL'  => $arParentSection['DEPTH_LEVEL']
 		], false, $arSelect);
-		$SectionIDS = array();
+		$sections = [];
 		while ($Section = $rsSections->GetNext()) {
-			$SectionIDS[] = $Section;
+			$sections[] = $Section;
 		}
-		return $SectionIDS;
+		return $sections;
 	}
 
 	/**
