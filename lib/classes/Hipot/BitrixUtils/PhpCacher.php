@@ -100,6 +100,7 @@ class PhpCacher
 				$GLOBALS['CACHE_MANAGER']->StartTagCache($CACHE_DIR);
 			}
 
+			$data = null;
 			self::$params = $params;
 			if (is_callable($callbackFunction)) {
 				$data = $callbackFunction($params);
@@ -176,10 +177,13 @@ class PhpCacher
 
 	private static function canCurrentUserDropCache(): bool
 	{
+		// if cacher used in init.php
+		if (! is_object($GLOBALS['USER'])) {
+			return true;
+		}
 		return $GLOBALS['USER']->IsAdmin();
 	}
 
 } //end class
-
 
 

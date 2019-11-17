@@ -9,6 +9,12 @@ use Bitrix\Highloadblock as HL;
 class HiBlock
 {
 	/**
+	 * @internal
+	 * @var int
+	 */
+	public const CACHE_TTL = 3600;
+
+	/**
 	 * Получить сущность DataManager HL-инфоблока
 	 *
 	 * @param int $hlblockId код HL-инфоблока
@@ -24,7 +30,7 @@ class HiBlock
 
 		\CModule::IncludeModule('highloadblock');
 
-		$hlblock   = HL\HighloadBlockTable::getById( $hlblockId )->fetch();
+		$hlblock   = HL\HighloadBlockTable::getByPrimary($hlblockId, ['cache' => ["ttl" => self::CACHE_TTL]])->fetch();
 		$entity    = HL\HighloadBlockTable::compileEntity( $hlblock );
 
 		/* @var $entity_data_class \Bitrix\Main\Entity\DataManager */
@@ -50,7 +56,10 @@ class HiBlock
 
 		\CModule::IncludeModule('highloadblock');
 
-		$hlblock	= HL\HighloadBlockTable::getList( ['filter' => ['NAME' => $hiBlockName]] )->fetch();
+		$hlblock	= HL\HighloadBlockTable::getList([
+			'filter'    => ['NAME' => $hiBlockName],
+			'cache'     => ["ttl" => self::CACHE_TTL]
+		])->fetch();
 		$entity   	= HL\HighloadBlockTable::compileEntity( $hlblock );
 
 		/* @var $entity_data_class \Bitrix\Main\Entity\DataManager */
