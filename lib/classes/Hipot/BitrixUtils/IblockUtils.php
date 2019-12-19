@@ -255,7 +255,7 @@ class IblockUtils
 
 	/**
 	 * Получить инфоблок элемента
-	 * @param $ID код элемента
+	 * @param int $ID код элемента
 	 * @return bool|integer
 	 */
 	public static function getElementIblockId($ID)
@@ -267,10 +267,10 @@ class IblockUtils
 		}
 
 		/** @noinspection SqlNoDataSourceInspection */
+		/** @noinspection SqlResolve */
 		$rs = $DB->Query("select IBLOCK_ID from b_iblock_element where ID=" . $ID);
 		if ($ar = $rs->Fetch()) {
-			$IBLOCK_ID = $ar["IBLOCK_ID"];
-			return $IBLOCK_ID;
+			return $ar["IBLOCK_ID"];
 		} else {
 			return false;
 		}
@@ -300,8 +300,7 @@ class IblockUtils
 		if (! in_array('IBLOCK_ID', $arSelect)) {
 			$arSelect[] = 'IBLOCK_ID';
 		}
-		$rsSect = \CIBlockSection::GetList($arOrder, $arFilter, $bIncCnt, $arSelect, $arNavStartParams);
-		return $rsSect;
+		return \CIBlockSection::GetList($arOrder, $arFilter, $bIncCnt, $arSelect, $arNavStartParams);
 	}
 
 	/**

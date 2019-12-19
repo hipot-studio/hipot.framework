@@ -296,6 +296,28 @@ class UnsortedUtils
 		}
 	}
 
+	/**
+	 * Рекурсивное преобразование объекта в массив
+	 *
+	 * @param object|array|mixed $obj объект для преобразования
+	 * @return array|mixed
+	 */
+	public static function objToAr_r($obj)
+	{
+		if (!is_object($obj) && !is_array($obj)) {
+			return $obj;
+		}
+		if (is_object($obj)) {
+			$obj = get_object_vars($obj);
+		}
+		if (is_array($obj)) {
+			foreach ($obj as $key => $val) {
+				$obj[$key] = self::objToAr_r($val);
+			}
+		}
+		return $obj;
+	}
+
 
 } // end class
 

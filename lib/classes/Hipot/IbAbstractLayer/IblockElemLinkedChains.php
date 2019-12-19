@@ -60,7 +60,7 @@ class IblockElemLinkedChains
 	 * !! Нужно вызывать перед каждым вызовом getChains_r()
 	 * @param int $maxLevel = 3 Максимальный уровень вложения (O)
 	 */
-	public function init($maxLevel = 3)
+	public function init($maxLevel = 3): void
 	{
 		$this->__topLevelId = NULL;
 		$this->__maxLevel = (int)$maxLevel;
@@ -72,7 +72,7 @@ class IblockElemLinkedChains
 	 * @param int $elementId корневой элемент для получения цепочки
 	 * @param array $arSelect = array() массив выбираемых полей, всегда выбираются "ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME"
 	 * Возвращает цепочку уровнем, указанным в init()
-	 * @return array
+	 * @return array|void
 	 */
 	public function getChains_r($elementId, $arSelect = array())
 	{
@@ -89,9 +89,9 @@ class IblockElemLinkedChains
 		// если элемент еще не выбирался
 		if (! isset($this->__cacheItems[ $elementId ])) {
 		
-			$arSelectDef = array("ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME");
+			$arSelectDef = ["ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME"];
 			$arSelect = array_merge($arSelect, $arSelectDef);
-			$arFilter = array('ID' => (int)$elementId);
+			$arFilter = ['ID' => (int)$elementId];
 			// QUERY 1
 			$rsItems = \CIBlockElement::GetList(array(), $arFilter, false, false, $arSelect);
 	
@@ -100,8 +100,8 @@ class IblockElemLinkedChains
 				$db_props = \CIBlockElement::GetProperty(
 					$arItem["IBLOCK_ID"],
 					$arItem['ID'],
-					array("sort" => "asc"),
-					array("EMPTY" => "N")
+					["sort" => "asc"],
+					["EMPTY" => "N"]
 				);
 				while ($ar_props = $db_props->Fetch()) {
 					if ($ar_props['PROPERTY_TYPE'] == "E") {

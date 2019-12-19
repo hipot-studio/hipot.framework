@@ -3,7 +3,7 @@
  * Very tiny simple autoloader with support of classes
  *
  * @author hipot, 2019
- * @version 2.2
+ * @version 2.4
  *
  * HELP:
  * <classes root> is:
