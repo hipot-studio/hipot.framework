@@ -9,7 +9,8 @@
 
 namespace Hipot\IbAbstractLayer;
 
-use Hipot\IbAbstractLayer\Types\IblockElementItem;
+use Hipot\IbAbstractLayer\Types\IblockElementItem,
+	Hipot\BitrixUtils\IblockUtils;
 
 /**
  * Класс для работы с получением цепочек связанных элементов (через свойства привязка к элементам),
@@ -74,7 +75,7 @@ class IblockElemLinkedChains
 	 * Возвращает цепочку уровнем, указанным в init()
 	 * @return array|void
 	 */
-	public function getChains_r($elementId, $arSelect = array())
+	public function getChains_r($elementId, $arSelect = [])
 	{
 		$elementId = (int)$elementId;
 		
@@ -97,29 +98,13 @@ class IblockElemLinkedChains
 	
 			if ($arItem = $rsItems->GetNext()) {
 				// QUERY 2
-				$db_props = \CIBlockElement::GetProperty(
-					$arItem["IBLOCK_ID"],
+				$arItem['PROPERTIES'] = IblockUtils::selectElementProperties(
 					$arItem['ID'],
-					["sort" => "asc"],
-					["EMPTY" => "N"]
+					$arItem["IBLOCK_ID"],
+					false,
+					["EMPTY" => "N"],
+					$this
 				);
-				while ($ar_props = $db_props->Fetch()) {
-					if ($ar_props['PROPERTY_TYPE'] == "E") {
-						// recursion!
-						$ar_props['CHAIN'] = $this->getChains_r($ar_props['VALUE'], $arSelect);
-					}
-					if ($ar_props['PROPERTY_TYPE'] == "S" && isset($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE'])) {
-						$ar_props['VALUE']['TEXT'] = \FormatText($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE']);
-					}
-					if ($ar_props['PROPERTY_TYPE'] == 'F') {
-						$ar_props['FILE_PARAMS'] = \CFile::GetFileArray($ar_props['VALUE']);
-					}
-					if ($ar_props['MULTIPLE'] == "Y") {
-						$arItem['PROPERTIES'][ $ar_props['CODE'] ][] = $ar_props;
-					} else {
-						$arItem['PROPERTIES'][ $ar_props['CODE'] ] = $ar_props;
-					}
-				}
 			}
 			$this->__cacheItems[ $elementId ] = $arItem;
 			
@@ -135,7 +120,7 @@ class IblockElemLinkedChains
 	 * @param array $arChain
 	 * @return IblockElementItem
 	 */
-	public static function chainArrayToChainObject($arChain)
+	public static function chainArrayToChainObject($arChain): IblockElementItem
 	{
 		return new IblockElementItem($arChain);
 	}

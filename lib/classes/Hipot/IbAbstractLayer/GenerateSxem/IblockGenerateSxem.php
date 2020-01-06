@@ -568,5 +568,3 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	}
 }
 
-
-?>

@@ -173,10 +173,13 @@ class IblockUtils
 	 * @param array $arSelect
 	 * @param bool $SelectAllProps = false
 	 * @param bool $OnlyPropsValue = true
+	 * @param bool $bSelectChains = false
+	 * @param int $selectChainsDepth = 3
 	 * @return array | int
 	 */
 	public static function selectElementsByFilterArray($arOrder, $arFilter, $arGroupBy = false, $arNavParams = false,
-															$arSelect = [], $SelectAllProps = false, $OnlyPropsValue = true)
+															$arSelect = [], $SelectAllProps = false, $OnlyPropsValue = true,
+															$bSelectChains = false, $selectChainsDepth = 3)
 	{
 		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (! in_array('IBLOCK_ID', $arSelect)) {
@@ -185,6 +188,12 @@ class IblockUtils
 		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (! in_array('ID', $arSelect)) {
 			$arSelect[] = 'ID';
+		}
+
+		$obChainBuilder = null;
+		if ($bSelectChains) {
+			$obChainBuilder = new \Hipot\IbAbstractLayer\IblockElemLinkedChains();
+			$OnlyPropsValue = false;
 		}
 
 		$arResult = [];
@@ -197,7 +206,9 @@ class IblockUtils
 				$arItem['PROPERTIES'] = self::selectElementProperties(
 					$arItem['ID'],
 					$arItem['IBLOCK_ID'],
-					$OnlyPropsValue
+					$OnlyPropsValue,
+					$obChainBuilder,
+					$selectChainsDepth
 				);
 			}
 			$arResult[] = $arItem;
@@ -205,6 +216,9 @@ class IblockUtils
 		if (count($arResult) == 1) {
 			$arResult = current($arResult);
 		}
+
+		unset($obChainBuilder);
+
 		return $arResult;
 	}
 
@@ -215,10 +229,13 @@ class IblockUtils
 	 * @param int  $IBLOCK_ID = 0 код инфоблока, если не указан, то будет выбран (желательно указывать для быстродействия!)
 	 * @param bool $onlyValue = false возвращать только значение свойства
 	 * @param array $exFilter = [] дополнительный фильтр при выборке свойств через CIBlockElement::GetProperty()
+	 * @param null | \Hipot\IbAbstractLayer\IblockElemLinkedChains $obChainBuilder = null
+	 * @param int $selectChainsDepth = 3 глубина вложенности выборки вложенных свойств
 	 *
 	 * @return array | bool
 	 */
-	public static function selectElementProperties($ID, $IBLOCK_ID = 0, $onlyValue = false, $exFilter = [])
+	public static function selectElementProperties($ID, $IBLOCK_ID = 0, $onlyValue = false, $exFilter = [],
+															$obChainBuilder = null, $selectChainsDepth = 3)
 	{
 		$IBLOCK_ID	= (int)$IBLOCK_ID;
 		$ID			= (int)$ID;
@@ -241,9 +258,24 @@ class IblockUtils
 		}
 		$db_props = \CIBlockElement::GetProperty($IBLOCK_ID, $ID, ["sort" => "asc"], $arFilter);
 		while ($ar_props = $db_props->Fetch()) {
+			// довыборка цепочек глубиной 3
+			if (is_object($obChainBuilder) && $ar_props['PROPERTY_TYPE'] == 'E') {
+				// инициализация должна происходить перед каждым вызовом getChains_r
+				// с указанием выбираемой вложенности
+				$obChainBuilder->init( (int)$selectChainsDepth );
+				$ar_props['CHAIN'] = $obChainBuilder->getChains_r($ar_props['VALUE']);
+			}
+
 			if (trim($ar_props['CODE']) == '') {
 				$ar_props['CODE'] = $ar_props['ID'];
 			}
+			if ($ar_props['PROPERTY_TYPE'] == "S" && isset($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE'])) {
+				$ar_props['VALUE']['TEXT'] = \FormatText($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE']);
+			}
+			if ($ar_props['PROPERTY_TYPE'] == 'F') {
+				$ar_props['FILE_PARAMS'] = \CFile::GetFileArray($ar_props['VALUE']);
+			}
+
 			if ($ar_props['MULTIPLE'] == "Y") {
 				$PROPERTIES[ $ar_props['CODE'] ][]	= ($onlyValue) ? $ar_props['VALUE'] : $ar_props;
 			} else {

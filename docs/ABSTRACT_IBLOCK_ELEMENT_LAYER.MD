@@ -1,11 +1,17 @@
  #Abstract Iblock Elements Layer
 
- ## Подсказки на выборки CIBlockElement::GetList() на базе компонента wexpert:iblock.list
+ ## Подсказки на выборки CIBlockElement::GetList() на базе компонента hipot:iblock.list
 
  ### ЗАЧЕМ ЭТО НУЖНО?
  * Удобное использование классов в шаблонах компонент, все поля подсказываются
  * Удобная выборка связанных полей связанных элементов в качестве неограниченной вложенности,
  естественно, тоже с подсказками по связанным элементам
+
+![](https://scontent.fkiv6-1.fna.fbcdn.net/v/t1.0-9/78401415_741880406313360_5240495133509550080_n.jpg?_nc_cat=111&_nc_ohc=C7eLlmuC1HAAQksv5B_lvd7BGoR4TOf_whDOa7d5FIIpIbQ7lfY4OBXgA&_nc_ht=scontent.fkiv6-1.fna&oh=2c09b4f4e4689d0d7038bcab20f6cce0&oe=5EA0044D)
+
+![](https://scontent.fkiv6-1.fna.fbcdn.net/v/t1.0-9/73504662_741880556313345_8864736740015865856_n.jpg?_nc_cat=104&_nc_ohc=oaW6mnwI16YAQmbm4DTZVSeHgN1IfUzt0qBPeIch35fSpfJwuTXlfsDmA&_nc_ht=scontent.fkiv6-1.fna&oh=ccbea221ea20908435cdba284f2e9fd1&oe=5E9B8626)
+
+![](https://scontent.fkiv6-1.fna.fbcdn.net/v/t1.0-9/77107997_741880622980005_4024262980576215040_n.jpg?_nc_cat=109&_nc_ohc=yyz8JMQDkrYAQmtHiyP05Lg4HCx8NK_wzXycBewU177vFH1pHU-m3QddA&_nc_ht=scontent.fkiv6-1.fna&oh=c1d774bcb02762abf32a6879b007d9b2&oe=5E681A07)
 
  #### Ниже описано старое использование библиотеки. Сейчас все подключение происходит автоматически.
  

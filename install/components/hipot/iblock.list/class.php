@@ -7,15 +7,18 @@
  */
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use \Hipot\BitrixUtils\IblockUtils;
+
 /**
  * Уникальный компонент всяческих листов элементов инфоблока
  *
  * @version 5.x, см. CHANGELOG.TXT
  * @copyright 2019, hipot studio
  */
-class HiIblockListComponent extends CBitrixComponent
+class hiIblockListComponent extends CBitrixComponent
 {
-	const LINKED_CHAINS_CLASS = '\\Hipot\\IbAbstractLayer\\IblockElemLinkedChains';
+	const /** @noinspection ClassConstantCanBeUsedInspection */
+			LINKED_CHAINS_CLASS = '\\Hipot\\IbAbstractLayer\\IblockElemLinkedChains';
 
 	/**
 	 * @var \Hipot\IbAbstractLayer\IblockElemLinkedChains
@@ -51,10 +54,10 @@ class HiIblockListComponent extends CBitrixComponent
 			if ($arParams["ORDER"]) {
 				$arOrder = $arParams["ORDER"];
 			} else {
-				$arOrder = array("SORT" => "ASC");
+				$arOrder = ["SORT" => "ASC"];
 			}
 
-			$arFilter = array("IBLOCK_ID" => $arParams["IBLOCK_ID"], "ACTIVE" => "Y");
+			$arFilter = ["IBLOCK_ID" => $arParams["IBLOCK_ID"], "ACTIVE" => "Y"];
 			if (count($arParams["FILTER"]) > 0) {
 				$arFilter = array_merge($arFilter, $arParams["~FILTER"]);
 			}
@@ -85,7 +88,14 @@ class HiIblockListComponent extends CBitrixComponent
 			while ($arItem = $rsItems->GetNext()) {
 				if ($arParams['GET_PROPERTY'] == "Y") {
 					// QUERY 2
-					$arItem = $this->getPropertys($arItem, $arParams);
+					$arItem['PROPERTIES'] = IblockUtils::selectElementProperties(
+						(int)$arItem['ID'],
+						(int)$arItem["IBLOCK_ID"],
+						false,
+						["EMPTY" => "N"],
+						($arParams['SELECT_CHAINS'] == 'Y' ? $this->obChainBuilder : null),
+						(int)$arParams['SELECT_CHAINS_DEPTH']
+					);
 				}
 
 				/*
@@ -119,12 +129,12 @@ class HiIblockListComponent extends CBitrixComponent
 						($arParams["NAV_SHOW_ALWAYS"] == 'Y')
 					);
 
-					$arResult["NAV_RESULT"] = array(
+					$arResult["NAV_RESULT"] = [
 						'PAGE_NOMER'					=> $rsItems->NavPageNomer,		// номер текущей страницы постранички
 						'PAGES_COUNT'					=> $rsItems->NavPageCount,		// всего страниц постранички
 						'RECORDS_COUNT'					=> $rsItems->NavRecordCount,	// размер выборки, всего строк
 						'CURRENT_PAGE_RECORDS_COUNT'	=> count($arResult["ITEMS"])	// размер выборки текущей страницы
-					);
+					];
 				}
 
 				$this->setResultCacheKeys(array(
@@ -149,42 +159,4 @@ class HiIblockListComponent extends CBitrixComponent
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	/**
-	 * @param       $arItem
-	 * @param array $arParams
-	 *
-	 * @return mixed
-	 */
-	public function getPropertys($arItem, array $arParams)
-	{
-		$db_props = \CIBlockElement::GetProperty(
-			(int)$arItem["IBLOCK_ID"],
-			(int)$arItem['ID'],
-			array("sort" => "asc"),
-			array("EMPTY" => "N")
-		);
-		while ($ar_props = $db_props->GetNext()) {
-			// для свойств TEXT/HTML не верно экранируются символы
-			if ($ar_props['PROPERTY_TYPE'] == "S" && isset($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE'])) {
-				$ar_props['VALUE']['TEXT'] = FormatText($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE']);
-			}
-			// довыборка цепочек глубиной 3
-			if ($arParams['SELECT_CHAINS'] == 'Y' && $ar_props['PROPERTY_TYPE'] == 'E') {
-				// инициализация должна происходить перед каждым вызовом getChains_r
-				// с указанием выбираемой вложенности
-				$this->obChainBuilder->init((int)$arParams['SELECT_CHAINS_DEPTH']);
-				$ar_props['CHAIN'] = $this->obChainBuilder->getChains_r($ar_props['VALUE']);
-			}
-			if ($ar_props['PROPERTY_TYPE'] == 'F') {
-				$ar_props['FILE_PARAMS'] = \CFile::GetFileArray($ar_props['VALUE']);
-			}
-
-			if ($ar_props['MULTIPLE'] == "Y") {
-				$arItem['PROPERTIES'][$ar_props['CODE']][] = $ar_props;
-			} else {
-				$arItem['PROPERTIES'][$ar_props['CODE']] = $ar_props;
-			}
-		}
-		return $arItem;
-	}
 }

@@ -6,7 +6,7 @@
  * @version pre 1.0
  */
 
-class HiSectionListComponent extends CBitrixComponent
+class hiIblockSectionComponent extends CBitrixComponent
 {
 	public function onPrepareComponentParams($arParams)
 	{
@@ -29,11 +29,11 @@ class HiSectionListComponent extends CBitrixComponent
 			$path                              = array_filter(explode('/', trim($arParams['SELECTED_SECTION_CODE'])));
 			$arParams['SELECTED_SECTION_CODE'] = array_pop($path);
 			$path                              = array_filter(explode('/', trim($arParams['FILTER']['CODE'])));
-			$arParams['FILTER']['CODE'] = array_pop($path);
+			$arParams['FILTER']['CODE']        = array_pop($path);
 		} else {
 			$arParams['SELECTED_SECTION_CODE'] = trim($arParams['SELECTED_SECTION_CODE']);
 		}
-		$arParams['SELECT_COUNT']			= $arParams['SELECT_COUNT'] == 'Y' ? true : false;
+		$arParams['SELECT_COUNT']			   = $arParams['SELECT_COUNT'] == 'Y' ? true : false;
 
 		return $arParams;
 	}

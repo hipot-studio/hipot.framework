@@ -4,11 +4,12 @@
  * @version 2.0
  */
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
-
 /* @var $this CBitrixComponent */
 
+use Bitrix\Main\Type\Collection;
+
 if (! is_array($arParams['COLLECTION_IDS'])) {
-	$arParams['COLLECTION_IDS'] = array($arParams['COLLECTION_IDS']);
+	$arParams['COLLECTION_IDS'] = [$arParams['COLLECTION_IDS']];
 }
 $arParams['COLLECTION_IDS'] = array_filter($arParams['COLLECTION_IDS']);
 
@@ -22,7 +23,7 @@ if ($this->startResultCache(false)) {
 
 	$Params = [];
 	if (count($arParams['COLLECTION_IDS']) > 0) {
-		$Params = array('arCollections' => $arParams['COLLECTION_IDS']);
+		$Params = ['arCollections' => $arParams['COLLECTION_IDS']];
 	}
 
 	$arResult = $fileIds = [];
@@ -34,7 +35,7 @@ if ($this->startResultCache(false)) {
 		$fileIds[] = $v['SOURCE_ID'];
 	}
 
-	\Bitrix\Main\Type\Collection::sortByColumn($arResult['ITEMS'], ['NAME' => SORT_NATURAL]);
+	Collection::sortByColumn($arResult['ITEMS'], ['NAME' => SORT_NATURAL]);
 
 	$fileIds = array_filter($fileIds);
 	if ($arParams['SELECT_FILE_INFO'] == 'Y' && count($fileIds) > 0) {
