@@ -3,7 +3,7 @@
  * hipot studio source file
  * User: <hipot AT ya DOT ru>
  * Date: 08.06.2017 22:38
- * @version pre 1.0
+ * @version pre 1.5
  */
 
 namespace Hipot\Admin;
@@ -33,25 +33,25 @@ $oAdminList->postGroupActions($ormDataClass);
 
 /** @var \UploadBfileindexTable $ormDataClass * /
 $rsData = $ormDataClass::getList(array(
-	'select'    => array('*'),
-	'filter'    => array(),
-	'order'     => array($by => $order),
+'select'    => array('*'),
+'filter'    => array(),
+'order'     => array($by => $order),
 ));
 
 $arHeaders = (array)$ormDataClass::getMap();
 
 // custom field
 $arHeaders['CRON_CMD'] = array(
-	'data_type' => 'string',
-	'title' => Loc::getMessage('CRON_CMD_TITLE'),
-	'default' => true,
-	'sort' => 1
+'data_type' => 'string',
+'title' => Loc::getMessage('CRON_CMD_TITLE'),
+'default' => true,
+'sort' => 1
 );
 
 $oAdminList->addHeaders($arHeaders);
 $oAdminList->collectAdminResultAndNav($rsData, $ormDataClass, function (&$arFieldsTable, &$arData) {
-	$arFieldsTable['CRON_CMD'] = 'html';
-	$arData['CRON_CMD'] = '<b><code>php -f ' . Bitrix\Main\Application::getDocumentRoot() . '/bitrix/modules/acrit.cleanmaster/cron/profile_run.php ' . $arData['ID'] . '</code></b>';
+$arFieldsTable['CRON_CMD'] = 'html';
+$arData['CRON_CMD'] = '<b><code>php -f ' . Bitrix\Main\Application::getDocumentRoot() . '/bitrix/modules/acrit.cleanmaster/cron/profile_run.php ' . $arData['ID'] . '</code></b>';
 });
 $oAdminList->addAdminContextMenuAndCheckXls();
 
@@ -59,15 +59,15 @@ $APPLICATION->SetTitle(GetMessage("acrit_cleanmaster_PROFILES_LIST"));
 require $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php";
 
 if ($isDemo != 1) {
-	echo BeginNote();
-	echo GetMessage("ACRIT_CLEANMASTER_IS_DEMO_MESSAGE");
-	echo '<br /><br /><input type="button" value="'.GetMessage("ACRIT_CLEANMASTER_IS_DEMO_MESSAGE_BTN").'" onclick="location.href = \''
-		. GetMessage('ACRIT_CLEANMASTER_IS_DEMO_MESSAGE_BUY_URL').'\'">';
-	echo EndNote();
+echo BeginNote();
+echo GetMessage("ACRIT_CLEANMASTER_IS_DEMO_MESSAGE");
+echo '<br /><br /><input type="button" value="'.GetMessage("ACRIT_CLEANMASTER_IS_DEMO_MESSAGE_BTN").'" onclick="location.href = \''
+. GetMessage('ACRIT_CLEANMASTER_IS_DEMO_MESSAGE_BUY_URL').'\'">';
+echo EndNote();
 } else {
-	echo BeginNote();
-	echo GetMessage("ACRIT_CLEANMASTER_CRONTAB_HELP_HTML");
-	echo EndNote();
+echo BeginNote();
+echo GetMessage("ACRIT_CLEANMASTER_CRONTAB_HELP_HTML");
+echo EndNote();
 }
 
 $oAdminList->displayList();
@@ -150,13 +150,16 @@ class ListWrapper
 
 
 	/**
-	 * @param $rsDataOrm
-	 * @param $ormDataClass
+	 * @param \CDBResult $rsDataOrm
+	 * @param string|null $ormDataClass  = null
+	 * @param callable|null $itemPresaveCallback = null
+	 * @param callable|null $rowActionCallback = null
+	 * @param callable|null $groupActionCallback = null
 	 *
 	 * @internal param bool|\Hipot\Admin\CDBResult|mixed $rsData
-	 * @internal param $itemPresaveCallback
+	 * @internal param $itemPresaveCallback = null
 	 */
-	public function collectAdminResultAndNav($rsDataOrm, $ormDataClass, $itemPresaveCallback = false)
+	public function collectAdminResultAndNav($rsDataOrm, $ormDataClass = null, $itemPresaveCallback = null, $rowActionCallback = null, $groupActionCallback = null): void
 	{
 		$perPage = $this->getNavParams();
 
@@ -193,35 +196,51 @@ class ListWrapper
 				}
 			}
 
-			$this->setRowAcrions($row, $arRes);
+			if (is_callable($rowActionCallback)) {
+				$rowActionCallback($row, $arRes, $this->lAdmin);
+			} else {
+				$this->setRowActions($row, $arRes);
+			}
 		}
 
 		$this->rsData->NavRecordCount = $this->rsData->SelectedRowsCount();
 		$this->rsData->NavPageCount = ceil($this->rsData->NavRecordCount / $perPage['SIZEN']);
 		$this->rsData->NavPageNomer = $perPage['PAGEN'];
 
-		$this->drawFooter();
+		$this->drawFooter($groupActionCallback);
 	}
 
-	protected function drawFooter()
+	/**
+	 * @param callable|null $groupActionCallback
+	 */
+	protected function drawFooter($groupActionCallback): void
 	{
 		$this->lAdmin->AddFooter(
-			array(
-				array(
+			[
+				[
 					"title" => Loc::getMessage("acrit_cleanmaster_MAIN_ADMIN_LIST_SELECTED"),
 					"value" => $this->rsData->SelectedRowsCount(),
-				),
-			)
+				],
+			]
 		);
 
-		$this->lAdmin->AddGroupActionTable(
-			array(
-				"delete" => GetMessage("acrit_cleanmaster_MAIN_ADMIN_LIST_DELETE")
-			)
-		);
+		if (is_callable($groupActionCallback)) {
+			$groupActionCallback($this->lAdmin);
+		} else {
+			$this->lAdmin->AddGroupActionTable(
+				[
+					"delete" => GetMessage("acrit_cleanmaster_MAIN_ADMIN_LIST_DELETE")
+				]
+			);
+		}
 	}
 
-	protected function setRowAcrions(&$row, $arRes, $bMayDelete = true)
+	/**
+	 * @param \CAdminListRow   $row
+	 * @param array $arRes
+	 * @param bool $bMayDelete = true
+	 */
+	protected function setRowActions(&$row, $arRes, $bMayDelete = true)
 	{
 		$arActions = array();
 		if ($bMayDelete) {

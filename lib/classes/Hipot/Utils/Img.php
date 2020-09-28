@@ -8,6 +8,10 @@ if (extension_loaded('imagick') && class_exists('Imagick')) {
 	iiImage::configure(['driver' => 'imagick']);
 }
 
+if (class_exists(Img::class)) {
+	return;
+}
+
 /**
  * Обработка изображений aka CImg 2.0
  * За основу взят класс CImg и сохранена некоторая совместимость c ним

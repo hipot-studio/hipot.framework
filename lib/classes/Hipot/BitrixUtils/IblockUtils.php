@@ -178,8 +178,8 @@ class IblockUtils
 	 * @return array | int
 	 */
 	public static function selectElementsByFilterArray($arOrder, $arFilter, $arGroupBy = false, $arNavParams = false,
-															$arSelect = [], $SelectAllProps = false, $OnlyPropsValue = true,
-															$bSelectChains = false, $selectChainsDepth = 3)
+	                                                   $arSelect = [], $SelectAllProps = false, $OnlyPropsValue = true,
+	                                                   $bSelectChains = false, $selectChainsDepth = 3)
 	{
 		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (! in_array('IBLOCK_ID', $arSelect)) {
@@ -235,7 +235,7 @@ class IblockUtils
 	 * @return array | bool
 	 */
 	public static function selectElementProperties($ID, $IBLOCK_ID = 0, $onlyValue = false, $exFilter = [],
-															$obChainBuilder = null, $selectChainsDepth = 3)
+	                                               $obChainBuilder = null, $selectChainsDepth = 3)
 	{
 		$IBLOCK_ID	= (int)$IBLOCK_ID;
 		$ID			= (int)$ID;
@@ -347,7 +347,7 @@ class IblockUtils
 	 * @return array|boolean
 	 */
 	public static function selectSectionsByFilterArray($arOrder, $arFilter, $bIncCnt = false,
-															$arSelect = [], $arNavStartParams = false): array
+	                                                   $arSelect = [], $arNavStartParams = false): array
 	{
 		$arResult = [];
 		$rsSect = self::selectSectionsByFilter($arOrder, $arFilter, $bIncCnt, $arSelect, $arNavStartParams);
@@ -477,6 +477,57 @@ class IblockUtils
 	}
 
 	/**
+	 * Вернуть атрибуты товара из множественного свойства 1с
+	 * @param array $propCml2Value
+	 * @return array
+	 */
+	public static function returnCml2AttributesFromPropVal($propCml2Value): array
+	{
+		$attr = [];
+		foreach ($propCml2Value as $v) {
+			if (trim($v['VALUE']) == '') {
+				continue;
+			}
+			$attr[ trim($v['DESCRIPTION']) ] = trim($v['VALUE']);
+		}
+		return $attr;
+	}
+
+	/**
+	 * Выборка ID-значения списочного свойства из инфоблока и значения
+	 * @param string $propCode код списочного свойства
+	 * @param int $iblockId
+	 * @param string $val искомое значение в списочном свойстве
+	 * @return false|int
+	 */
+	public static function checkExistsEnumByVal($propCode, $iblockId, $val)
+	{
+		$val = trim($val);
+		if ($val == '') {
+			return false;
+		}
+
+		static $existsValues, $PROPERTY_ID;
+		if (is_null($existsValues)) {
+			$vs = self::selectPropertyEnumArray($propCode, ['IBLOCK_ID' => (int)$iblockId]);
+			foreach ($vs as $v) {
+				$existsValues[ trim($v['VALUE']) ] = $v['ID'];
+			}
+		}
+		if (is_null($PROPERTY_ID)) {
+			$arProp = \CIBlockProperty::GetList([], ['IBLOCK_ID' => (int)$iblockId, 'CODE' => $propCode])->Fetch();
+			$PROPERTY_ID = (int)$arProp['ID'];
+		}
+
+		if (! isset($existsValues[ $val ])) {
+			$ibpenum = new \CIBlockPropertyEnum();
+			$propID = $ibpenum->Add(['PROPERTY_ID' => $PROPERTY_ID, 'VALUE' => $val, 'SORT' => 10 + count($existsValues) * 10]);
+			$existsValues[ $val ] = $propID;
+		}
+		return $existsValues[ $val ];
+	}
+
+	/**
 	 * Выбрать следующие/предыдущие $cntSelect штук относительно $elId
 	 *
 	 * @param int        $ELEMENT_ID относительно какого элемента выбрать след/предыдущие $cntSelect штук
@@ -492,7 +543,7 @@ class IblockUtils
 	 * @return array|bool
 	 */
 	public static function getNextPrevElementsByElementId($ELEMENT_ID, $rowSort = [], $prevNextSelect = [],
-																$dopFilter = ['ACTIVE' => 'Y'], $cntSelect = 1)
+	                                                      $dopFilter = ['ACTIVE' => 'Y'], $cntSelect = 1)
 	{
 		$ELEMENT_ID = (int)$ELEMENT_ID;
 		if ($ELEMENT_ID <= 0) {

@@ -139,36 +139,36 @@ class SaleUtils
 	 *
 	 * @return array
 	 */
-	public static function getCurrentBasketItems($arSelect = array(), $needBasketProps = false, $orderId = 'NULL')
+	public static function getCurrentBasketItems($arSelect = [], $needBasketProps = false, $orderId = 'NULL')
 	{
 		\CModule::IncludeModule('sale');
 
-		$arBasketItems = array();
+		$arBasketItems = [];
 
-		$arSel = array(
+		$arSel = [
 			"ID", "NAME",
 			"PRODUCT_ID", "QUANTITY",
 			"PRICE", "CURRENCY",
 			"CAN_BUY"
-		);
+		];
 
 		if (is_array($arSelect) && !empty($arSelect)) {
 			$arSel = array_merge($arSel, $arSelect);
 		}
 
 		if ((int)$orderId > 0 && $orderId != 'NULL') {
-			$arF = array(
+			$arF = [
 				"ORDER_ID" => (int)$orderId,
-			);
+			];
 		} else {
-			$arF = array(
+			$arF = [
 				"FUSER_ID" => \CSaleBasket::GetBasketUserID(),
 				"ORDER_ID" => $orderId
-			);
+			];
 		}
 
 		$dbBasketItems = \CSaleBasket::GetList(
-			array("ID" => "ASC"),
+			["ID" => "ASC"],
 			$arF,
 			false,
 			false,
@@ -180,13 +180,13 @@ class SaleUtils
 
 		if (!empty($arBasketItems) && $needBasketProps) {
 			$res = \CSaleBasket::GetPropsList(
-				array("ID" => "ASC"),
-				array("BASKET_ID" => array_keys($arBasketItems))
+				["ID" => "ASC"],
+				["BASKET_ID" => array_keys($arBasketItems)]
 			);
 			$i = 0;
 			while ($ar = $res->Fetch()) {
 				$k = (trim($ar['CODE']) != '') ? $ar['CODE'] : $i++;
-				$arBasketItems[$ar['BASKET_ID']]['PROPS'][$k] = $ar;
+				$arBasketItems[ $ar['BASKET_ID'] ]['PROPS'][ $k ] = $ar;
 			}
 		}
 
@@ -204,15 +204,15 @@ class SaleUtils
 		static $_cache;
 
 		if (!isset($_cache)) {
-			$_cache = array();
+			$_cache = [];
 
 			\CModule::IncludeModule('sale');
 			$dbOrderProperties = \CSaleOrderProps::GetList(
 				array("ID" => "ASC"),
-				array(),
+				[],
 				false,
 				false,
-				array()
+				[]
 			);
 			while ($arOrderProperties = $dbOrderProperties->Fetch()) {
 				$_cache[$arOrderProperties['CODE']] = $arOrderProperties;
@@ -537,13 +537,13 @@ class SaleUtils
 	}
 
 	/**
-	 * TODO
 	 * @param   $propertyCollection
 	 * @param $code
 	 *
 	 * @return \Bitrix\Sale\PropertyValueCollection
 	 */
-	static function getPropertyByCode($propertyCollection, $code)  {
+	static function getPropertyByCode($propertyCollection, $code)
+	{
 		foreach ($propertyCollection as $property) {
 			if ($property->getField('CODE') == $code) {
 				return $property;
