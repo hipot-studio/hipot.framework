@@ -45,18 +45,18 @@ class PhpCacher
 	 *
 	 * В случае ошибки в статичной переменной $LAST_ERROR - будет строка с ошибкой
 	 *
-	 * @param string   $tagName - тег (массив тегов)
-	 * @param int      $cacheTime - время кеша
-	 * @param callable $callbackFunction в анонимной функции можно регистрировать и теги для управляемого кеша:
+	 * @param string                   $tagName - тег (массив тегов)
+	 * @param int                      $cacheTime - время кеша
+	 * @param callable                 $callbackFunction в анонимной функции можно регистрировать и теги для управляемого кеша:
 	 * <pre>global $CACHE_MANAGER;
 	 * $CACHE_MANAGER->RegisterTag("iblock_id_43");
 	 * $CACHE_MANAGER->RegisterTag("iblock_id_new");</pre>
-	 * @param array    $params - массив параметров функции (deprecated, для старых версий php)
+	 * @param array                    $params - массив параметров функции (deprecated, для старых версий php)
 	 * данные параметры влияют на идентификатор кеша $CACHE_ID
 	 *
 	 * @return boolean|array
 	 */
-	public static function cache($tagName, $cacheTime, $callbackFunction, $params = [])
+	public static function cache(string $tagName, int $cacheTime, callable $callbackFunction, array $params = [])
 	{
 		self::$LAST_ERROR = '';
 
@@ -70,7 +70,7 @@ class PhpCacher
 			return false;
 		}
 
-		if (($cacheTime = (int)$cacheTime) < 0) {
+		if ($cacheTime < 0) {
 			self::$LAST_ERROR = 'BAD CACHE TIME ARGUMENT...';
 			return false;
 		}
@@ -102,9 +102,10 @@ class PhpCacher
 
 			$data = null;
 			self::$params = $params;
-			if (is_callable($callbackFunction)) {
-				$data = $callbackFunction($params);
-			}
+
+			// is_callable tests above
+			$data = $callbackFunction($params);
+
 			self::$params = [];
 
 			if (defined('BX_COMP_MANAGED_CACHE')) {
@@ -135,14 +136,13 @@ class PhpCacher
 	 * @param string $tagName
 	 * @return boolean|string
 	 */
-	private static function getCacheDir($tagName)
+	private static function getCacheDir(string $tagName)
 	{
 		if (($tagName = trim($tagName)) == '') {
 			return false;
 		}
 
-		$path = '/php/' . $tagName;
-		return $path;
+		return '/php/' . $tagName;
 	}
 
 	/**
@@ -150,7 +150,7 @@ class PhpCacher
 	 *
 	 * @param string $tagName
 	 */
-	public static function clearDirByTag($tagName): void
+	public static function clearDirByTag(string $tagName): void
 	{
 		$path = self::getCacheDir($tagName);
 
