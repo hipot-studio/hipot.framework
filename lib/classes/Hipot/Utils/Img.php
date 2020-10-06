@@ -1,8 +1,11 @@
 <?php
 namespace Hipot\Utils;
 
+use CMainPage;
+use COption;
 use \Intervention\Image\ImageManagerStatic as iiImage;
 use Bitrix\Main\IO;
+use RuntimeException;
 
 if (extension_loaded('imagick') && class_exists('Imagick')) {
 	iiImage::configure(['driver' => 'imagick']);
@@ -136,7 +139,7 @@ class Img
 		}
 
 		if (!is_numeric($img) && !is_string($img)) {
-			throw new \RuntimeException('wrong_input_img_type');
+			throw new RuntimeException('wrong_input_img_type');
 		} elseif (is_numeric($img)) {
 			// если входит БитриксID картинки
 			$this->path_type		= 'bxid';
@@ -145,7 +148,7 @@ class Img
 		} elseif (strpos($img, $_SERVER['DOCUMENT_ROOT']) !== false) {
 			// если входит абсолютный путь к картинке на диске
 			if (! is_file($img)) {
-				throw new \RuntimeException('wrong_input_img_type');
+				throw new RuntimeException('wrong_input_img_type');
 			}
 			$this->path_type		= 'abs';
 			$this->src				= $img;
@@ -156,7 +159,7 @@ class Img
 			$this->r_src			= $img;
 			$this->src				= $_SERVER['DOCUMENT_ROOT'] . $this->r_src;
 		} else {
-			throw new \RuntimeException('wrong_input_img_type');
+			throw new RuntimeException('wrong_input_img_type');
 		}
 	}
 
@@ -171,7 +174,7 @@ class Img
 		// учет многосайтовости
 		if ($ssid) {
 			require_once $_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include/mainpage.php";
-			$this->postfix = \CMainPage::GetSiteByHost() . '/' . $this->postfix;
+			$this->postfix = CMainPage::GetSiteByHost() . '/' . $this->postfix;
 		}
 
 		// 32000-2 folders can have unix folder (ext3)
@@ -226,7 +229,7 @@ class Img
 	protected function do_resize($w = null, $h = null, $method = self::M_CROP): void
 	{
 		if ($method === false) {
-			throw new \RuntimeException('no_resize_method_set');
+			throw new RuntimeException('no_resize_method_set');
 		}
 
 		$aspectRatio = function ($constraint) {
@@ -282,7 +285,7 @@ class Img
 		CheckDirPath($this->path);
 
 		if ($jpgQuality === false) {
-			$jpgQuality = (int)\COption::GetOptionString('main', 'image_resize_quality', '95');
+			$jpgQuality = (int)COption::GetOptionString('main', 'image_resize_quality', '95');
 		}
 
 		// итог - сохраняем либо gif, либо png, либо jpeg
@@ -432,7 +435,7 @@ class Img
 			$to = $_SERVER['DOCUMENT_ROOT'] . $to;
 		}
 		if (! is_file($to)) {
-			throw new \RuntimeException('wrong_image_wm ' . $to);
+			throw new RuntimeException('wrong_image_wm ' . $to);
 			return false;
 		}
 

@@ -1,12 +1,14 @@
 <?
 namespace Hipot\Utils;
 
+use ArrayAccess;
+
 /**
  * Мини-объект, для работы с объектом как с массивом
  *
  * @see http://php.net/manual/ru/class.arrayaccess.php
  */
-class ObjectArItem implements \ArrayAccess
+class ObjectArItem implements ArrayAccess
 {
 	/**
 	 * Счетчик:

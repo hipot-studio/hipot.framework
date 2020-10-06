@@ -8,6 +8,10 @@
 
 namespace Hipot\BitrixUtils;
 
+use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\Result;
+
 /**
  * Дополнительные утилиты для сущностей
  * @package Hipot\BitrixUtils
@@ -50,6 +54,44 @@ trait EO_Utils
 			if (!in_array($field->getName(), $dbHasField)) {
 				self::addFieldDataTable($field);
 			}
+		}
+	}
+
+	/**
+	 * Wraps provided callback with transaction
+	 * @param callable $callback
+	 * @param array $arguments
+	 * @return mixed
+	 * @throws SqlQueryException
+	 * @throws Throwable
+	 */
+	public static function wrapTransaction(callable $callback, ...$arguments)
+	{
+		$connection = Application::getConnection();
+
+		try {
+			$connection->startTransaction();
+
+			$result = $callback(...$arguments);
+
+			$isSuccess = true;
+
+			if ($result instanceof Result) {
+				$isSuccess = $result->isSuccess();
+			} elseif (is_bool($result)) {
+				$isSuccess = $result;
+			}
+
+			if ($isSuccess) {
+				$connection->commitTransaction();
+			} else {
+				$connection->rollbackTransaction();
+			}
+
+			return $result;
+		} catch (Throwable $e) {
+			$connection->rollbackTransaction();
+			throw $e;
 		}
 	}
 }

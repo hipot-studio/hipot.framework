@@ -302,6 +302,9 @@ class ListWrapper
 
 
 		$arID = $this->lAdmin->GroupAction();
+		if (! is_array($arID)) {
+			$arID = [];
+		}
 		$arID = array_filter($arID);
 		if (count($arID) <= 0) {
 			return;

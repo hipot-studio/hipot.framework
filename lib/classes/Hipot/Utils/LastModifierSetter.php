@@ -10,6 +10,8 @@
  */
 namespace Hipot\Utils;
 
+use function AddEventHandler;
+
 /**
  * Установка заголовка Last-Modified для статики и динамики.
  * Также обработка заголовка HTTP_IF_MODIFIED_SINCE
@@ -31,7 +33,6 @@ class LastModifierSetter
 		// (компонент может не установить заголовок, тогда нужно отослать текущий)
 		if (! file_exists($file)) {
 			self::setEndBufferPageChecker();
-			return;
 		} else {
 			// если на странице вызван компонент, то тоже вешаем проверяльщик перед выводом страницы
 			// (компонент может не установить, тогда нужно отослать текущий)
@@ -81,7 +82,7 @@ class LastModifierSetter
 	 */
 	protected static function setEndBufferPageChecker(): void
 	{
-		\AddEventHandler(
+		AddEventHandler(
 			"main", "OnEndBufferContent",
 			[__CLASS__, "LastModifierSetterEndBufferContent"]
 		);

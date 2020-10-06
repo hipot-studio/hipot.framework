@@ -2,6 +2,11 @@
 namespace Hipot\BitrixUtils;
 
 use Bitrix\Highloadblock as HL;
+use CModule;
+use CUserTypeEntity;
+use RuntimeException;
+
+CModule::IncludeModule('highloadblock');
 
 /**
  * Удобный класс для работы с HL-инфоблоками
@@ -28,8 +33,6 @@ class HiBlock
 			return false;
 		}
 
-		\CModule::IncludeModule('highloadblock');
-
 		$hlblock   = HL\HighloadBlockTable::getByPrimary($hlblockId, ['cache' => ["ttl" => self::CACHE_TTL]])->fetch();
 		$entity    = HL\HighloadBlockTable::compileEntity( $hlblock );
 
@@ -53,8 +56,6 @@ class HiBlock
 		if (trim($hiBlockName) == '') {
 			return false;
 		}
-
-		\CModule::IncludeModule('highloadblock');
 
 		$hlblock	= HL\HighloadBlockTable::getList([
 			'filter'    => ['NAME' => $hiBlockName],
@@ -80,17 +81,15 @@ class HiBlock
 	 */
 	public static function installCustomSettingsHiBlock($tableName = 'hi_custom_settings', $hiBlockName = 'CustomSettings')
 	{
-		\CModule::IncludeModule('highloadblock');
-
 		$tableName		= trim($tableName);
 		$hiBlockName	= trim($hiBlockName);
 
 		if ($tableName == '') {
-			throw new \Exception('ERROR - VOID tableName');
+			throw new RuntimeException('ERROR - VOID tableName');
 		}
 
 		if ($hiBlockName == '') {
-			throw new \Exception('ERROR - VOID hiBlockName');
+			throw new RuntimeException('ERROR - VOID hiBlockName');
 		}
 
 		$result = HL\HighloadBlockTable::add([
@@ -100,7 +99,7 @@ class HiBlock
 		$ID_hiBlock = $result->getId();
 
 		if ((int)$ID_hiBlock <= 0) {
-			throw new \Exception('ERROR - CREATE hiBlockName');
+			throw new RuntimeException('ERROR - CREATE hiBlockName');
 		}
 
 		$arUfFields = [
@@ -122,7 +121,7 @@ class HiBlock
 		$ID_props = [];
 
 		foreach ($arUfFields as $arFields) {
-			$obUserField 	= new \CUserTypeEntity;
+			$obUserField 	= new CUserTypeEntity;
 			$ID_props[ $arFields['CODE'] ]	= $obUserField->Add([
 				"ENTITY_ID"			=> 'HLBLOCK_' . $ID_hiBlock,
 				"FIELD_NAME"		=> 'UF_' . $arFields['CODE'],
@@ -162,7 +161,7 @@ class HiBlock
 	{
 		$self = __CLASS__;
 
-		$arParams = PhpCacher::cache('hi_custom_settings', $cacheTime, static function() use ($hiBlockName, $self) {
+		return PhpCacher::cache('hi_custom_settings', $cacheTime, static function() use ($hiBlockName, $self) {
 			$arParams = [];
 
 			/* @var $dm \Bitrix\Main\Entity\DataManager */
@@ -177,8 +176,6 @@ class HiBlock
 			}
 			return $arParams;
 		});
-
-		return $arParams;
 	}
 
 	/**

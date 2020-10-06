@@ -13,6 +13,14 @@ use Bitrix\Iblock\InheritedProperty\ElementTemplates,
 	Bitrix\Iblock\InheritedProperty\SectionValues,
 	Bitrix\Iblock\PropertyIndex\Manager;
 
+use CFile;
+use CIblock;
+use CIBlockElement;
+use CIBlockProperty;
+use CIBlockPropertyEnum;
+use CIBlockSection;
+use function FormatText;
+
 /**
  * Дополнительные утилиты для работы с инфоблоками
  *
@@ -40,7 +48,7 @@ class IblockUtils
 			$arAddFields = array();
 		}
 
-		$el = new \CIBlockSection();
+		$el = new CIBlockSection();
 		$ID = $el->Add($arAddFields, $bResort, $bUpdateSearch);
 
 		if ($ID) {
@@ -53,26 +61,25 @@ class IblockUtils
 	/**
 	 * Обновление секции в инфоблоке, возвращает ошибку либо ID результата, см. return
 	 *
-	 * @param int $ID код секции
+	 * @param int   $ID код секции
 	 * @param array $arAddFields массив к добавлению
-	 * @param bool $bResort = true перестроить ли дерево, можно отдельно вызывать CIBlockSection::Resort(int IBLOCK_ID);
-	 * @param bool $bUpdateSearch = false обновить ли поиск
+	 * @param bool  $bResort = true перестроить ли дерево, можно отдельно вызывать CIBlockSection::Resort(int IBLOCK_ID);
+	 * @param bool  $bUpdateSearch = false обновить ли поиск
 	 *
 	 * @return bool | \Hipot\Utils\UpdateResult
 	 * @see \CIBlockSection::Add()
 	 */
-	public static function updateSectionToDb($ID, $arAddFields = [], $bResort = true, $bUpdateSearch = false)
+	public static function updateSectionToDb(int $ID, $arAddFields = [], $bResort = true, $bUpdateSearch = false)
 	{
 		if (! is_array($arAddFields)) {
 			$arAddFields = [];
 		}
 
-		$ID = (int)$ID;
 		if ($ID <= 0) {
 			return false;
 		}
 
-		$el		= new \CIBlockSection();
+		$el		= new CIBlockSection();
 		$res	= $el->Update($ID, $arAddFields, $bResort, $bUpdateSearch);
 		if ($res) {
 			return new UpdateResult(['RESULT' => $ID,				'STATUS' => UpdateResult::STATUS_OK]);
@@ -96,7 +103,7 @@ class IblockUtils
 			$arAddFields = [];
 		}
 
-		$el = new \CIBlockElement();
+		$el = new CIBlockElement();
 		$ID = $el->Add($arAddFields, false, $bUpdateSearch);
 
 		if ($ID) {
@@ -109,19 +116,19 @@ class IblockUtils
 	/**
 	 * Обновление элемента в инфоблоке, возвращает ошибку либо ID результата, см. return
 	 *
-	 * @param int $ID массив к добавлению
+	 * @param int   $ID массив к добавлению
 	 * @param array $arAddFields массив к добавлению
-	 * @param bool $bUpdateSearch = false обновить ли поиск
+	 * @param bool  $bUpdateSearch = false обновить ли поиск
 	 *
 	 * @return bool | \Hipot\Utils\UpdateResult
 	 * @see \CIBlockElement::Update()
 	 */
-	public static function updateElementToDb($ID, $arAddFields, $bUpdateSearch = false)
+	public static function updateElementToDb(int $ID, $arAddFields = [], $bUpdateSearch = false)
 	{
 		if (! is_array($arAddFields)) {
 			$arAddFields = [];
 		}
-		$ID = (int)$ID;
+
 		if ($ID <= 0) {
 			return false;
 		}
@@ -131,12 +138,12 @@ class IblockUtils
 			unset($arAddFields["PROPERTY_VALUES"]);
 		}
 
-		$el 	= new \CIBlockElement();
+		$el 	= new CIBlockElement();
 		$bUpd 	= $el->Update($ID, $arAddFields, false, $bUpdateSearch);
 
 		if (isset($PROPS) && $bUpd) {
 			$iblockId = self::getElementIblockId($ID);
-			\CIBlockElement::SetPropertyValuesEx($ID, $iblockId, $PROPS);
+			CIBlockElement::SetPropertyValuesEx($ID, $iblockId, $PROPS);
 			Manager::updateElementIndex($iblockId, $ID);
 		}
 
@@ -159,8 +166,7 @@ class IblockUtils
 	 */
 	public static function selectElementsByFilter($arOrder, $arFilter, $arGroupBy = false, $arNavParams = false, $arSelect = [])
 	{
-		$rsItems = \CIBlockElement::GetList($arOrder, $arFilter, $arGroupBy, $arNavParams, $arSelect);
-		return $rsItems;
+		return CIBlockElement::GetList($arOrder, $arFilter, $arGroupBy, $arNavParams, $arSelect);
 	}
 
 	/**
@@ -234,8 +240,7 @@ class IblockUtils
 	 *
 	 * @return array | bool
 	 */
-	public static function selectElementProperties($ID, $IBLOCK_ID = 0, $onlyValue = false, $exFilter = [],
-	                                               $obChainBuilder = null, $selectChainsDepth = 3)
+	public static function selectElementProperties($ID, $IBLOCK_ID = 0, $onlyValue = false, $exFilter = [], $obChainBuilder = null, $selectChainsDepth = 3)
 	{
 		$IBLOCK_ID	= (int)$IBLOCK_ID;
 		$ID			= (int)$ID;
@@ -256,9 +261,10 @@ class IblockUtils
 		foreach ($exFilter as $f => $v) {
 			$arFilter[$f] = $v;
 		}
-		$db_props = \CIBlockElement::GetProperty($IBLOCK_ID, $ID, ["sort" => "asc"], $arFilter);
+		$db_props = CIBlockElement::GetProperty($IBLOCK_ID, $ID, ["sort" => "asc"], $arFilter);
 		while ($ar_props = $db_props->Fetch()) {
-			// довыборка цепочек глубиной 3
+
+			// довыборка цепочек глубиной 3, магия чепочек в ключе CHAIN
 			if (is_object($obChainBuilder) && $ar_props['PROPERTY_TYPE'] == 'E') {
 				// инициализация должна происходить перед каждым вызовом getChains_r
 				// с указанием выбираемой вложенности
@@ -270,10 +276,10 @@ class IblockUtils
 				$ar_props['CODE'] = $ar_props['ID'];
 			}
 			if ($ar_props['PROPERTY_TYPE'] == "S" && isset($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE'])) {
-				$ar_props['VALUE']['TEXT'] = \FormatText($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE']);
+				$ar_props['VALUE']['TEXT'] = FormatText($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE']);
 			}
 			if ($ar_props['PROPERTY_TYPE'] == 'F') {
-				$ar_props['FILE_PARAMS'] = \CFile::GetFileArray($ar_props['VALUE']);
+				$ar_props['FILE_PARAMS'] = CFile::GetFileArray($ar_props['VALUE']);
 			}
 
 			if ($ar_props['MULTIPLE'] == "Y") {
@@ -287,14 +293,16 @@ class IblockUtils
 
 	/**
 	 * Получить инфоблок элемента
+	 *
 	 * @param int $ID код элемента
+	 *
 	 * @return bool|integer
 	 */
-	public static function getElementIblockId($ID)
+	public static function getElementIblockId(int $ID)
 	{
 		global $DB;
 
-		if (($ID = (int)$ID) <= 0) {
+		if ($ID <= 0) {
 			return false;
 		}
 
@@ -332,7 +340,7 @@ class IblockUtils
 		if (! in_array('IBLOCK_ID', $arSelect)) {
 			$arSelect[] = 'IBLOCK_ID';
 		}
-		return \CIBlockSection::GetList($arOrder, $arFilter, $bIncCnt, $arSelect, $arNavStartParams);
+		return CIBlockSection::GetList($arOrder, $arFilter, $bIncCnt, $arSelect, $arNavStartParams);
 	}
 
 	/**
@@ -384,7 +392,7 @@ class IblockUtils
 		}
 
 		$arRes = [];
-		$property_enums = \CIBlockPropertyEnum::GetList($aSort, $arFilter);
+		$property_enums = CIBlockPropertyEnum::GetList($aSort, $arFilter);
 		while ($enum_fields = $property_enums->GetNext()) {
 			$arRes[] = $enum_fields;
 		}
@@ -395,12 +403,13 @@ class IblockUtils
 	 * Проверить наличие элемента/секции с именем или симв. кодом $field в инфоблоке $iblockId.
 	 *
 	 * @param string $field
-	 * @param int $iblockId
+	 * @param int    $iblockId
 	 * @param string $fieldType
 	 * @param string $table = b_iblock_element | b_iblock_section
+	 *
 	 * @return boolean | int возвращает ID найденного элемента
 	 */
-	public static function checkExistsByNameOrCode($field, $iblockId, $fieldType = 'name', $table = 'b_iblock_element')
+	public static function checkExistsByNameOrCode($field, int $iblockId, $fieldType = 'name', $table = 'b_iblock_element')
 	{
 		global $DB;
 
@@ -414,7 +423,8 @@ class IblockUtils
 		}
 		unset($f);
 
-		if ((int)$iblockId == 0 || trim($field) == ''
+		/** @noinspection TypeUnsafeArraySearchInspection */
+		if ($iblockId == 0 || trim($field) == ''
 			|| !in_array(trim($fieldType, '?=%!<> '), $iblockFields)
 			|| !in_array(ToLower($table), ['b_iblock_element', 'b_iblock_section'])
 		) {
@@ -434,7 +444,7 @@ class IblockUtils
 
 		/** @noinspection SqlNoDataSourceInspection */
 		/** @noinspection SqlResolve */
-		$sqlCheck = 'SELECT ID FROM ' . $table . ' WHERE ' . $fw . ' AND IBLOCK_ID = ' . (int)$iblockId;
+		$sqlCheck = 'SELECT ID FROM ' . $table . ' WHERE ' . $fw . ' AND IBLOCK_ID = ' . $iblockId;
 		$el = $DB->Query($sqlCheck)->Fetch();
 
 		if ((int)$el['ID'] > 0) {
@@ -451,11 +461,12 @@ class IblockUtils
 	 * !!! Крайне желательно иметь двойной индекс $field / $iblockId в таблице b_iblock_element
 	 *
 	 * @param string $fieldVal по какому значению ищем
-	 * @param int $iblockId
-	 * @param string $fieldType  = 'name' тип поля: name|code|xml_id
+	 * @param int    $iblockId
+	 * @param string $fieldType = 'name' тип поля: name|code|xml_id
+	 *
 	 * @return boolean|integer
 	 */
-	public static function checkElementExistsByNameOrCode($fieldVal, $iblockId, $fieldType = 'name')
+	public static function checkElementExistsByNameOrCode($fieldVal, int $iblockId, $fieldType = 'name')
 	{
 		return self::checkExistsByNameOrCode($fieldVal, $iblockId, $fieldType, 'b_iblock_element');
 	}
@@ -467,11 +478,12 @@ class IblockUtils
 	 * !!! Крайне желательно иметь двойной индекс $field / $iblockId в таблице b_iblock_section
 	 *
 	 * @param string $fieldVal по какому значению ищем
-	 * @param int $iblockId
-	 * @param string $fieldType  = 'name' тип поля: name|code|xml_id
+	 * @param int    $iblockId
+	 * @param string $fieldType = 'name' тип поля: name|code|xml_id
+	 *
 	 * @return boolean|integer
 	 */
-	public static function checkSectionExistsByNameOrCode($fieldVal, $iblockId, $fieldType = 'name')
+	public static function checkSectionExistsByNameOrCode($fieldVal, int $iblockId, $fieldType = 'name')
 	{
 		return self::checkExistsByNameOrCode($fieldVal, $iblockId, $fieldType, 'b_iblock_section');
 	}
@@ -481,7 +493,7 @@ class IblockUtils
 	 * @param array $propCml2Value
 	 * @return array
 	 */
-	public static function returnCml2AttributesFromPropVal($propCml2Value): array
+	public static function returnCml2AttributesFromPropVal(array $propCml2Value): array
 	{
 		$attr = [];
 		foreach ($propCml2Value as $v) {
@@ -495,12 +507,14 @@ class IblockUtils
 
 	/**
 	 * Выборка ID-значения списочного свойства из инфоблока и значения
+	 *
 	 * @param string $propCode код списочного свойства
-	 * @param int $iblockId
+	 * @param int    $iblockId
 	 * @param string $val искомое значение в списочном свойстве
+	 *
 	 * @return false|int
 	 */
-	public static function checkExistsEnumByVal($propCode, $iblockId, $val)
+	public static function checkExistsEnumByVal($propCode, int $iblockId, $val)
 	{
 		$val = trim($val);
 		if ($val == '') {
@@ -515,12 +529,12 @@ class IblockUtils
 			}
 		}
 		if (is_null($PROPERTY_ID)) {
-			$arProp = \CIBlockProperty::GetList([], ['IBLOCK_ID' => (int)$iblockId, 'CODE' => $propCode])->Fetch();
+			$arProp = CIBlockProperty::GetList([], ['IBLOCK_ID' => (int)$iblockId, 'CODE' => $propCode])->Fetch();
 			$PROPERTY_ID = (int)$arProp['ID'];
 		}
 
 		if (! isset($existsValues[ $val ])) {
-			$ibpenum = new \CIBlockPropertyEnum();
+			$ibpenum = new CIBlockPropertyEnum();
 			$propID = $ibpenum->Add(['PROPERTY_ID' => $PROPERTY_ID, 'VALUE' => $val, 'SORT' => 10 + count($existsValues) * 10]);
 			$existsValues[ $val ] = $propID;
 		}
@@ -542,8 +556,7 @@ class IblockUtils
 	 *
 	 * @return array|bool
 	 */
-	public static function getNextPrevElementsByElementId($ELEMENT_ID, $rowSort = [], $prevNextSelect = [],
-	                                                      $dopFilter = ['ACTIVE' => 'Y'], $cntSelect = 1)
+	public static function getNextPrevElementsByElementId(int $ELEMENT_ID, $rowSort = [], $prevNextSelect = [], $dopFilter = ['ACTIVE' => 'Y'], $cntSelect = 1)
 	{
 		$ELEMENT_ID = (int)$ELEMENT_ID;
 		if ($ELEMENT_ID <= 0) {
@@ -576,7 +589,7 @@ class IblockUtils
 			$arNavStartParams['nPageSize'] = (int)$cntSelect;
 		}
 
-		$rsList = \CIBlockElement::GetList($arSort, $arFilter, false, $arNavStartParams, $arFields);
+		$rsList = CIBlockElement::GetList($arSort, $arFilter, false, $arNavStartParams, $arFields);
 
 		$arResult = [];
 		while ($arItem = $rsList->GetNext()) {
@@ -601,21 +614,22 @@ class IblockUtils
 	/**
 	 * Выбор секции с детьми. В итоговый массив попадает и $sectionId
 	 *
-	 * @param int $sectionId
+	 * @param int   $sectionId
 	 * @param array $arSelect = ["ID"]
+	 *
 	 * @return array | bool
 	 */
-	public static function selectSubsectionByParentSection($sectionId, $arSelect = ["ID"])
+	public static function selectSubsectionByParentSection(int $sectionId, $arSelect = ["ID"])
 	{
-		if ((int)$sectionId <= 0) {
+		if ($sectionId <= 0) {
 			return false;
 		}
-		$arParentSection = \CIBlockSection::GetList(["SORT" => "ASC"], [
+		$arParentSection = CIBlockSection::GetList(["SORT" => "ASC"], [
 			"ACTIVE"    => "Y",
 			"ID"      	=> $sectionId,
 		], false, ['ID', 'IBLOCK_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'IBLOCK_ID'])->GetNext();
 
-		$rsSections = \CIBlockSection::GetList(['LEFT_MARGIN' => 'ASC'], [
+		$rsSections = CIBlockSection::GetList(['LEFT_MARGIN' => 'ASC'], [
 			"ACTIVE"        => "Y",
 			"IBLOCK_ID"     => $arParentSection['IBLOCK_ID'],
 			">LEFT_MARGIN"  => $arParentSection["LEFT_MARGIN"],
@@ -632,24 +646,25 @@ class IblockUtils
 	/**
 	 * Добавляет фотки из ссылок, во множественное свойство типа файл
 	 *
-	 * @param int $ID
-	 * @param int $IBLOCK_ID ID
-	 * @param array $arFiles Массив файлов в виде ['link.png'=>'description']
+	 * @param int    $ID
+	 * @param int    $IBLOCK_ID ID
+	 * @param array  $arFiles Массив файлов в виде ['link.png'=>'description']
 	 * @param string $prop_code Код свойства
+	 *
 	 * @return bool|string
 	 */
-	public function AddMultipleFileValue($ID, $IBLOCK_ID, $arFiles, $prop_code)
+	public function AddMultipleFileValue(int $ID, int $IBLOCK_ID, $arFiles = [], string $prop_code)
 	{
 		$result = true;
 		$ar = [];
 
-		$rsPr = \CIBlockElement::GetProperty($IBLOCK_ID, $ID, ['sort', 'asc'], [
+		$rsPr = CIBlockElement::GetProperty($IBLOCK_ID, $ID, ['sort', 'asc'], [
 			'CODE' => $prop_code,
 			'EMPTY' => 'N'
 		]);
 		while ($arPr = $rsPr->GetNext()) {
-			$far = \CFile::GetFileArray($arPr['VALUE']);
-			$far = \CFile::MakeFileArray($far['SRC']);
+			$far = CFile::GetFileArray($arPr['VALUE']);
+			$far = CFile::MakeFileArray($far['SRC']);
 			$ar[] = [
 				'VALUE' => $far,
 				'DESCRIPTION' => $arPr['DESCRIPTION']
@@ -660,7 +675,7 @@ class IblockUtils
 			$gn = 0;
 			while (!$art || ($art['type'] == 'unknown' && $gn < 10)) {
 				$gn++;
-				$art = \CFile::MakeFileArray($l);
+				$art = CFile::MakeFileArray($l);
 			}
 			if ($art['tmp_name']) {
 				$ar[] = [
@@ -671,7 +686,7 @@ class IblockUtils
 				$result = 'partial';
 			}
 		}
-		\CIBlockElement::SetPropertyValuesEx($ID, $IBLOCK_ID, array(
+		CIBlockElement::SetPropertyValuesEx($ID, $IBLOCK_ID, array(
 			$prop_code => $ar
 		));
 		return $result;
@@ -681,14 +696,13 @@ class IblockUtils
 	 * По имени либо получает значение, либо если его нет - добавляет его в справочник.
 	 *
 	 * @param string $fieldVal = Значение, не может быть пустым (Dr.Pepper)
-	 * @param string $iblockId = инентификатор справочника
+	 * @param int $iblockId = инентификатор справочника
 	 *
 	 * @retrun возвращается значение ID значения в справочнике
 	 * @return bool|int
 	 */
-	public static function addToHelperAndReturnElementId($fieldVal, $iblockId)
+	public static function addToHelperAndReturnElementId(string $fieldVal, int $iblockId)
 	{
-		$iblockId = (int)$iblockId;
 		if ($iblockId <= 0 || ($fieldVal = trim($fieldVal)) == '') {
 			return false;
 		}
@@ -726,50 +740,52 @@ class IblockUtils
 	 *
 	 * @return array
 	 */
-	public static function returnSeoValues($IBLOCK_ID, $ID): array
+	public static function returnSeoValues(int $IBLOCK_ID, int $ID): array
 	{
-		$ipropValues = new ElementValues((int)$IBLOCK_ID, (int)$ID);
-		return $ipropValues->getValues();
+		return (new ElementValues($IBLOCK_ID, $ID))->getValues();
 	}
 
 	/**
 	 * Установить новое сео у элементов
+	 *
 	 * @param int   $IBLOCK_ID
 	 * @param int   $ID
 	 * @param array $arTemplates (обычно в ключах ELEMENT_META_DESCRIPTION, ELEMENT_META_TITLE, ELEMENT_META_KEYWORDS)
 	 *
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	public static function setSeoValues($IBLOCK_ID, $ID, $arTemplates = []): void
+	public static function setSeoValues(int $IBLOCK_ID, int $ID, $arTemplates = []): void
 	{
-		$ipropTemplates = new ElementTemplates((int)$IBLOCK_ID, (int)$ID);
+		$ipropTemplates = new ElementTemplates($IBLOCK_ID, $ID);
 		$ipropTemplates->set($arTemplates);
 	}
 
 	/**
 	 * Установить новое сео у секций
+	 *
 	 * @param int   $IBLOCK_ID
 	 * @param int   $ID
 	 * @param array $arTemplates (обычно в ключах SECTION_META_DESCRIPTION, SECTION_META_TITLE, SECTION_META_KEYWORDS)
 	 *
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	public static function setSectionSeoValues($IBLOCK_ID, $ID, $arTemplates = []): void
+	public static function setSectionSeoValues(int $IBLOCK_ID, int $ID, $arTemplates = []): void
 	{
-		$ipropTemplates = new SectionTemplates((int)$IBLOCK_ID, (int)$ID);
+		$ipropTemplates = new SectionTemplates($IBLOCK_ID, $ID);
 		$ipropTemplates->set($arTemplates);
 	}
 
 	/**
 	 * Получить сео-поля секций
+	 *
 	 * @param int $IBLOCK_ID
 	 * @param int $ID
+	 *
 	 * @return array
 	 */
-	public static function returnSectionSeoValues($IBLOCK_ID, $ID): array
+	public static function returnSectionSeoValues(int $IBLOCK_ID, int $ID): array
 	{
-		$ipropValues = new SectionValues((int)$IBLOCK_ID, (int)$ID);
-		return $ipropValues->getValues();
+		return (new SectionValues($IBLOCK_ID, $ID))->getValues();
 	}
 
 	/**
@@ -780,20 +796,42 @@ class IblockUtils
 	 *
 	 * @return bool
 	 */
-	public static function setGroupToElement($elId, $sectionId): bool
+	public static function setGroupToElement(int $elId, int $sectionId): bool
 	{
-		$elId = (int)$elId;
-		$sectionId = (int)$sectionId;
 		if ($elId <= 0 || $sectionId <= 0) {
 			return false;
 		}
 
-		$db_old_groups = \CIBlockElement::GetElementGroups($elId, true);
+		$db_old_groups = CIBlockElement::GetElementGroups($elId, true);
 		$ar_new_groups = [$sectionId];
 		while ($ar_group = $db_old_groups->Fetch()) {
 			$ar_new_groups[] = $ar_group["ID"];
 		}
-		\CIBlockElement::SetElementSection($elId, $ar_new_groups);
+		CIBlockElement::SetElementSection($elId, $ar_new_groups);
+		return true;
+	}
+
+	/**
+	 * Отключает сброс тэгированного кэша инфоблока
+	 * @return bool
+	 */
+	public static function disableIblockCacheClear(): bool
+	{
+		while (CIblock::isEnabledClearTagCache()) {
+			CIblock::disableClearTagCache();
+		}
+		return true;
+	}
+
+	/**
+	 * Включает сброс тэгированного кэша инфоблока
+	 * @return bool
+	 */
+	public static function enableIblockCacheClear(): bool
+	{
+		while (!CIblock::isEnabledClearTagCache()) {
+			CIblock::enableClearTagCache();
+		}
 		return true;
 	}
 

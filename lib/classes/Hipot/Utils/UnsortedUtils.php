@@ -5,6 +5,7 @@ use \Bitrix\Main\Application,
 	\Bitrix\Main\Grid\Declension,
 	\Bitrix\Main\Loader,
 	\Bitrix\Main\Web\HttpClient;
+use CUtil;
 
 /**
  * Различные не-структурированные утилиты
@@ -28,8 +29,7 @@ class UnsortedUtils
 		if (is_string($forms)) {
 			$forms = explode('|', $forms);
 		}
-		$declens = new Declension($forms[0], $forms[1], $forms[2]);
-		return $declens->get($n);
+		return ( new Declension($forms[0], $forms[1], $forms[2]) )->get($n);
 	}
 
 	/**
@@ -41,7 +41,7 @@ class UnsortedUtils
 	 */
 	public static function TranslitText($text, $lang = 'ru'): string
 	{
-		return \CUtil::translit(trim($text), $lang, array(
+		return CUtil::translit(trim($text), $lang, array(
 			'max_len' => 100,
 			'change_case' => "L",
 			'replace_space' => '-',
@@ -204,8 +204,7 @@ class UnsortedUtils
 	public static function getPageContentByUrl($url)
 	{
 		$el = new HttpClient();
-		$cont = $el->get( $url );
-		return $cont;
+		return $el->get( $url );
 	}
 
 	public static function getHttpHeadersByUrl($url): array
@@ -330,6 +329,37 @@ class UnsortedUtils
 	public static function isValidRegx($regx): bool
 	{
 		return preg_match($regx, null) !== false;
+	}
+
+	/**
+	 * Возвращает код, сгенерированный компонентом Битрикс
+	 * @param string $name Имя компонента
+	 * @param string $template Шаблон компонента
+	 * @param array $params Параметры компонента
+	 * @param mixed $componentResult Данные, возвращаемые компонентом
+	 * @return string
+	 * @see \CMain::IncludeComponent()
+	 */
+	public static function getComponent($name, $template = '', $params = [], &$componentResult = null): string
+	{
+		ob_start();
+		$componentResult = $GLOBALS['APPLICATION']->IncludeComponent($name, $template, $params);
+		return ob_get_clean();
+	}
+
+	/**
+	 * Возвращает код, сгенерированный включаемой областью Битрикс
+	 * @param string $path Путь до включаемой области
+	 * @param array $params Массив параметров для подключаемого файла
+	 * @param array $functionParams Массив настроек данного метода
+	 * @return string
+	 * @see \CMain::IncludeFile()
+	 */
+	public static function getIncludeArea($path, $params = [], $functionParams = []): string
+	{
+		ob_start();
+		$GLOBALS['APPLICATION']->IncludeFile($path, $params, $functionParams);
+		return ob_get_clean();
 	}
 
 } // end class

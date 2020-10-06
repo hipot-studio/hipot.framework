@@ -1,6 +1,8 @@
-﻿<?
+﻿<?php
 namespace Hipot\Utils;
 
+use Bitrix\Main\Config\Configuration;
+use ArrayAccess;
 
 /**
  * A lightweight wrapper around the PHP Memcached extension with three goals:
@@ -17,7 +19,7 @@ namespace Hipot\Utils;
  * unset($cache['bar']);       // deletes 'foobar'
  * $cache->set('bar', 'x')     // sets 'foobar' to 'x'
  */
-class MemcachedWrapper implements \ArrayAccess
+class MemcachedWrapper implements ArrayAccess
 {
 	/**
 	 * Memcached methods that take key(s) as arguments, and the argument
@@ -62,7 +64,7 @@ class MemcachedWrapper implements \ArrayAccess
 		$this->prefix = $prefix;
 		$this->mc = new Memcache();
 
-		$cacheConfig = \Bitrix\Main\Config\Configuration::getValue("cache");
+		$cacheConfig = Configuration::getValue("cache");
 		$v = (isset($cacheConfig["memcache"])) ? $cacheConfig["memcache"] : null;
 
 		if ($v != null && isset($v["port"])) {
@@ -106,7 +108,7 @@ class MemcachedWrapper implements \ArrayAccess
 				$args[$pos] = $this->prefix . $args[$pos];
 			}
 		}
-		$result = call_user_func_array(array($this->mc, $name), $args);
+		$result = call_user_func_array([$this->mc, $name], $args);
 		// process keys in return value if necessary
 		$prefixLen = strlen($this->prefix);
 		$process = function ($r) use ($prefixLen) {

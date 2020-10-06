@@ -1,9 +1,12 @@
 <?
+/** @noinspection PhpIllegalPsrClassPathInspection */
 namespace Hipot\BitrixUtils;
+
+use CPHPCache;
 
 /**
  * Класс для работы с кешированием (как обертка над логикой в виде анонимной функции, возвращающей данные)
- * @version 2.2 beta
+ * @version 2.4
  */
 class PhpCacher
 {
@@ -24,20 +27,6 @@ class PhpCacher
 	 * @var array
 	 */
 	public static $params = [];
-
-	/**
-	 * @param       $tagName
-	 * @param       $cacheTime
-	 * @param       $callbackFunction
-	 * @param array $params
-	 *
-	 * @return array|bool
-	 * @deprecated use cache(...)
-	 */
-	public static function returnCacheDataAndSave($tagName, $cacheTime, $callbackFunction, $params = [])
-	{
-		return self::cache($tagName, $cacheTime, $callbackFunction, $params);
-	}
 
 	/**
 	 * Записываем и возвращает данные в кеш по пути /bitrix/cache/php/$tagName/ с возможностью указать
@@ -87,7 +76,7 @@ class PhpCacher
 		$CACHE_ID     = 'cacher_' . md5(serialize($params) . $tagName);
 		$CACHE_DIR    = self::getCacheDir($tagName);
 
-		$obCache = new \CPHPCache();
+		$obCache = new CPHPCache();
 
 		// clear cache now clear folder
 		if ($_REQUEST['clear_cache'] === 'Y' && self::canCurrentUserDropCache()) {
@@ -126,6 +115,20 @@ class PhpCacher
 	}
 
 	/**
+	 * @param       $tagName
+	 * @param       $cacheTime
+	 * @param       $callbackFunction
+	 * @param array $params
+	 *
+	 * @return array|bool
+	 * @deprecated use PhpCacher::cache(...)
+	 */
+	public static function returnCacheDataAndSave($tagName, $cacheTime, $callbackFunction, $params = [])
+	{
+		return self::cache($tagName, $cacheTime, $callbackFunction, $params);
+	}
+
+	/**
 	 * Получить путь к папке для записи кеша
 	 * путь задается относительно папки /bitrix/cache/
 	 *
@@ -154,7 +157,7 @@ class PhpCacher
 	{
 		$path = self::getCacheDir($tagName);
 
-		$obCache = new \CPHPCache();
+		$obCache = new CPHPCache();
 		$obCache->CleanDir($path);
 	}
 

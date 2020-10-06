@@ -94,7 +94,7 @@ class IblockElemLinkedChains
 			$arSelect = array_merge($arSelect, $arSelectDef);
 			$arFilter = ['ID' => (int)$elementId];
 			// QUERY 1
-			$rsItems = \CIBlockElement::GetList(array(), $arFilter, false, false, $arSelect);
+			$rsItems = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
 	
 			if ($arItem = $rsItems->GetNext()) {
 				// QUERY 2
