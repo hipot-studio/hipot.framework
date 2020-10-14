@@ -3,7 +3,7 @@
  * Abstract Layer
  * Подсказки на выборки CIBlockElement::GetList
  *
- * @version 3.2 beta
+ * @version 3.4 beta
  * @author hipot <hipot at ya dot ru>
  */
 
@@ -16,6 +16,8 @@ use Hipot\IbAbstractLayer\Types\IblockElementItem,
  * Класс для работы с получением цепочек связанных элементов (через свойства привязка к элементам),
  * закрывает кольцевые цепочки
  *
+ * Также для всей магии фреймфорка hipot для работы с инфоблоками
+ *
  * @example
  * if ($arProps['series']['PROPERTY_TYPE'] == "E") {
  *		$obChainBuilder = new IblockElemLinkedChains();
@@ -23,7 +25,7 @@ use Hipot\IbAbstractLayer\Types\IblockElementItem,
  *		$arProps['series']['CHAIN'] = $obChainBuilder->getChains_r($arProps['series']['VALUE']);
  * }
  */
-class IblockElemLinkedChains
+class IblockElemLinkedChains extends IblockUtils
 {
 	/**
 	 * Корень получаемой цепочки
@@ -94,11 +96,11 @@ class IblockElemLinkedChains
 			$arSelect = array_merge($arSelect, $arSelectDef);
 			$arFilter = ['ID' => (int)$elementId];
 			// QUERY 1
-			$rsItems = \CIBlockElement::GetList([], $arFilter, false, false, $arSelect);
+			$rsItems = self::selectElementsByFilter([], $arFilter, false, false, $arSelect);
 	
 			if ($arItem = $rsItems->GetNext()) {
 				// QUERY 2
-				$arItem['PROPERTIES'] = IblockUtils::selectElementProperties(
+				$arItem['PROPERTIES'] = self::selectElementProperties(
 					$arItem['ID'],
 					$arItem["IBLOCK_ID"],
 					false,
@@ -123,6 +125,52 @@ class IblockElemLinkedChains
 	public static function chainArrayToChainObject($arChain): IblockElementItem
 	{
 		return new IblockElementItem($arChain);
+	}
+
+	/**
+	 * Выборка элементов инфоблока сразу в виде объектов Hipot\IbAbstractLayer\Types\IblockElementItem
+	 *
+	 * @param string[] $arOrder
+	 * @param array    $arFilter
+	 * @param false    $arGroupBy
+	 * @param false    $arNavParams
+	 * @param array    $arSelectFields
+	 *
+	 * @return array|mixed
+	 */
+	public static function getList($arOrder = ["SORT"=>"ASC"], $arFilter = [], $arGroupBy=false, $arNavParams=false, $arSelectFields=[])
+	{
+		$arSelectFields[] = 'ID';
+		$arSelectFields[] = 'IBLOCK_ID';
+
+		$rsItems = \CIBlockElement::GetList($arOrder, $arFilter, $arGroupBy, $arNavParams, $arSelectFields);
+
+		$arParams = $arResult = [];
+		$arParams['SELECT_CHAINS_DEPTH'] = 3;
+		$arResult["ITEMS"] = [];
+
+		$obChainBuilder = new self();
+
+		while ($arItem = $rsItems->GetNext()) {
+			// QUERY 2
+			$arItem['PROPERTIES'] = self::selectElementProperties(
+				(int)$arItem['ID'],
+				(int)$arItem["IBLOCK_ID"],
+				false,
+				["EMPTY" => "N"],
+				$obChainBuilder,
+				(int)$arParams['SELECT_CHAINS_DEPTH']
+			);
+
+			$arResult["ITEMS"][] = new IblockElementItem($arItem);
+		}
+
+		// освобождаем память от цепочек
+		if (isset($obChainBuilder)) {
+			unset($obChainBuilder);
+		}
+
+		return $arResult["ITEMS"];
 	}
 }
 
