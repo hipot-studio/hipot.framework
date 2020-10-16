@@ -1,8 +1,9 @@
 # Мини-фреймворк hipot.framework для работы
 (с) hipot, 2017 - 2020<br>
-mailto: me AT hipot DOT life
+mailto: me AT hipot DOT life<br>
+mailto: hipot AT ya DOT ru
 
-![](https://scontent.fkiv6-1.fna.fbcdn.net/v/t1.0-9/18447157_223812644786808_1001941195412342679_n.png?_nc_cat=106&_nc_ohc=oTCrecS2eIgAQkTHS31xaKgzdXHD2oS0lA1bhpOza8ito7Lda6hvVcYJg&_nc_ht=scontent.fkiv6-1.fna&oh=07c7dcff104f9d0d6c592700d26ef3a3&oe=5E97E72D)
+![hipot logo](docs/img/hipot_logo.jpg)
 
 ### Требования:
 bitrix 20+, PHP 7.2+
@@ -12,6 +13,12 @@ bitrix 20+, PHP 7.2+
 - автозагрузчик к классам lib/simple_loader.php для копирования в /local/php_interface/lib/simple_loader.php
 - пример файла /local/php_interface/init.php с подключением деталей фреймворка к битриксу
 можно найти в файле include.php
+<ul style="margin-left:100px;"><li> объектная модель-обертка Hipot\IbAbstractLayer\IblockElemLinkedChains
+<li>класс для работы с инфоблоками Hipot\BitrixUtils\IblockUtils
+<li>с кешированием Hipot\BitrixUtils\PhpCacher
+<li>с магазином Hipot\BitrixUtils\SaleUtils
+<li>различные утилиты Hipot\Utils\UnsortedUtils</ul>
+  
 - компоненты в папке install/components для копирования в /local/components
   
 ### Установка:
@@ -21,7 +28,7 @@ bitrix 20+, PHP 7.2+
 - установить в админке модуль, чтобы он зарегистрировал себя
 - можно добавить нужные классы в автозагрузчик (PSR-0, см. hipot_code_style_34.pdf)
 
-### ВАЖНО! После включения Abstract Iblock Elements Layer нужно проиндексировать файл /bitrix/cache/generated_iblock_sxem.php
+### ВАЖНО! После включения Abstract Iblock Elements Layer нужно проиндексировать файл /bitrix/modules/generated_iblock_sxem.php
 Это делается в IDE для подсказок, по аналогии как в битриксе с аннотациями файл bitrix/modules/orm_annotations.php   
 
 см docs/ABSTRACT_IBLOCK_ELEMENT_LAYER.MD
