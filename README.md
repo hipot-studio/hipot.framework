@@ -15,6 +15,7 @@ bitrix 20+, PHP 7.2+
 можно найти в файле include.php
 <ul style="margin-left:100px;"><li> объектная модель-обертка Hipot\IbAbstractLayer\IblockElemLinkedChains
 <li>класс для работы с инфоблоками Hipot\BitrixUtils\IblockUtils
+<li>api для трансформации изображений Hipot\Utils\Img</li>
 <li>с кешированием Hipot\BitrixUtils\PhpCacher
 <li>с магазином Hipot\BitrixUtils\SaleUtils
 <li>различные утилиты Hipot\Utils\UnsortedUtils</ul>
