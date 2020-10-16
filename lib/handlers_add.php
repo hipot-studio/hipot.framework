@@ -74,6 +74,20 @@ AddEventHandler("main", "OnAdminListDisplay", static function ($this_al) {
 	//echo $this_al->sNavText;
 });
 
+// draw user picture after login
+AddEventHandler("main", "OnAdminListDisplay", /** @param CAdminUiList $this_al */static function (&$this_al) {
+	if ($this_al->table_id == "tbl_user") {
+		foreach ($this_al->aRows as &$row) {
+			$userId = (int)$row->arRes['ID'];
+			$picPath = CFile::GetPath( (CUser::GetByID($userId)->Fetch())["PERSONAL_PHOTO"] );
+			if (trim($picPath) != '') {
+				$row->aFields["LOGIN"]["view"]["value"] .= ' <br><a target="_blank" href="' . $picPath . '">'
+					. '<img style="max-width:200px;" src="' . $picPath  . '"></a>';
+			}
+		}
+	}
+});
+
 // очищаем настройки формы по-умолчанию для всех админов
 // @see http://hipot.mooo.com/Codex/form_iblock_element_settings/
 AddEventHandler('main', 'OnEndBufferContent', static function (&$content) {
