@@ -11,10 +11,10 @@ return [
 			'mode' => 'default',
 			'handlers' => [
 				'general' => [
-					//'type' => 'file',
-					'type' => 'memcache',
+					'type' => 'file',
+					/*'type' => 'memcache',
 					'port' => '0',
-					'host' => 'unix:///home/bitrix/memcached.sock'
+					'host' => 'unix:///home/bitrix/memcached.sock'*/
 				]
 			],
 		]
@@ -22,7 +22,7 @@ return [
 	// two stages sessions
 	'crypto' => [
 		'value' => [
-			'crypto_key' => 'DB!x3kWilOwNVms',
+			'crypto_key' => '',
 			'readonly' => true
 		]
 	],
