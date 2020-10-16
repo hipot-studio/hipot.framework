@@ -24,7 +24,7 @@ if (! defined('ABSTRACT_LAYER_SAULT')) {
  * @var string
  * @global
  */
-$fileToGenerateSxema = $GLOBAL['fileToGenerateSxema'] = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/cache/generated_iblock_sxem.php';
+$fileToGenerateSxema = $GLOBAL['fileToGenerateSxema'] = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/generated_iblock_sxem.php';
 if (! file_exists($fileToGenerateSxema)) {
 	IblockGenerateSxemManager::updateSxem();
 }
