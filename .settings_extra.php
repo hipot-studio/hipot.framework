@@ -6,6 +6,42 @@
  * @version pre 1.0
  */
 return [
+	'session' => [
+		'value' => [
+			'mode' => 'default',
+			'handlers' => [
+				'general' => [
+					//'type' => 'file',
+					'type' => 'memcache',
+					'port' => '0',
+					'host' => 'unix:///home/bitrix/memcached.sock'
+				]
+			],
+		]
+	],
+	// two stages sessions
+	'crypto' => [
+		'value' => [
+			'crypto_key' => 'DB!x3kWilOwNVms',
+			'readonly' => true
+		]
+	],
+	/*'session' => [
+		'value' => [
+			'lifetime' => 14400, // +
+			'mode' => 'separated',  // +
+			'handlers' => [
+				'kernel' => 'encrypted_cookies',  // +
+				'general' => [
+					'type' => 'file',
+
+					//'type' => 'memcache',
+					//'port' => '11211',
+					//'host' => '127.0.0.1',
+				],
+			],
+		]
+	],*/
 	'cache' => [
 		'value' => [
 			'type' => [
@@ -32,6 +68,6 @@ return [
 		'readonly' => false,
 	],
 	'composer' => [
-		'value' => ['config_path' => __DIR__ . '/../local/composer.json']
+		'value' => ['config_path' => 'local/composer.json']	// may relative path set
 	],
 ];
