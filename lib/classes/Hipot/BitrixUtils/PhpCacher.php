@@ -17,12 +17,6 @@ class PhpCacher
 	public static $LAST_ERROR = '';
 
 	/**
-	 * Сохранять ли пустые выборки в кеш
-	 * @var boolean
-	 */
-	public static $SAVE_EMPTY_DATA_TO_CACHE = false;
-
-	/**
 	 * Массив параметров функции для проброса параметров в анонимную функцию
 	 * @var array
 	 */
@@ -89,7 +83,6 @@ class PhpCacher
 				$GLOBALS['CACHE_MANAGER']->StartTagCache($CACHE_DIR);
 			}
 
-			$data = null;
 			self::$params = $params;
 
 			// is_callable tests above
@@ -101,7 +94,7 @@ class PhpCacher
 				$GLOBALS['CACHE_MANAGER']->EndTagCache();
 			}
 
-			if (($data !== null && self::$SAVE_EMPTY_DATA_TO_CACHE) || !empty($data)) {
+			if ($data !== null) {
 				$obCache->EndDataCache($data);
 			} else {
 				$obCache->AbortDataCache();

@@ -1,8 +1,9 @@
-﻿<?php
+<?php
 namespace Hipot\Utils;
 
-use Bitrix\Main\Config\Configuration;
-use ArrayAccess;
+use Bitrix\Main\Config\Configuration,
+	Memcache, ArrayAccess;
+
 
 /**
  * A lightweight wrapper around the PHP Memcached extension with three goals:

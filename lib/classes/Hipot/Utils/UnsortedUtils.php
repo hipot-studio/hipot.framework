@@ -7,6 +7,8 @@ use \Bitrix\Main\Application,
 	\Bitrix\Main\Web\HttpClient;
 use CUtil;
 
+class UUtils extends UnsortedUtils {}
+
 /**
  * Различные не-структурированные утилиты
  *
@@ -360,6 +362,20 @@ class UnsortedUtils
 		ob_start();
 		$GLOBALS['APPLICATION']->IncludeFile($path, $params, $functionParams);
 		return ob_get_clean();
+	}
+
+	/**
+	 * стартует по классике сессию
+	 */
+	public static function sessionStart(): void
+	{
+		//session initialization
+		if (session_status() !== PHP_SESSION_ACTIVE) {
+			ini_set("session.cookie_httponly", "1");
+			ini_set("session.use_strict_mode", "On");
+
+			session_start();
+		}
 	}
 
 } // end class

@@ -21,13 +21,13 @@
 spl_autoload_register(static function ($className) {
 	//echo $className; die();
 	$libDirs = [
+		__DIR__ . '/classes',
 		$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/include/lib/classes',
 		$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/lib/classes',
 		$_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/include/lib/classes',
 		$_SERVER['DOCUMENT_ROOT'] . '/_tests/classes',
 		$_SERVER['DOCUMENT_ROOT'] . '/local/modules/hipot.framework/lib',
-		$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/hipot.framework/lib',
-		__DIR__ . '/classes'
+		$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/hipot.framework/lib'
 		// ...
 	];
 	foreach ($libDirs as $libDir) {

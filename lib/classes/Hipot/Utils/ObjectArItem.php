@@ -61,4 +61,3 @@ class ObjectArItem implements ArrayAccess
 		}
 	}
 }
-?>

@@ -3,6 +3,13 @@
  * Файл с различными глобальными рубильниками-константами
  */
 
+/**
+ * @global $APPLICATION \CMain
+ * @global $USER \CUser
+ * @global $DB \CDatabase
+ * @global $USER_FIELD_MANAGER \CUserTypeManager
+ */
+
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 
 /**

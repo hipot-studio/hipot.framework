@@ -5,8 +5,9 @@ use Bitrix\Highloadblock as HL;
 use CModule;
 use CUserTypeEntity;
 use RuntimeException;
+use Bitrix\Main\Loader;
 
-CModule::IncludeModule('highloadblock');
+Loader::includeModule('highloadblock');
 
 /**
  * Удобный класс для работы с HL-инфоблоками
@@ -210,5 +211,3 @@ class HiBlock
 
 } // end class
 
-
-?>

@@ -50,14 +50,15 @@
  */
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
+use Bitrix\Main\Loader;
+
 if (!class_exists('Memcache') || !class_exists('Hipot\\Utils\\MemcachedWrapper')) {
 	return;
 }
 
+Loader::includeModule('iblock');
 
-\Bitrix\Main\Loader::includeModule('iblock');
-
-$pr = new \CIBlockProperty();
+$pr = new CIBlockProperty();
 unset($pr);
 
 $GLOBALS['IBLOCK_CACHE_PROPERTY'] = new Hipot\Utils\MemcachedWrapper('IBLOCK_CACHE_PROPERTY_');

@@ -6,9 +6,11 @@
  * Т.е. в данном файле пишем AddEventHandler
  * а сам обработчик в файле с классом /include/lib/classes/siteevents.php
  */
+use Bitrix\Main\EventManager;
+use Bitrix\Main\Web\HttpClient;
 
 // определяем глобальные константы, которые могут зависеть от $APPLICATION и $USER
-AddEventHandler("main", "OnBeforeProlog", static function () {
+EventManager::getInstance()->addEventHandler("main", "OnBeforeProlog", static function () {
 	global $APPLICATION, $USER;
 
 	foreach (
@@ -50,7 +52,7 @@ AddEventHandler("main", "OnBeforeProlog", static function () {
 });
 
 // проставляем id инфоблоков в административном меню
-AddEventHandler("main", "OnBuildGlobalMenu", static function (&$aGlobalMenu, &$aModuleMenu) {
+EventManager::getInstance()->addEventHandler("main", "OnBuildGlobalMenu", static function (&$aGlobalMenu, &$aModuleMenu) {
 	if (! $GLOBALS['USER']->IsAdmin() || !defined("ADMIN_SECTION")) {
 		return;
 	}
@@ -65,32 +67,37 @@ AddEventHandler("main", "OnBuildGlobalMenu", static function (&$aGlobalMenu, &$a
 	}
 });
 
-// верхняя постраничка в админке в лентах
-AddEventHandler("main", "OnAdminListDisplay", static function ($this_al) {
-	/* @var $this_al CAdminList */
-	if (in_array($this_al->table_id, ['tbl_user'])) {
-		return;
-	}
-	//echo $this_al->sNavText;
-});
-
 // draw user picture after login
-AddEventHandler("main", "OnAdminListDisplay", /** @param CAdminUiList $this_al */static function (&$this_al) {
-	if ($this_al->table_id == "tbl_user") {
-		foreach ($this_al->aRows as &$row) {
-			$userId = (int)$row->arRes['ID'];
-			$picPath = CFile::GetPath( (CUser::GetByID($userId)->Fetch())["PERSONAL_PHOTO"] );
-			if (trim($picPath) != '') {
-				$row->aFields["LOGIN"]["view"]["value"] .= ' <br><a target="_blank" href="' . $picPath . '">'
-					. '<img style="max-width:200px;" src="' . $picPath  . '"></a>';
+EventManager::getInstance()->addEventHandler(
+	"main",
+	"OnAdminListDisplay",
+	/** @param CAdminUiList $this_al */
+	static function (&$this_al) {
+		if ($this_al->table_id == "tbl_user") {
+			foreach ($this_al->aRows as &$row) {
+				$userId = (int)$row->arRes['ID'];
+				$picPath = CFile::GetPath( (CUser::GetByID($userId)->Fetch())["PERSONAL_PHOTO"] );
+				if (trim($picPath) != '') {
+					$row->aFields["LOGIN"]["view"]["value"] .= ' <br><a target="_blank" href="' . $picPath . '">'
+						. '<img style="max-width:200px;" src="' . $picPath  . '"></a>';
+				}
 			}
 		}
 	}
-});
+);
+
+// верхняя постраничка в админке в лентах
+/*AddEventHandler("main", "OnAdminListDisplay", static function ($this_al) {
+	/* @var $this_al CAdminList * /
+	if (in_array($this_al->table_id, ['tbl_user'])) {
+		return;
+	}
+	echo $this_al->sNavText;
+});*/
 
 // очищаем настройки формы по-умолчанию для всех админов
 // @see http://hipot.mooo.com/Codex/form_iblock_element_settings/
-AddEventHandler('main', 'OnEndBufferContent', static function (&$content) {
+EventManager::getInstance()->addEventHandler('main', 'OnEndBufferContent', static function (&$content) {
 	if (!isset($_POST['p']) || !is_array($_POST['p']) || count($_POST['p']) <= 0) {
 		return;
 	}
@@ -106,11 +113,13 @@ AddEventHandler('main', 'OnEndBufferContent', static function (&$content) {
 		return;
 	}
 
+	/** @noinspection SqlResolve */
 	$DB->Query("DELETE FROM b_user_option WHERE CATEGORY = 'form' AND NAME = '" . $pCfg['n'] . "' AND COMMON = 'N'");
 	$CACHE_MANAGER->CleanDir("user_option");
 });
 
-AddEventHandler('main', 'OnEndBufferContent', static function (&$cont) {
+// отрисовка 404 страницы с прерыванием текущего буфера и замены его на содержимое 404
+EventManager::getInstance()->addEventHandler('main', 'OnEndBufferContent', static function (&$cont) {
 	global $APPLICATION;
 
 	// process 404 in content part
@@ -123,8 +132,7 @@ AddEventHandler('main', 'OnEndBufferContent', static function (&$cont) {
 
 		$cont = file_get_contents($contCacheFile);
 		if (trim($cont) == '') {
-			//$cont = QueryGetData($_SERVER['HTTP_HOST'], 80, '/404.php', '', $errno, $errstr);
-			$el = new \Bitrix\Main\Web\HttpClient();
+			$el = new HttpClient();
 			$cont = $el->get((CMain::IsHTTPS() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . '/404.php');
 			file_put_contents($contCacheFile, $cont);
 		}

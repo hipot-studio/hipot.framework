@@ -1,6 +1,6 @@
 # Мини-фреймворк hipot.framework для создания проектов на bitrix
-(с) hipot, 2017 - 2020<br>
-mailto: me AT hipot DOT life, mailto: hipot AT ya DOT ru<br>
+(с) hipot, 2017 - 2021<br>
+mailto: hipot AT ya DOT ru<br>
 ![hipot logo](docs/img/hipot_logo.jpg)
 
 ### Требования:
