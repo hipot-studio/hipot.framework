@@ -35,7 +35,9 @@ if ($this->startResultCache(false)) {
 		$fileIds[] = $v['SOURCE_ID'];
 	}
 
-	Collection::sortByColumn($arResult['ITEMS'], ['NAME' => SORT_NATURAL]);
+	if (is_array($arResult['ITEMS'])) {
+		Collection::sortByColumn($arResult['ITEMS'], ['NAME' => SORT_NATURAL]);
+	}
 
 	$fileIds = array_filter($fileIds);
 	if ($arParams['SELECT_FILE_INFO'] == 'Y' && count($fileIds) > 0) {

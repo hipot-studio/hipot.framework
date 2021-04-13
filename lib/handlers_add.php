@@ -15,17 +15,17 @@ EventManager::getInstance()->addEventHandler("main", "OnBeforeProlog", static fu
 
 	foreach (
 		[
+			__DIR__ . '/constants.php',
 			$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/include/constants.php',
 			$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/include/lib/constants.php',
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/include/constants.php',
-			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/include/lib/constants.php',
-			__DIR__ . '/constants.php'
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/include/lib/constants.php'
 		] as $constFile) {
-		if (is_file($constFile)) {
-			include $constFile;
-			break;
+			if (is_file($constFile)) {
+				include $constFile;
+				break;
+			}
 		}
-	}
 
 	// включаем генератор ORM
 	if ($APPLICATION->GetCurPage() == '/bitrix/admin/perfmon_tables.php' && $_GET['orm'] != 'y') {
@@ -123,8 +123,12 @@ EventManager::getInstance()->addEventHandler('main', 'OnEndBufferContent', stati
 	global $APPLICATION;
 
 	// process 404 in content part
-	if (defined('ERROR_404') && constant('ERROR_404') == 'Y' && $APPLICATION->GetCurPage() != '/404.php') {
-		$contCacheFile  = $_SERVER['DOCUMENT_ROOT'] . '/404_cache.html';
+	if ((defined('ERROR_404') && constant('ERROR_404') == 'Y' && $APPLICATION->GetCurPage() != '/404.php')
+
+		|| ($GLOBALS['httpCode'] == 404 && $APPLICATION->GetCurPage() != '/404.php')
+
+	) {
+		$contCacheFile  = $_SERVER['DOCUMENT_ROOT'] . '/upload/404_cache.html';
 
 		if (is_file($contCacheFile) && ((time() - filemtime($contCacheFile)) > 3600)) {
 			unlink($contCacheFile);
@@ -141,4 +145,14 @@ EventManager::getInstance()->addEventHandler('main', 'OnEndBufferContent', stati
 	}
 });
 
-?>
+// drop unused cache to per-product discount on cli run
+EventManager::getInstance()->addEventHandler('catalog', 'OnGetDiscountResult', static function (&$arResult) {
+
+	if (PHP_SAPI == 'cli') {
+		$property = new \ReflectionProperty("CAllCatalogDiscount", "arCacheProduct");
+		$property->setAccessible(true);
+		$property->setValue("CAllCatalogDiscount", []);
+	}
+	return true;
+
+});

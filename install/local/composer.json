@@ -1,0 +1,22 @@
+{
+  "require": {
+    "php": ">=7.2.0",
+    "wikimedia/composer-merge-plugin": "dev-master",
+    "intervention/image": "^2.5"
+  },
+  "config": {
+    "vendor-dir": "../local/vendor"
+  },
+  "autoload": {
+    "psr-4": {
+      "Hipot\\": "../local/php_interface/lib/classes/Hipot"
+    }
+  },
+  "extra": {
+    "merge-plugin": {
+      "require": [
+        "../bitrix/composer-bx.json"
+      ]
+    }
+  }
+}

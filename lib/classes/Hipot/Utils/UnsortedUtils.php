@@ -378,6 +378,26 @@ class UnsortedUtils
 		}
 	}
 
+	/**
+	 * вернуть время года по таймстампу
+	 * @param \DateTimeImmutable | \DateTime $dateTime
+	 * @return string Winter|Spring|Summer|Fall
+	 */
+	public static function timestampToSeason($dateTime): string
+	{
+		$dayOfTheYear = $dateTime->format('z');
+		if ($dayOfTheYear < 80 || $dayOfTheYear > 356) {
+			return 'Winter';
+		}
+		if ($dayOfTheYear < 173) {
+			return 'Spring';
+		}
+		if ($dayOfTheYear < 266) {
+			return 'Summer';
+		}
+		return 'Fall';
+	}
+
 } // end class
 
 

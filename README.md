@@ -1,10 +1,10 @@
 # Мини-фреймворк hipot.framework для создания проектов на bitrix
 (с) hipot, 2017 - 2021<br>
-mailto: hipot AT ya DOT ru<br>
+mailto: info AT hipot-studio DOT com<br>
 ![hipot logo](docs/img/hipot_logo.jpg)
 
 ### Требования:
-bitrix 20+, PHP 7.2+
+bitrix 20+, PHP 7.4+
 
 # Доступные инструменты и возможности:
 - библиотека классов /lib/classes для копирования в /local/php_interface/lib/classes

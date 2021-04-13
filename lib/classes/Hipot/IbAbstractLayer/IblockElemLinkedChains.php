@@ -145,6 +145,12 @@ class IblockElemLinkedChains extends IblockUtils
 
 		$rsItems = \CIBlockElement::GetList($arOrder, $arFilter, $arGroupBy, $arNavParams, $arSelectFields);
 
+		// fix select cnt by group by []
+		if (!is_object($rsItems) || !method_exists($rsItems, 'GetNext')) {
+			return $rsItems;
+		}
+
+
 		$arParams = $arResult = [];
 		$arParams['SELECT_CHAINS_DEPTH'] = 3;
 		$arResult["ITEMS"] = [];
@@ -173,6 +179,3 @@ class IblockElemLinkedChains extends IblockUtils
 		return $arResult["ITEMS"];
 	}
 }
-
-
-?>

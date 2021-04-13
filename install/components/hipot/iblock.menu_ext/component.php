@@ -1,9 +1,13 @@
-<?
-if (! defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+<?php if (! defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-/* @var $this CBitrixComponent */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CMain $APPLICATION */
+/** @global CUser $USER */
+/** @global CDatabase $DB */
+/** @var CBitrixComponent $this */
 
-$reqParams = array('TYPE', 'CACHE_TAG', 'CACHE_TIME');
+$reqParams = ['TYPE', 'CACHE_TAG', 'CACHE_TIME'];
 foreach ($reqParams as $param) {
 	if (trim($arParams[ $param ]) == '') {
 		ShowError('Need PARAM ' . $param . ', see .description.php!');
@@ -62,6 +66,8 @@ if ($obMenuCache->StartDataCache($CACHE_TIME, $CACHE_ID, $cachePath)) {
 			$arSelect = array_merge($arSelect, $arParams['SELECT']);
 		}
 
+		$arNavStartParams = false;
+
 		$rsSect = CIBlockSection::GetList($arOrder, $arFilter, false, $arSelect, $arNavStartParams);
 		while ($arSect = $rsSect->GetNext()) {
 			$link_params = (count($arParams["SELECT"]) > 0) ? $arSect : array();
@@ -89,5 +95,3 @@ if ($obMenuCache->StartDataCache($CACHE_TIME, $CACHE_ID, $cachePath)) {
 
 // возвращаем выборку для использования в файлах menu_ext
 return $arResult;
-
-?>

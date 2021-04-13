@@ -19,6 +19,7 @@ use CIBlockElement;
 use CIBlockProperty;
 use CIBlockPropertyEnum;
 use CIBlockSection;
+use _CIBElement;
 use function FormatText;
 
 /**
@@ -30,7 +31,7 @@ use function FormatText;
  *
  * @version 2.X
  */
-class IblockUtils
+class IblockUtils extends _CIBElement
 {
 	/**
 	 * Добавление секции в инфоблок, возвращает ошибку либо ID результата, см. return
@@ -163,6 +164,7 @@ class IblockUtils
 	 * @param bool $arNavParams
 	 * @param array $arSelect
 	 * @return \CIBlockResult | int
+	 * {@inheritdoc}
 	 */
 	public static function selectElementsByFilter($arOrder, $arFilter, $arGroupBy = false, $arNavParams = false, $arSelect = [])
 	{
@@ -833,6 +835,36 @@ class IblockUtils
 			CIblock::enableClearTagCache();
 		}
 		return true;
+	}
+
+	/**
+	 * Получить массив ids элементов инфоблока $iblockId по запросу $query
+	 * @param string $query строка запроса
+	 * @param int $iblockId код инфоблока
+	 *
+	 * @return array
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function queryIblockItemsSearch($query, $iblockId): array
+	{
+		$r = [];
+		if (!Loader::includeModule('search')) {
+			return $r;
+		}
+		$obSearch = new CSearch();
+		$obSearch->Search([
+			'QUERY'         => $query,
+			'SITE_ID'       => SITE_ID,
+			'MODULE_ID'     => 'iblock',
+		], ["RANK" => "DESC"], [
+			"=MODULE_ID" => "iblock",
+			"!ITEM_ID" => "S%",
+			"=PARAM2" => [(int)$iblockId],
+		]);
+		while ($arResult = $obSearch->GetNext()) {
+			$r[] = $arResult['ITEM_ID'];
+		}
+		return $r;
 	}
 
 } // end class
