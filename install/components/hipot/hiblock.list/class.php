@@ -12,7 +12,7 @@ use Bitrix\Highloadblock as HL;
 /**
  * Уникальный компонент списка из Hl-блока
  */
-class hiHiblockListComponent extends CBitrixComponent
+class hiBlockListComponent extends CBitrixComponent
 {
 	const CACHE_TTL = 3600 * 24;
 
@@ -99,6 +99,7 @@ class hiHiblockListComponent extends CBitrixComponent
 				return 0;
 			}
 
+			// region parameters
 			// sort
 			if ($arParams["ORDER"]) {
 				$arOrder = $arParams["ORDER"];
@@ -129,6 +130,7 @@ class hiHiblockListComponent extends CBitrixComponent
 			if (!empty($arParams["GROUP_BY"])) {
 				$arGroupBy = $arParams["GROUP_BY"];
 			}
+			// endregion
 
 			$result = $entity_class::getList([
 				"order"     => $arOrder,
@@ -138,6 +140,7 @@ class hiHiblockListComponent extends CBitrixComponent
 				"limit"     => $limit["nPageTop"] > 0 ? $limit["nPageTop"] : 0,
 			]);
 
+			// region pager
 			if ($limit["nPageTop"] <= 0) {
 				$result = new \CDBResult($result);
 				$result->NavStart($limit, false, true);
@@ -150,6 +153,7 @@ class hiHiblockListComponent extends CBitrixComponent
 				$arResult["NAV_CACHED_DATA"] = $navComponentObject->GetTemplateCachedData();
 				$arResult["NAV_RESULT"] = $result;
 			}
+			// endregion
 
 			// build results
 			$arResult["ITEMS"] = [];
@@ -164,10 +168,14 @@ class hiHiblockListComponent extends CBitrixComponent
 					}
 					$arUserField = $fields[$k];
 
-					$html = call_user_func([$arUserField["USER_TYPE"]["CLASS_NAME"], "getadminlistviewhtml"], $arUserField, [
-						"NAME" => "FIELDS[" . $row['ID'] . "][" . $arUserField["FIELD_NAME"] . "]",
-						"VALUE" => htmlspecialcharsbx($v)
-					]);
+					$html = call_user_func(
+						[$arUserField["USER_TYPE"]["CLASS_NAME"], "getadminlistviewhtml"],
+						$arUserField,
+						[
+							"NAME"      => "FIELDS[" . $row['ID'] . "][" . $arUserField["FIELD_NAME"] . "]",
+							"VALUE"     => htmlspecialcharsbx($v)
+						]
+					);
 					if ($html == '') {
 						$html = '&nbsp;';
 					}
