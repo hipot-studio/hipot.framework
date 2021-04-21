@@ -18,6 +18,9 @@ use Bitrix\Main\Result;
  */
 trait EO_Utils
 {
+	/**
+	 * @param \Bitrix\Main\ORM\Fields\ScalarField $field
+	 */
 	protected function addFieldDataTable(\Bitrix\Main\ORM\Fields\ScalarField $field)
 	{
 		$connection = self::getEntity()->getConnection();

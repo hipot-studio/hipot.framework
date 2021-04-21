@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * @see http://dev.1c-bitrix.ru/community/webdev/user/17890/blog/8910/?commentId=49110#com49110
  *
@@ -45,14 +45,14 @@
  * @use init.php
  * require __DIR__ . '/include/ib_props_memcache.php';
  *
- * @version 1.0.1
- * @author hipot, 201
+ * @version 1.5.0
+ * @author hipot, 2021
  */
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Main\Loader;
 
-if (!class_exists('Memcache') || !class_exists('Hipot\\Utils\\MemcachedWrapper')) {
+if (!class_exists('Memcache') || !class_exists('Hipot\\Utils\\MemcacheWrapper')) {
 	return;
 }
 
@@ -61,6 +61,14 @@ Loader::includeModule('iblock');
 $pr = new CIBlockProperty();
 unset($pr);
 
-$GLOBALS['IBLOCK_CACHE_PROPERTY'] = new Hipot\Utils\MemcachedWrapper('IBLOCK_CACHE_PROPERTY_');
+$GLOBALS['IBLOCK_CACHE_PROPERTY'] = new Hipot\Utils\MemcacheWrapper('IBLOCK_CACHE_PROPERTY_', true);
 
-
+// _tests:
+/*if (isset($_REQUEST['IBLOCK_CACHE_PROPERTY'])) {
+	$keys = $GLOBALS['IBLOCK_CACHE_PROPERTY']->getMemcachedKeys();
+	foreach ($keys as $k) {
+		echo $k;
+		\Bitrix\Main\Diag\Debug::dump($GLOBALS['IBLOCK_CACHE_PROPERTY'][$k]);
+	}
+	exit;
+}*/

@@ -11,6 +11,7 @@ namespace Hipot\IbAbstractLayer\Types;
  */
 class IblockElementItem extends Base
 {
+	//region /* поля элемента инфоблока */
 	/**
 	 * ID элемента
 	 * @var int
@@ -225,7 +226,7 @@ class IblockElementItem extends Base
 	 * @var string
 	 */
 	public $TAGS;
-	/*
+	//endregion
 
 	/**
 	 * Динамичное создание итема из массива
@@ -253,6 +254,10 @@ class IblockElementItem extends Base
 		}
 	}
 
+	/**
+	 * @param $value
+	 * @return mixed
+	 */
 	public function generatePropObj($value)
 	{
 		foreach ($value as $k => $sv) {
@@ -261,4 +266,3 @@ class IblockElementItem extends Base
 		return $value;
 	}
 }
-?>

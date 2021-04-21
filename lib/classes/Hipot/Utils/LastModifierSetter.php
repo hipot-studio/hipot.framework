@@ -48,7 +48,6 @@ class LastModifierSetter
 		}
 	}
 
-
 	/**
 	 * посылка заголовка Last-Modified
 	 * @param bool|int $timeStamp = time() дата изменения в юникс-формате
@@ -76,7 +75,6 @@ class LastModifierSetter
 		header('Last-Modified: '. gmdate("D, d M Y H:i:s \G\M\T", $timeStamp));
 	}
 
-
 	/**
 	 * Вешаем проверяльщик на событие модуля main - OnEndBufferContent.
 	 */
@@ -87,7 +85,6 @@ class LastModifierSetter
 			[__CLASS__, "LastModifierSetterEndBufferContent"]
 		);
 	}
-
 
 	/**
 	 * Обработчик события модуля main - OnEndBufferContent.
@@ -123,7 +120,6 @@ class LastModifierSetter
 	 * @var int
 	 */
 	protected static $LastModified_unix_Component = false;
-
 
 	/**
 	 * Для вызова в файле result_modifier.php компонентов iblock.list и iblock.detail

@@ -32,11 +32,21 @@ class ObjectArItem implements ArrayAccess
 
 	//// ArrayAccess interface init:
 
+	/**
+	 * @param mixed $offset
+	 *
+	 * @return bool
+	 */
 	public function offsetExists($offset): bool
 	{
 		return isset($this->{$offset});
 	}
 
+	/**
+	 * @param mixed $offset
+	 *
+	 * @return mixed|null
+	 */
 	public function offsetGet($offset)
 	{
 		if ($this->offsetExists($offset)) {
@@ -46,6 +56,10 @@ class ObjectArItem implements ArrayAccess
 		}
 	}
 
+	/**
+	 * @param mixed $offset
+	 * @param mixed $value
+	 */
 	public function offsetSet($offset, $value): void
 	{
 		if (trim($offset) == '') {
@@ -54,6 +68,9 @@ class ObjectArItem implements ArrayAccess
 		$this->{$offset} = $value;
 	}
 
+	/**
+	 * @param mixed $offset
+	 */
 	public function offsetUnset($offset): void
 	{
 		if ($this->offsetExists($offset)) {

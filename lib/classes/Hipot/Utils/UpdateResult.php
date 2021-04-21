@@ -13,7 +13,7 @@ namespace Hipot\Utils;
  */
 class UpdateResult extends ObjectArItem
 {
-	public const  STATUS_OK         = 'OK';
+	public const STATUS_OK         = 'OK';
 	public const STATUS_ERROR      = 'ERROR';
 
 	/**
@@ -24,7 +24,7 @@ class UpdateResult extends ObjectArItem
 
 	/**
 	 * OK | ERROR успешно, либо ошибка
-	 * @var string
+	 * @var mixed|string
 	 */
 	public $STATUS;
 }

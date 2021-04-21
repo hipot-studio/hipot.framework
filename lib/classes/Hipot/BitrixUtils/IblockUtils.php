@@ -3,9 +3,7 @@ namespace Hipot\BitrixUtils;
 
 use Bitrix\Main\Loader,
 	Hipot\Utils\UpdateResult,
-	Hipot\Utils\UnsortedUtils;
-
-Loader::includeModule('iblock');
+	Hipot\Utils\UUtils;
 
 use Bitrix\Iblock\InheritedProperty\ElementTemplates,
 	Bitrix\Iblock\InheritedProperty\ElementValues,
@@ -13,14 +11,10 @@ use Bitrix\Iblock\InheritedProperty\ElementTemplates,
 	Bitrix\Iblock\InheritedProperty\SectionValues,
 	Bitrix\Iblock\PropertyIndex\Manager;
 
-use CFile;
-use CIblock;
-use CIBlockElement;
-use CIBlockProperty;
-use CIBlockPropertyEnum;
-use CIBlockSection;
-use _CIBElement;
+use CFile, CIblock, CIBlockElement, CIBlockProperty, CIBlockPropertyEnum, CIBlockSection, _CIBElement;
 use function FormatText;
+
+Loader::includeModule('iblock');
 
 /**
  * Дополнительные утилиты для работы с инфоблоками
@@ -418,7 +412,7 @@ class IblockUtils extends _CIBElement
 		$fieldType = ToLower($fieldType);
 
 		$iblockFieldsBase = ['code', 'xml_id', 'name', 'preview_text'];
-		$fields = UnsortedUtils::getTableFieldsFromDB($table);
+		$fields = UUtils::getTableFieldsFromDB($table);
 		foreach ($fields as &$f) {
 			$f = ToLower($f);
 			$iblockFields[] = $f;
@@ -724,7 +718,7 @@ class IblockUtils extends _CIBElement
 				'ACTIVE'        => 'Y',
 				'NAME'          => $fieldVal,
 				'IBLOCK_ID'     => $iblockId,
-				'CODE'          => UnsortedUtils::TranslitText($fieldVal) . '-' . randString(3)
+				'CODE'          => UUtils::TranslitText($fieldVal) . '-' . randString(3)
 			]);
 			if ($r->STATUS != UpdateResult::STATUS_OK) {
 				return false;

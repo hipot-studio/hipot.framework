@@ -14,13 +14,14 @@ if (! function_exists('my_print_r')) {
 	 * @param 	bool 	$in_browser = true выводить ли результат на экран,
 	 * 					либо скрыть в HTML-комментарий
 	 * @param 	bool 	$check_admin = true проверять на админа, если вывод прямо в браузер
+	 *
 	 * @return 	void
 	 *
 	 * @example
 	 * <pre>my_print_r($ar); //выведет только для админа, для всех остальных HTML-комментарий-заглушка
 	 * my_print_r($ar, false); //выведет всем в виде HTML-комментария
 	 * my_print_r($ar, true, false); //выведет всем на экран (не рекомендуется)</pre>
-	 */
+	 * @noinspection ForgottenDebugOutputInspection*/
 	function my_print_r($what, $in_browser = true, $check_admin = true)
 	{
 		if ($in_browser && $check_admin && !$GLOBALS['USER']->IsAdmin()) {
@@ -41,7 +42,7 @@ if (! function_exists('my_print_r')) {
 	}
 }
 
-if (! function_exists('__cs')) {
+if (! function_exists('__hiCs')) {
 	/**
 	 * Удобная обертка для получения в разных местах параметров в произвольных настройкаx сайта
 	 *
@@ -53,9 +54,9 @@ if (! function_exists('__cs')) {
 	 * @return mixed
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	function __cs($paramCode)
+	function __hiCs($paramCode)
 	{
-		$params = Hipot\BitrixUtils\HiBlock::getCustomSettingsList();
+		$params = Hipot\BitrixUtils\HiBlockApps::getCustomSettingsList();
 		return $params[$paramCode];
 	}
 }
@@ -104,7 +105,6 @@ if (! function_exists('GetIbEventPropValue')) {
 	function GetIbEventPropValue($propIdx)
 	{
 		$k = array_keys($propIdx);
-
 		if (is_array($k) && is_array($propIdx)) {
 			return $propIdx[ $k[0] ]['VALUE'];
 		}

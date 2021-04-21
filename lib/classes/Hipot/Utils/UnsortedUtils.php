@@ -7,8 +7,6 @@ use \Bitrix\Main\Application,
 	\Bitrix\Main\Web\HttpClient;
 use CUtil;
 
-class UUtils extends UnsortedUtils {}
-
 /**
  * Различные не-структурированные утилиты
  *

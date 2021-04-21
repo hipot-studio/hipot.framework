@@ -7,6 +7,6 @@
  */
 namespace Hipot\Utils;
 
-class MemcachedWrapperError extends \Exception
+class MemcacheWrapperError extends \Exception
 {
 }

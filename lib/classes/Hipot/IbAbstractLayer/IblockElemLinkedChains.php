@@ -1,12 +1,11 @@
 <?
 /**
- * Abstract Layer
- * Подсказки на выборки CIBlockElement::GetList
+ * Abstract Layer - Подсказки на выборки CIBlockElement::GetList()<br>
+ * точка входа в данный функционал и максимальные утилиты для инфоблока
  *
  * @version 3.4 beta
  * @author hipot <hipot at ya dot ru>
  */
-
 namespace Hipot\IbAbstractLayer;
 
 use Hipot\IbAbstractLayer\Types\IblockElementItem,
@@ -51,8 +50,7 @@ class IblockElemLinkedChains extends IblockUtils
 	 * @var array
 	 */
 	private $__cacheItems;
-	
-	
+
 	public function __construct()
 	{
 		$this->__cacheItems = array();
