@@ -7,6 +7,10 @@ use Bitrix\Sale\Delivery;
 use Bitrix\Sale\DiscountCouponsManager;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\PaySystem;
+use Bitrix\Catalog\ProductTable;
+
+Loader::includeModule('catalog');
+Loader::includeModule('sale');
 
 /**
  * Работа с заказами и корзиной
@@ -379,7 +383,66 @@ class SaleUtils
 		return $pr['CITY']['VALUE_FULL'];
 	}
 
+	/**
+	 * @param $PRODUCT_ID
+	 * @param $arItemProduct
+	 *
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 * @return \Bitrix\Main\ORM\Data\AddResult | \Bitrix\Main\ORM\Data\UpdateResult | false
+	 */
+	public static function updateProduct($PRODUCT_ID, $arItemProduct = [])
+	{
+		$PRODUCT_ID = (int)$PRODUCT_ID;
 
+		// Create the product
+		$res = ProductTable::getList([
+			'filter' => [
+				"ID" => $PRODUCT_ID,
+			],
+			'select' => ['*']
+		]);
+		if (! $arProduct = $res->fetch()) {
+			$useStoreControl = (string)\Bitrix\Main\Config\Option::get('catalog', 'default_use_store_control') === 'Y';
+			$arFields = [
+				'ID' => $PRODUCT_ID,
+				'QUANTITY_TRACE' => \Bitrix\Catalog\ProductTable::STATUS_DEFAULT,
+				'CAN_BUY_ZERO' => \Bitrix\Catalog\ProductTable::STATUS_DEFAULT,
+				'WEIGHT' => 0,
+			];
+			if ($arItemProduct['VAT_INCLUDED'] == 'Y') {
+				$arFields['VAT_INCLUDED'] = 'Y';
+			}
+			if ($arItemProduct['QUANTITY']) {
+				$arFields['QUANTITY'] = $arItemProduct['QUANTITY'];
+			} else {
+				$arFields['QUANTITY'] = 0;
+			}
+			$arFields['AVAILABLE'] = ProductTable::calculateAvailable($arFields);
+			return ProductTable::add($arFields);
+		} else {
+			$arFields = [
+				'QUANTITY_TRACE' => $arProduct['QUANTITY_TRACE'],
+				'CAN_BUY_ZERO' => $arProduct['CAN_BUY_ZERO'],
+			];
+			if ($arItemProduct['VAT_INCLUDED'] == 'Y') {
+				$arFields['VAT_INCLUDED'] = 'Y';
+			}
+			if (isset($arItemProduct['QUANTITY'])) {
+				$arFields['QUANTITY'] = $arItemProduct['QUANTITY'];
+			} else {
+				$arFields['QUANTITY'] = 0;
+			}
+			$arFields['AVAILABLE'] = ProductTable::calculateAvailable($arFields);
+			if (!empty($arFields)) {
+				return ProductTable::update($arProduct['ID'], $arFields);
+			}
+		}
+		return false;
+	}
 
 	/************************** d7 test cases, wont work **************************/
 

@@ -62,7 +62,7 @@ EventManager::getInstance()->addEventHandler("main", "OnBuildGlobalMenu", static
 		}
 		foreach ($arMenu['items'] as $i => $item) {
 			$arEx = explode('/', $item['items_id']);
-			$aModuleMenu[$k]['items'][$i]['text'] .= ' [' . $arEx[2] . ']';
+			$aModuleMenu[$k]['items'][$i]['text'] .= ' /' . $arEx[2] . '/';
 		}
 	}
 });
@@ -156,3 +156,8 @@ EventManager::getInstance()->addEventHandler('catalog', 'OnGetDiscountResult', s
 	return true;
 
 });
+
+// immediately drop custom setting hl-block cache
+EventManager::getInstance()->addEventHandler('', 'CustomSettingsOnAfterUpdate',   ['Hipot\\BitrixUtils\\HiBlockApps', 'clearCustomSettingsCacheHandler']);
+EventManager::getInstance()->addEventHandler('', 'CustomSettingsOnAfterAdd',      ['Hipot\\BitrixUtils\\HiBlockApps', 'clearCustomSettingsCacheHandler']);
+EventManager::getInstance()->addEventHandler('', 'CustomSettingsOnAfterDelete',   ['Hipot\\BitrixUtils\\HiBlockApps', 'clearCustomSettingsCacheHandler']);

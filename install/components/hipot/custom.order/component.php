@@ -10,6 +10,12 @@
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 /** @var $this \CBitrixComponent */
+/**
+ * @global $APPLICATION \CMain
+ * @global $USER \CUser
+ * @global $DB \CDatabase
+ * @global $USER_FIELD_MANAGER \CUserTypeManager
+ */
 
 /*ini_set('display_errors' ,1);
 error_reporting(E_ERROR);*/
@@ -89,7 +95,7 @@ if ($arParams['AJAX'] == 'Y' && count($_REQUEST) > 0) {
 
 		if ($postKeyForm == 'PROPS_fast') {
 			// add to web form
-			$r = \Hipot\Utils\UnsortedUtils::formResultAddSimple(3, [
+			$r = \Hipot\Utils\UUtils::formResultAddSimple(3, [
 				'form_text_18' => $props['FIO'],                                                // Имя
 				'form_text_19' => $props['PHONE'],                                              // Телефон
 				'form_text_21' => $props['EMAIL'],                                              // email

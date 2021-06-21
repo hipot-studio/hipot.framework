@@ -7,6 +7,7 @@
  */
 namespace Hipot\BitrixUtils;
 
+use Bitrix\Main\Entity\Event;
 use RuntimeException;
 
 /**
@@ -14,6 +15,11 @@ use RuntimeException;
  */
 class HiBlockApps extends HiBlock
 {
+	/**
+	 * тег сохранения настроек через PhpCacher
+	 */
+	public const CS_CACHE_TAG = 'hi_custom_settings';
+
 	/**
 	 * Установить таблицу и HL-блок с произвольными настройками сайта
 	 *
@@ -90,9 +96,12 @@ class HiBlockApps extends HiBlock
 	 * @throws \Bitrix\Main\SystemException
 	 * @uses \Hipot\BitrixUtils\PhpCacher
 	 */
-	public static function getCustomSettingsList(string $hiBlockName = 'CustomSettings')
+	public static function getCustomSettingsList(string $hiBlockName = 'CustomSettings', $cacheTtl = false)
 	{
-		return PhpCacher::cache('hi_custom_settings', self::CACHE_TTL, static function() use ($hiBlockName) {
+		if ($cacheTtl === false) {
+			$cacheTtl = self::CACHE_TTL;
+		}
+		return PhpCacher::cache(self::CS_CACHE_TAG, $cacheTtl, static function() use ($hiBlockName) {
 			$arParams = [];
 
 			/* @var $dm \Bitrix\Main\Entity\DataManager */
@@ -115,7 +124,7 @@ class HiBlockApps extends HiBlock
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	static function ShowPostersHtml(string $hlBlockname = 'SupportPoster'): void
+	public static function ShowPostersHtml(string $hlBlockname = 'SupportPoster'): void
 	{
 		$dm			= self::getDataManagerByHiCode($hlBlockname);
 		$arPosters 	= $dm::getList(array(
@@ -137,6 +146,15 @@ class HiBlockApps extends HiBlock
 		if (count($arPosters) > 0) {
 			echo '</div>';
 		}
+	}
+
+	/**
+	 * событие очистки, нужен обработчик на CustomSettingsOnAfterUpdate, CustomSettingsOnAfterAdd, CustomSettingsOnAfterDelete
+	 * @param \Bitrix\Main\Entity\Event $event
+	 */
+	public static function clearCustomSettingsCacheHandler(Event $event): void
+	{
+		PhpCacher::clearDirByTag(self::CS_CACHE_TAG);
 	}
 
 } // end class

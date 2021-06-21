@@ -1,11 +1,11 @@
 <?php
 namespace Hipot\Utils;
 
-use CMainPage;
-use COption;
 use \Intervention\Image\ImageManagerStatic as iiImage;
-use Bitrix\Main\IO;
-use RuntimeException;
+use CMainPage,
+	COption,
+	Bitrix\Main\IO,
+	RuntimeException;
 
 if (extension_loaded('imagick') && class_exists('Imagick')) {
 	iiImage::configure(['driver' => 'imagick']);
@@ -20,15 +20,15 @@ if (class_exists(Img::class)) {
  * За основу взят класс CImg и сохранена некоторая совместимость c ним
  * Использует библиотеку трансформации \Intervention\Image 2.X *
  *
- * Необходимо: php 7.1, Fileinfo Extension, GD (лучше Imagick)
+ * Необходимо: php 7.4, Extensions: fileinfo, GD (лучше Imagick)
  *
  * @see http://image.intervention.io/
  * @see http://hipot.socialmatrix.net/Codex/cimg-constantly-integrable-modifier-of-graphics/
  *
  * @throws 		Intervention\Image\Exception\*
  *
- * @author		(c) hipot
- * @version		3.5, 2019
+ * @author		(c) hipot studio
+ * @version		3.5.1, 2021
  */
 class Img
 {

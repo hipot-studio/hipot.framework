@@ -34,7 +34,7 @@ class HiBlock
 	{
 		$hlblock = false;
 
-		if (is_numeric($hlblockId)) {
+		if ($hlblockId > 0) {
 			$hlblock   = HighloadBlockTable::getByPrimary($hlblockId, ['cache' => ["ttl" => self::CACHE_TTL]])->fetch();
 		} else if (trim($hiBlockName) != '') {
 			$hlblock	= HighloadBlockTable::getList([

@@ -8,18 +8,20 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Highloadblock as HL;
+use Bitrix\Highloadblock\HighloadBlockTable;
+use Bitrix\Main\Entity\DataManager;
 
 /**
  * Уникальный компонент списка из Hl-блока
  */
 class hiBlockListComponent extends CBitrixComponent
 {
-	const CACHE_TTL = 3600 * 24;
+	public const CACHE_TTL = 3600 * 24;
 
 	/**
-	 * @var \Bitrix\Main\Entity\DataManager
+	 * @var \Bitrix\Main\Entity\DataManager|null
 	 */
-	private $entity_class;
+	private ?DataManager $entity_class;
 
 	/**
 	 * <pre>
@@ -41,7 +43,7 @@ class hiBlockListComponent extends CBitrixComponent
 	 * </pre>
 	 *
 	 * @param $arParams
-	 * @return array
+	 * @return array|void
 	 */
 	public function onPrepareComponentParams($arParams)
 	{
@@ -59,7 +61,7 @@ class hiBlockListComponent extends CBitrixComponent
 	{
 		global $USER_FIELD_MANAGER;
 
-		// simplyfiers )
+		// simplifier )
 		$arParams     = &$this->arParams;
 		$arResult     = &$this->arResult;
 		$entity_class = &$this->entity_class;
@@ -77,9 +79,9 @@ class hiBlockListComponent extends CBitrixComponent
 			$hlblock_code   = $arParams['HLBLOCK_CODE'];
 
 			if (is_numeric($hlblock_id)) {
-				$hlblock   = HL\HighloadBlockTable::getByPrimary($hlblock_id, ['cache' => ["ttl" => self::CACHE_TTL]])->fetch();
+				$hlblock    = HighloadBlockTable::getByPrimary($hlblock_id, ['cache' => ["ttl" => self::CACHE_TTL]])->fetch();
 			} else if (trim($hlblock_code) != '') {
-				$hlblock	= HL\HighloadBlockTable::getList([
+				$hlblock	= HighloadBlockTable::getList([
 					'filter'    => ['NAME' => $hlblock_code],
 					'cache'     => ["ttl" => self::CACHE_TTL]
 				])->fetch();
@@ -89,7 +91,7 @@ class hiBlockListComponent extends CBitrixComponent
 				return 0;
 			}
 
-			$entity_class = HL\HighloadBlockTable::compileEntity( $hlblock );
+			$entity_class = HighloadBlockTable::compileEntity( $hlblock );
 
 			if (empty($entity_class)) {
 				if ($arParams["SET_404"] == "Y") {
@@ -168,8 +170,9 @@ class hiBlockListComponent extends CBitrixComponent
 					}
 					$arUserField = $fields[$k];
 
+					/* @see https://dev.1c-bitrix.ru/api_help/iblock/classes/user_properties/GetAdminListViewHTML.php */
 					$html = call_user_func(
-						[$arUserField["USER_TYPE"]["CLASS_NAME"], "getadminlistviewhtml"],
+						[$arUserField["USER_TYPE"]["CLASS_NAME"], "GetAdminListViewHTML"],
 						$arUserField,
 						[
 							"NAME"      => "FIELDS[" . $row['ID'] . "][" . $arUserField["FIELD_NAME"] . "]",
