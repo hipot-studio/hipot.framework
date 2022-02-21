@@ -22,21 +22,22 @@ if (! function_exists('my_print_r')) {
 	 * my_print_r($ar, false); //выведет всем в виде HTML-комментария
 	 * my_print_r($ar, true, false); //выведет всем на экран (не рекомендуется)</pre>
 	 * @noinspection ForgottenDebugOutputInspection*/
-	function my_print_r($what, $in_browser = true, $check_admin = true)
+	function my_print_r($what, bool $in_browser = true, bool $check_admin = true, bool $backtrace = false)
 	{
-		if ($in_browser && $check_admin && !$GLOBALS['USER']->IsAdmin()) {
+		if ($in_browser && $check_admin && !$GLOBALS['USER']->IsAdmin() && !IS_BETA_TESTER) {
 			echo "<!-- my_print_r admin need! -->";
 			return;
 		}
-
-		/*$backtrace = debug_backtrace();
-		echo '<h4>' . $backtrace[0]["file"] . ', ' . $backtrace[0]["line"] . '</h4>';*/
 
 		echo $in_browser ? "<pre>" : "<!--";
 		if ( is_array($what) )  {
 			print_r($what);
 		} else {
 			var_dump($what);
+		}
+		if ($backtrace) {
+			$arBacktrace = debug_backtrace();
+			echo '<h4>' . $arBacktrace[0]["file"] . ', ' . $arBacktrace[0]["line"] . '</h4>';
 		}
 		echo $in_browser ? "</pre>" : "-->";
 	}
@@ -166,8 +167,8 @@ if (! function_exists('array_get')) {
 	/**
 	 * Возвращает элемент подмассива используя точечную нотацию item.sub_item
 	 *
-	 * @param array $array Массив
-	 * @param string $key Ключ
+	 * @param array|mixed $array Массив
+	 * @param string|int $key Ключ
 	 * @param mixed $default Значение "по умалчанию"
 	 *
 	 * @return mixed

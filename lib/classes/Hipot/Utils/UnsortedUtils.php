@@ -130,7 +130,7 @@ class UnsortedUtils
 	 *
 	 * @param string $cmd команда на выполнение
 	 * @see exec()
-	 * @return NULL
+	 * @deprecated
 	 */
 	public static function execInBackground($cmd): void
 	{
@@ -182,7 +182,7 @@ class UnsortedUtils
 	 * @param string $tableName имя таблицы
 	 * @return array
 	 */
-	public static function getTableFieldsFromDB($tableName): array
+	public static function getTableFieldsFromDB(string $tableName): array
 	{
 		$a = [];
 		if (trim($tableName) != '') {
@@ -326,7 +326,7 @@ class UnsortedUtils
 	 * @param string $regx
 	 * @return bool
 	 */
-	public static function isValidRegx($regx): bool
+	public static function isValidRegx(string $regx): bool
 	{
 		return preg_match($regx, null) !== false;
 	}
@@ -394,6 +394,18 @@ class UnsortedUtils
 			return 'Summer';
 		}
 		return 'Fall';
+	}
+
+	/**
+	 * write exception to log
+	 * @param \Exception|\Bitrix\Main\SystemException $exception
+	 * @return void
+	 */
+	public static function logException($exception): void
+	{
+		$application = Application::getInstance();
+		$exceptionHandler = $application->getExceptionHandler();
+		$exceptionHandler->writeToLog($exception);
 	}
 
 } // end class

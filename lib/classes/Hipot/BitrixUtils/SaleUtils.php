@@ -8,6 +8,7 @@ use Bitrix\Sale\DiscountCouponsManager;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\PaySystem;
 use Bitrix\Catalog\ProductTable;
+use Bitrix\Iblock;
 
 Loader::includeModule('catalog');
 Loader::includeModule('sale');
@@ -85,7 +86,6 @@ class SaleUtils
 
 		return (!empty($_cache[$orderPropsId])) ? $_cache[$orderPropsId] : false;
 	}
-
 
 	/**
 	 * Устанавливает в заказ $orderId свойства $arProps
@@ -196,7 +196,6 @@ class SaleUtils
 
 		return $arBasketItems;
 	}
-
 
 	/**
 	 * Получить справочник свойств заказа
@@ -444,8 +443,64 @@ class SaleUtils
 		return false;
 	}
 
-	/************************** d7 test cases, wont work **************************/
+	/**
+	 * Получить скидки у продукта из инфоблока
+	 * @param int $PRODUCT_ID
+	 * @param int $IBLOCK_ID = 0
+	 *
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function GetDiscountForProduct(int $PRODUCT_ID, $IBLOCK_ID = 0): array
+	{
+		if ((int)$IBLOCK_ID == 0) {
+			$IBLOCK_ID = IblockUtils::getElementIblockId($PRODUCT_ID);
+		}
 
+		static $arMainCatalog;
+		if (! isset($arMainCatalog[$IBLOCK_ID])) {
+			$arMainCatalog[$IBLOCK_ID] = \CCatalogSku::GetInfoByIBlock($IBLOCK_ID);
+
+			$siteList = [];
+			$iterator = Iblock\IblockSiteTable::getList([
+				'select' => ['SITE_ID'],
+				'filter' => ['=IBLOCK_ID' => $IBLOCK_ID]
+			]);
+			while ($row = $iterator->fetch()) {
+				$siteList[] = $row['SITE_ID'];
+			}
+			unset($row, $iterator);
+			$arMainCatalog[$IBLOCK_ID]['SITE_ID'] = $siteList;
+		}
+
+		$arParams = [];
+		if (\CCatalogSku::TYPE_OFFERS == $arMainCatalog['CATALOG_TYPE']) {
+			$arParams['SKU'] = 'Y';
+			$arParams['SKU_PARAMS'] = [
+				'IBLOCK_ID' => $arMainCatalog['IBLOCK_ID'],
+				'PRODUCT_IBLOCK_ID' => $arMainCatalog['PRODUCT_IBLOCK_ID'],
+				'SKU_PROPERTY_ID' => $arMainCatalog['SKU_PROPERTY_ID'],
+			];
+		}
+		$arParams['DISCOUNT_FIELDS'] = [
+			"ACTIVE_FROM", 'ACTIVE_TO', 'NAME', 'ID', 'SITE_ID', 'SORT', 'NAME', 'VALUE_TYPE', 'VALUE'
+		];
+		$arParams['SITE_ID'] = $arMainCatalog[$IBLOCK_ID]['SITE_ID'];
+
+		$arDiscountList = \CCatalogDiscount::GetDiscountForProduct(['ID' => $PRODUCT_ID, 'IBLOCK_ID' => $IBLOCK_ID], $arParams);
+		if (PHP_SAPI == 'cli') {
+			\CCatalogDiscount::ClearDiscountCache([
+				'PRODUCT'       => true,
+				'SECTIONS'      => true,
+				'PROPERTIES'    => true
+			]);
+		}
+		return (array)$arDiscountList;
+	}
+
+	/************************** d7 test cases, wont work **************************/
 
 	/**
 	 * TODO
