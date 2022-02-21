@@ -1,6 +1,6 @@
 {
   "require": {
-    "php": ">=7.2.0",
+    "php": ">=7.4.0",
     "wikimedia/composer-merge-plugin": "dev-master",
     "intervention/image": "^2.5"
   },
