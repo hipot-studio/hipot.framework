@@ -8,8 +8,11 @@
 
 namespace Hipot\BitrixUtils;
 
+use Bitrix\Main\Data;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\DB;
+use Bitrix\Main\ORM\Fields\ScalarField;
 use Bitrix\Main\Result;
 
 /**
@@ -19,24 +22,27 @@ use Bitrix\Main\Result;
 trait EO_Utils
 {
 	/**
-	 * @param \Bitrix\Main\ORM\Fields\ScalarField $field
+	 * @param ScalarField $field
+	 *
+	 * @return DB\Result;
+	 * @throws \Bitrix\Main\DB\SqlQueryException
 	 */
-	protected function addFieldDataTable(\Bitrix\Main\ORM\Fields\ScalarField $field)
+	protected static function addFieldDataTable(ScalarField $field): DB\Result
 	{
+		/** @var Data\Connection|DB\Connection $connection */
 		$connection = self::getEntity()->getConnection();
 
-		$query = 'ALTER   TABLE ';
-		$query .= self::getTableName() . ' ADD ' . $field->getName() . ' ';
+		$query = 'ALTER   TABLE `' . self::getTableName() . '` ADD ' . $field->getName() . ' ';
 		$query .= $connection->getSqlHelper()->getColumnTypeByField($field);
 		$query .= $field->isRequired() ? ' NOT NULL' : '';
-		$connection->query($query);
+		return $connection->query($query);
 	}
 
 	/**
 	 * Обновить поля сушьности после добавления его в getMap()
 	 * удаленные из getMap удаляются из базы, а добавленные в него - добавляются
 	 */
-	public static function updateDataTable()
+	public static function updateDataTable(): void
 	{
 		$entity = self::getEntity();
 		$connection = $entity->getConnection();
@@ -66,7 +72,7 @@ trait EO_Utils
 	 * @param array $arguments
 	 * @return mixed
 	 * @throws SqlQueryException
-	 * @throws Throwable
+	 * @throws \Throwable
 	 */
 	public static function wrapTransaction(callable $callback, ...$arguments)
 	{
@@ -92,7 +98,7 @@ trait EO_Utils
 			}
 
 			return $result;
-		} catch (Throwable $e) {
+		} catch (\Throwable $e) {
 			$connection->rollbackTransaction();
 			throw $e;
 		}

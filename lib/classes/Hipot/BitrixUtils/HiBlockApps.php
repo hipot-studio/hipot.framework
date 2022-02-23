@@ -89,7 +89,7 @@ class HiBlockApps extends HiBlock
 	 *
 	 * @param string $hiBlockName = 'CustomSettings'
 	 *
-	 * @return boolean | array (CODE => VALUE)
+	 * @return boolean | array{CODE: VALUE}
 	 *
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException

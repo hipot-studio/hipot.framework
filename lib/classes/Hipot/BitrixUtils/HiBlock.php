@@ -3,6 +3,7 @@ namespace Hipot\BitrixUtils;
 
 use Bitrix\Main\Loader, CUserTypeEntity;
 use Bitrix\Highloadblock\HighloadBlockTable;
+use Bitrix\Main\ORM\Data\AddResult;
 
 Loader::includeModule('highloadblock');
 
@@ -86,12 +87,15 @@ class HiBlock
 
 	/**
 	 * Добавляем hl-блок в систему
+	 *
 	 * @param string $hiBlockName
 	 * @param string $tableName
-	 * @param array $addField = []
-	 * @return \Bitrix\Main\ORM\Data\AddResult
+	 * @param array  $addField = []
+	 *
+	 * @return AddResult
+	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function addHiBlock($hiBlockName, $tableName, $addField = [])
+	public static function addHiBlock(string $hiBlockName, string $tableName, array $addField = []): AddResult
 	{
 		$flds = [
 			'NAME'			=> $hiBlockName,

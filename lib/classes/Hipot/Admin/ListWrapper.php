@@ -148,7 +148,6 @@ class ListWrapper
 		return $navyParams;
 	}
 
-
 	/**
 	 * @param \CDBResult $rsDataOrm
 	 * @param string|null $ormDataClass  = null

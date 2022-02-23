@@ -43,11 +43,6 @@ class PhpCacher
 	{
 		self::$LAST_ERROR = '';
 
-		if (! is_string($tagName)) {
-			self::$LAST_ERROR = 'BAD TAG NAME TO BE STRING...';
-			return false;
-		}
-
 		if (($tagName = trim($tagName)) == '') {
 			self::$LAST_ERROR = 'BAD TAG NAME ARGUMENT...';
 			return false;
