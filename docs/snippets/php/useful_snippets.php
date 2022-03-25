@@ -1,4 +1,14 @@
 <?
+/**
+ * @global $APPLICATION \CMain
+ * @global $USER \CUser
+ * @global $DB \CDatabase
+ * @global $USER_FIELD_MANAGER \CUserTypeManager
+ *
+ * @var $arParams array
+ */
+
+
 //preg_replace_callback example
 echo preg_replace_callback('|#H2#(.*?)#/H2#|is', function ($matches) {
 	return '<h2>' . strip_tags($matches[1]) . '</h2>';
@@ -154,6 +164,10 @@ if ($_SERVER['HTTP_X_REQUESTED_WITH'] != 'XMLHttpRequest') {
 			});
 		});
 	});
+
+	// телефон с хвостом
+	$.mask.definitions['~'] = '[+-]';
+	$('input[name="PHONE"], .phone_mask').mask("+7 999 999 99 99?999999", {placeholder : "*"});
 </script>
 
 
@@ -260,7 +274,7 @@ $arJqueryExt = CJSCore::getExtInfo("jquery");
 
 <?
 // 2. Как отменить композитное кеширование в любом месте страницы (проголосовать "против") ?
-\Bitrix\Main\Data\StaticHtmlCache::getInstance()->markNonCacheable();
+\Bitrix\Main\Composite\Page::getInstance()->markNonCacheable();
 ?>
 
 <?
@@ -273,4 +287,121 @@ if ($arBarCode === false) {
 } elseif ($arBarCode["ID"]["BARCODE"] != $barcode) {
 	$dbBarCode = CCatalogStoreBarCode::Update($arBarCode["ID"], array("BARCODE" => $barcode, "MODIFIED_BY" => $USER->GetID()));
 }
+?>
+
+<?
+/** @var \Bitrix\Sale\Order $order */
+$order = \Bitrix\Sale\Order::load($arOrder['ID']);
+\Bitrix\Sale\OrderStatus::isAllowPay($order->getField('STATUS_ID'))
+?>
+
+<?php
+# http://mamihlapinatapai.mooo.com/bitrix/admin/repair_db.php?lang=ru&optimize_tables=Y
+
+$arTable["Name"] = "b_stat_searcher_hit";
+$rsStatus = $DB->Query('check table `'.$arTable["Name"].'`');
+$rsStatus = $DB->Query('optimize table `'.$arTable["Name"].'`');
+$rsStatus = $DB->Query('analyze table `'.$arTable["Name"].'`');
+# check table b_stat_searcher_hit;
+# optimize table b_stat_searcher_hit;
+# analyze table b_stat_searcher_hit;
+?>
+
+
+<?php
+function CleatCatalogCompositCache($arFields)
+{
+	global $USER, $CACHE_MANAGER;
+	if (! in_array($arFields['IBLOCK_ID'], [54, 32])) {
+		return;
+	}
+	$el = CIBlockElement::GetList([], ['ID' => (int)$arFields['ID']], false, false,
+		['ID', 'DETAIL_PAGE_URL', 'IBLOCK_ID'])->GetNext();
+	if (trim($el['DETAIL_PAGE_URL']) != '') {
+
+		$basePath = '/bitrix/html_pages/q-watch.ru';
+		if (is_dir(\Bitrix\Main\Loader::getDocumentRoot() . $basePath . $el['DETAIL_PAGE_URL'])) {
+			DeleteDirFilesEx($basePath . $el['DETAIL_PAGE_URL']);
+		}
+
+		$basePath = '/bitrix/html_pages/www.citytime.ru';
+		if (is_dir(\Bitrix\Main\Loader::getDocumentRoot() . $basePath . $el['DETAIL_PAGE_URL'])) {
+			DeleteDirFilesEx($basePath . $el['DETAIL_PAGE_URL']);
+		}
+	}
+}
+
+AddEventHandler('iblock', 'OnAfterIBlockElementUpdate', 'CleatCatalogCompositCache');
+AddEventHandler('iblock', 'OnAfterIBlockElementAdd', 'CleatCatalogCompositCache');
+?>
+
+<?php
+exec ("find /var/www/vhosts/matugalnik.ru/httpdocs/bitrix/modules/bitrixcloud/classes/general  -type d -exec chmod 0750 {} +");
+exec ("find /var/www/vhosts/matugalnik.ru/httpdocs/bitrix/modules/bitrixcloud/classes/general  -type f -exec chmod 0644 {} +");
+?>
+
+
+<?php
+// see merge bitrix backup cmd
+$dir            = '/home/bitrix/www/bitrix/backup';
+$startName      = '1rmc.ru_20210309_192159_full_c46e65f1.tar.gz';
+
+$arChParts = [];
+$iter = new DirectoryIterator($dir);
+foreach ($iter as $fileinfo) {
+	/* @var SplFileInfo $fileinfo */
+	if ($fileinfo->isDir()) {
+		continue;
+	}
+	if (strpos($fileinfo->getFilename(), $startName) !== false) {
+		$arChParts[] = $fileinfo->getFilename();
+	}
+}
+natsort($arChParts);
+
+$cmd = 'cat ' . implode(' ', $arChParts) . ' > merged.tar.gz';
+echo 'cd ' . $dir . '<br>' . PHP_EOL;
+echo $cmd;
+?>
+
+<?php
+usort($arItem["VALUES"], static function ($a, $b) {
+	return strnatcasecmp($a['VALUE'], $b['VALUE']);
+});
+?>
+
+<?php
+/* get memcached stat */
+$memcache_obj = new Memcache;
+$memcache_obj->addServer('unix:///home/bitrix/memcached.sock', '0');
+$memcache_obj->addServer('localhost', 11211);
+
+$stats = $memcache_obj->getExtendedStats();
+print_r($stats);
+print_r( CFile::FormatSize( $stats['unix:///home/bitrix/memcached.sock:0']['bytes'] ));
+
+print_r( PHP_EOL . CFile::FormatSize( $stats['localhost:11211']['bytes'] ));
+?>
+
+
+<?php
+// 403 admin edit /bitrix/modules/security/admin/security_403.php
+?>
+
+<?php
+$_SERVER['HTTP_HOST'] = preg_replace('#:(80|443)$#', '', $_SERVER['HTTP_HOST']);
+?>
+
+<?
+define("CACHED_b_iblock", 3600 * 24);
+define("CACHED_b_iblock_bucket_size", 40);
+?>
+
+
+<?
+$APPLICATION->SetTitle("title h1");
+$APPLICATION->SetPageProperty('title', "title browser");    // opt set to title
+
+// <title><?$APPLICATION->ShowTitle()?></title>
+// <h1 id="pagetitle"><?$APPLICATION->ShowTitle(false)?></h1>
 ?>

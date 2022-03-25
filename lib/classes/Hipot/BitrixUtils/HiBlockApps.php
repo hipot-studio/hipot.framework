@@ -89,7 +89,7 @@ class HiBlockApps extends HiBlock
 	 *
 	 * @param string $hiBlockName = 'CustomSettings'
 	 *
-	 * @return boolean | array{CODE: VALUE}
+	 * @return boolean | array{CODE: 'VALUE'}
 	 *
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
@@ -155,6 +155,12 @@ class HiBlockApps extends HiBlock
 	public static function clearCustomSettingsCacheHandler(Event $event): void
 	{
 		PhpCacher::clearDirByTag(self::CS_CACHE_TAG);
+
+		// clear composite (if its in memcache)
+		// \Bitrix\Main\Composite\Page::getInstance()->deleteAll();
+
+		// clear component cache
+		\CBitrixComponent::clearComponentCache("hipot:hiblock.list");
 	}
 
 } // end class

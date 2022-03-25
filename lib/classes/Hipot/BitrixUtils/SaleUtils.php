@@ -500,6 +500,22 @@ class SaleUtils
 		return (array)$arDiscountList;
 	}
 
+	/**
+	 * очистить профили покупателя для анонимного пользователя
+	 * @return void
+	 */
+	public static function clearAnonymousSaleUserProps(): void
+	{
+		$anonUserID = (int)\COption::GetOptionInt("sale", "anonymous_user_id");
+		if ($anonUserID <= 0) {
+			return;
+		}
+		$db_sales = \CSaleOrderUserProps::GetList(["DATE_UPDATE" => "DESC"], ["USER_ID" => $anonUserID], false, false, ['ID', 'USER_ID']);
+		while ($ar_sales = $db_sales->Fetch()) {
+			\CSaleOrderUserProps::Delete($ar_sales['ID']);
+		}
+	}
+
 	/************************** d7 test cases, wont work **************************/
 
 	/**

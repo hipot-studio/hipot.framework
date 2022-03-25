@@ -1,8 +1,26 @@
-<?
+<?php
 
 /** @see http://www.intervolga.ru/blog/projects/d7-analogi-lyubimykh-funktsiy-v-1s-bitriks/ */
 /** @see https://github.com/SidiGi/bitrix-info/wiki */
 
+// ALL uses
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\Application;
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\IO\Directory;
+use Bitrix\Main\IO\File;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Web\Cookie;
+use Bitrix\Main\Service\GeoIp;
+use Bitrix\Sale\Location\GeoIp as SaleGeoIp;
+use Bitrix\Main\Mail\Event as CMailEvent;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventResult;
+use Bitrix\Main\SystemException;
 
 // Old school
 $APPLICATION->AddHeadScript(SITE_TEMPLATE_PATH . "/js/fix.js");
@@ -10,8 +28,6 @@ $APPLICATION->SetAdditionalCSS(SITE_TEMPLATE_PATH . "/styles/fix.css");
 $APPLICATION->AddHeadString("<link href='http://fonts.googleapis.com/css?family=PT+Sans:400&subset=cyrillic' rel='stylesheet' type='text/css'>");
 
 // D7
-use Bitrix\Main\Page\Asset;
-
 Asset::getInstance()->addJs(SITE_TEMPLATE_PATH . "/js/fix.js");
 Asset::getInstance()->addCss(SITE_TEMPLATE_PATH . "/styles/fix.css");
 Asset::getInstance()->addString("<link href='http://fonts.googleapis.com/css?family=PT+Sans:400&subset=cyrillic' rel='stylesheet' type='text/css'>");
@@ -23,8 +39,6 @@ CModule::IncludeModule("iblock");
 CModule::IncludeModuleEx("intervolga.tips");
 
 // D7
-use Bitrix\Main\Loader;
-
 Loader::includeModule("iblock");
 Loader::includeSharewareModule("intervolga.tips");
 
@@ -37,8 +51,6 @@ IncludeTemplateLangFile(__FILE__);
 echo GetMessage("INTERVOLGA_TIPS.TITLE");
 
 // D7
-use Bitrix\Main\Localization\Loc;
-
 Loc::loadMessages(__FILE__);
 echo Loc::getMessage("INTERVOLGA_TIPS.TITLE");
 
@@ -50,8 +62,6 @@ $size = COption::GetOptionInt("main", "max_file_size");
 COption::RemoveOption("main", "max_file_size", "s2");
 
 // D7
-use Bitrix\Main\Config\Option;
-
 Option::set("main", "max_file_size", "1024");
 $size = Option::get("main", "max_file_size");
 Option::delete("main", array(
@@ -63,12 +73,17 @@ Option::delete("main", array(
 /////////////////////////////////////////////////////////////
 
 // Old school
+$cacheTime      = 3600;
+$cacheId        = md5();
+$cacheDir       = "php/some_stuff";
+
 $cache = new CPHPCache();
 if ($cache->InitCache($cacheTime, $cacheId, $cacheDir)) {
 	$result = $cache->GetVars();
 } elseif ($cache->StartDataCache()) {
 	$result = array();
 	// ...
+	$isInvalid = false;
 	if ($isInvalid) {
 		$cache->AbortDataCache();
 	}
@@ -124,8 +139,6 @@ UnRegisterModuleDependences(
 $handlers = GetModuleEvents("main", "OnProlog", true);
 
 // D7
-use Bitrix\Main\EventManager;
-
 $handler = EventManager::getInstance()->addEventHandler(
 	"main",
 	"OnUserLoginExternal",
@@ -134,7 +147,7 @@ $handler = EventManager::getInstance()->addEventHandler(
 		"onUserLoginExternal"
 	)
 );
-Bitrix\Main\EventManager::addEventHandlerCompatible();
+EventManager::addEventHandlerCompatible();
 
 EventManager::getInstance()->removeEventHandler(
 	"main",
@@ -170,10 +183,6 @@ RewriteFile(
 DeleteDirFilesEx("/foo/bar/baz/");
 
 // D7
-use Bitrix\Main\Application;
-use Bitrix\Main\IO\Directory;
-use Bitrix\Main\IO\File;
-
 Directory::createDirectory(
 	Application::getDocumentRoot() . "/foo/bar/baz/"
 );
@@ -199,8 +208,6 @@ if ($exception = $APPLICATION->GetException()) {
 }
 
 // D7
-use Bitrix\Main\SystemException;
-
 try {
 	// ...
 	throw new SystemException("Error");
@@ -250,14 +257,13 @@ CEvent::Send(
 );
 
 // D7
-use Bitrix\Main\Mail\Event;
-Event::send(array(
+CMailEvent::send(array(
 	"EVENT_NAME" => "NEW_USER",
 	"LID" => "s1",
-	"C_FIELDS" => array(
+	"C_FIELDS" => [
 		"EMAIL" => "info@intervolga.ru",
 		"USER_ID" => 42
-	),
+	],
 ));
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -273,9 +279,6 @@ $name = $request->getPost("name");
 $email = htmlspecialchars($request->getQuery("email"));
 
 //////////////////////////////////////////////////////////////////////////////////
-
-use Bitrix\Main\Web\HttpClient;
-
 $httpClient = new HttpClient();
 $httpClient->setHeader('Content-Type', 'application/json', true);
 $response = $httpClient->post('http://www.example.com', json_encode(array('x' => 1)));
@@ -290,7 +293,6 @@ $APPLICATION->set_cookie("TEST", 42, false, "/", "example.com");
 echo $APPLICATION->get_cookie("TEST");
 
 // D7
-use Bitrix\Main\Web\Cookie;
 $cookie = new Cookie("TEST", 42);
 $cookie->setDomain("example.com");
 Application::getInstance()->getContext()->getResponse()->addCookie($cookie);
@@ -301,16 +303,14 @@ echo Application::getInstance()->getContext()->getRequest()->getCookie("TEST");
 
 // Old school
 global $APPLICATION;
-$redirect = $APPLICATION->GetCurPageParam("foo=bar", array("baz"));
+$redirect = $APPLICATION->GetCurPageParam("foo=bar", ["baz"]);
 
 // D7
-use Bitrix\Main\Web\Uri;
-
 $request = Application::getInstance()->getContext()->getRequest();
 $uriString = $request->getRequestUri();
 $uri = new Uri($uriString);
-$uri->deleteParams(array("baz"));
-$uri->addParams(array("foo" => "bar"));
+$uri->deleteParams(["baz"]);
+$uri->addParams(["foo" => "bar"]);
 $redirect = $uri->getUri();
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -333,12 +333,21 @@ Debug::writeToFile($record);
 
 ///////////////////////////// sale /////////////////////////////////////////////////
 
-\Bitrix\Main\EventManager::getInstance()->addEventHandler(
+EventManager::getInstance()->addEventHandler(
 	'sale',
 	'OnSaleOrderBeforeSaved',
 	'saleOrderBeforeSaved'
 );
-function saleOrderBeforeSaved(\Bitrix\Main\Event $event)
+/**
+ * @param \Bitrix\Main\Event $event
+ *
+ * @throws \Bitrix\Main\ArgumentException
+ * @throws \Bitrix\Main\ArgumentOutOfRangeException
+ * @throws \Bitrix\Main\NotImplementedException
+ * @throws \Bitrix\Main\ObjectPropertyException
+ * @throws \Bitrix\Main\SystemException
+ */
+function saleOrderBeforeSaved(Event $event)
 {
 	/** @var \Bitrix\Sale\Order $order */
 	$order = $event->getParameter("ENTITY");
@@ -372,4 +381,89 @@ function saleOrderBeforeSaved(\Bitrix\Main\Event $event)
 		}
 	}
 }
+
+
+//////////////////////////////////////////////////////
+$cache = Application::getInstance()->getManagedCache();
+$cache->clean("b_module_to_module");
+
+
+////// Определение геолокации пользователя
+/// sale 17.0.13+ Настройки -> Настройки продукта -> Геолокация
+// own
+$eventManager = EventManager::getInstance();
+$eventManager->addEventHandler(
+	'main',
+	'onMainGeoIpHandlersBuildList',
+	'GeoIpHandler'
+);
+function GeoIpHandler()
+{
+	return new EventResult(
+		EventResult::SUCCESS,
+		array(
+			'YourClass' => '/path/to/your/class.php',
+		)
+	);
+}
+
+// geocoding example
+$ipAddress = GeoIp\Manager::getRealIp();
+$result = GeoIp\Manager::getDataResult($ipAddress, "ru")->getGeoData();
+$country = $result->countryCode;
+
+// relay to sale locations
+SaleGeoIp::getLocationId($ipAddress, $lang);
+SaleGeoIp::getLocationCode($ipAddress, $lang);
+SaleGeoIp::getZipCode($ipAddress, $lang);
+
+?>
+
+
+<?php
+foreach (EventManager::getInstance()->findEventHandlers('main', 'OnEndBufferContent') as $i => $evt) {
+	EventManager::getInstance()->removeEventHandler('main', 'OnEndBufferContent', $i);
+}
+?>
+
+<?php
+// work with session
+\Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["scanned"]++;
+?>
+
+<?
+// очистка кеша компонента
+$GLOBALS["CACHE_MANAGER"]->CleanDir("menu");
+CBitrixComponent::clearComponentCache("bitrix:menu");
+?>
+
+<?
+$page = \Bitrix\Main\Composite\Page::getInstance();
+$page->deleteAll();
+?>
+
+<?
+$connection = \Bitrix\Main\Application::getConnection();
+// останавливаем выполнение запросов
+$connection->disableQueryExecuting();
+
+// выполняем свой код, который как бы генерирует и исполняет запросы, но БД их не получит, а результат запроса будет пустым
+Bitrix\Iblock\ElementTable::getList( /*...*/ );
+$connection->createTable( /*...*/ );
+// и т.п.
+
+// включаем выполнение запросов
+$connection->enableQueryExecuting();
+
+// и получаем дамп (массив) накопившихся sql запросов
+$queries = $connection->getDisabledQueryExecutingDump();
+
+// трекинг выполненных запросов пост-фактум
+
+\Bitrix\Main\Application::getConnection()->startTracker(false);
+$rsData = Bitrix\Iblock\ElementTable::getList( /*...*/ );
+\Bitrix\Main\Application::getConnection()->stopTracker();
+$sql = $rsData->getTrackerQuery()->getSql();
+// or
+print_r( \Bitrix\Main\Application::getConnection()->getTracker() );
 ?>

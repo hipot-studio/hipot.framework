@@ -6,8 +6,10 @@
  * Т.е. в данном файле пишем AddEventHandler
  * а сам обработчик в файле с классом /include/lib/classes/siteevents.php
  */
+
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Composite\Page as CompositePage;
 
 // определяем глобальные константы, которые могут зависеть от $APPLICATION и $USER
 EventManager::getInstance()->addEventHandler("main", "OnBeforeProlog", static function () {
@@ -96,7 +98,7 @@ EventManager::getInstance()->addEventHandler(
 });*/
 
 // очищаем настройки формы по-умолчанию для всех админов
-// @see http://hipot.mooo.com/Codex/form_iblock_element_settings/
+// @see https://www.hipot-studio.com/Codex/form_iblock_element_settings/
 EventManager::getInstance()->addEventHandler('main', 'OnEndBufferContent', static function (&$content) {
 	if (!isset($_POST['p']) || !is_array($_POST['p']) || count($_POST['p']) <= 0) {
 		return;
@@ -141,6 +143,8 @@ EventManager::getInstance()->addEventHandler('main', 'OnEndBufferContent', stati
 			file_put_contents($contCacheFile, $cont);
 		}
 
+		CompositePage::getInstance()->markNonCacheable();
+
 		header("HTTP/1.0 404 Not Found\r\n");
 	}
 });
@@ -149,9 +153,14 @@ EventManager::getInstance()->addEventHandler('main', 'OnEndBufferContent', stati
 EventManager::getInstance()->addEventHandler('catalog', 'OnGetDiscountResult', static function (&$arResult) {
 
 	if (PHP_SAPI == 'cli') {
-		$property = new \ReflectionProperty("CAllCatalogDiscount", "arCacheProduct");
+		/*$property = new \ReflectionProperty("CAllCatalogDiscount", "arCacheProduct");
 		$property->setAccessible(true);
-		$property->setValue("CAllCatalogDiscount", []);
+		$property->setValue("CAllCatalogDiscount", []);*/
+		\CCatalogDiscount::ClearDiscountCache([
+			'PRODUCT'       => true,
+			/*'SECTIONS'      => true,
+			'PROPERTIES'    => true*/
+		]);
 	}
 	return true;
 
