@@ -41,6 +41,7 @@ $xhprofEnd = static function ($minDiffTime = null) {
 		$uri        = implode('|', $uri);
 		$xhprofCode = $client . '__' . $uri . '__' . $timeF . 's';
 		$xhprofCode = preg_replace('#[^a-z0-9_|-]#i', '_', $xhprofCode);
+		$xhprofCode = substr($xhprofCode, 0, 200);  // linux max filename
 
 		$pathXhprof = $_SERVER['DOCUMENT_ROOT'] . '/local';
 
