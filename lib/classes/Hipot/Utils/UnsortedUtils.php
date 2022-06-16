@@ -221,7 +221,7 @@ class UnsortedUtils
 	/**
 	 * Возвращает размер удаленного файла
 	 *
-	 * @param $path Путь к удаленному файлу
+	 * @param string $path Путь к удаленному файлу
 	 * @return int | bool
 	 */
 	public static function remote_filesize($path)
@@ -406,6 +406,75 @@ class UnsortedUtils
 		$application = Application::getInstance();
 		$exceptionHandler = $application->getExceptionHandler();
 		$exceptionHandler->writeToLog($exception);
+	}
+
+	/**
+	 * Подключает видео-проигрыватель битрикса
+	 *
+	 * @param string $videoFile
+	 * @param int $width
+	 * @param int $height
+	 * @param $component
+	 * @param bool $adaptiveFixs установка ширины плеера согласно текущей ширины блока, но с соотношением переданной ширины/высоты
+	 *
+	 * @return void
+	 */
+	public static function insertVideoBxPlayer(string $videoFile, int $width = 800, int $height = 450, $component = null, bool $adaptiveFixs = true): void
+	{
+		global $APPLICATION;
+
+		$videoId = 'video_' . md5($videoFile . randString());
+		if ($adaptiveFixs) {
+			?>
+			<script>
+				BX.ready(() => {
+					BX.addCustomEvent('PlayerManager.Player:onAfterInit', (player) => {
+						if (typeof $(player.getElement()).data('resize_koef') === 'undefined') {
+							$(player.getElement()).data('resize_koef', $(player.getElement()).height() / $(player.getElement()).width()).css({
+								'width': '100%',
+							});
+						}
+						$(window).resize(() => {
+							$(player.getElement()).css({
+								'width' : '100%',
+								'height': $(player.getElement()).width() * $(player.getElement()).data('resize_koef')
+							});
+						}).resize();
+					});
+				});
+			</script>
+			<?
+		}
+
+		$APPLICATION->IncludeComponent(
+			"bitrix:player",
+			"",
+			[
+				//"PREVIEW" => "",
+				"ADVANCED_MODE_SETTINGS" => "N",
+				"AUTOSTART" => "N",
+				"AUTOSTART_ON_SCROLL" => "N",
+
+				"WIDTH" => $width,
+				"HEIGHT" => $height,
+				'PLAYER_ID' => $videoId,
+				"PATH" => trim($videoFile),
+
+				"MUTE" => "N",
+				"PLAYBACK_RATE" => "1",
+				"PLAYER_TYPE" => "auto",
+				"PRELOAD" => "N",
+				"BUFFER_LENGTH" => "15",
+				"REPEAT" => "none",
+				"SHOW_CONTROLS" => "Y",
+				"SIZE_TYPE" => "absolute",
+				"SKIN" => "",
+				"SKIN_PATH" => "/bitrix/js/fileman/player/videojs/skins",
+				"START_TIME" => "0",
+				"VOLUME" => 60,
+
+			], $component, ["HIDE_ICONS" => "Y"]
+		);
 	}
 
 } // end class

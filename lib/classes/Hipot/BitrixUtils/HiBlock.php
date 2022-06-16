@@ -39,7 +39,7 @@ class HiBlock
 			$hlblock   = HighloadBlockTable::getByPrimary($hlblockId, ['cache' => ["ttl" => self::CACHE_TTL]])->fetch();
 		} else if (trim($hiBlockName) != '') {
 			$hlblock	= HighloadBlockTable::getList([
-				'filter'    => ['NAME' => $hiBlockName],
+				'filter'    => ['=NAME' => $hiBlockName],
 				'cache'     => ["ttl" => self::CACHE_TTL]
 			])->fetch();
 		}

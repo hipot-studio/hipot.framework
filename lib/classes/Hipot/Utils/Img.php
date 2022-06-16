@@ -112,7 +112,7 @@ class Img
 	public static $saveAlpha = false;
 
 	/**
-	 * Можно переопределить в какой формат в итоге сохранить png|gif|jpeg
+	 * Можно переопределить в какой формат в итоге сохранить png|gif|jpeg|webp
 	 * @var bool
 	 */
 	public static $decodeToFormat = false;
@@ -202,7 +202,7 @@ class Img
 			$this->r_path = preg_replace('#gif$#i', 'png', $this->r_path);
 		}
 		if (self::$decodeToFormat) {
-			$this->r_path = preg_replace('#(png)|(gif)$#i', self::$decodeToFormat, $this->r_path);
+			$this->r_path = preg_replace('#(png)|(gif)|(jpe?g)$#i', self::$decodeToFormat, $this->r_path);
 		}
 		self::$decodeToFormat = false;
 	}

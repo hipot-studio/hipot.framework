@@ -1,9 +1,9 @@
-<?
+<?php
 /**
  * Very tiny simple autoloader with support of classes
  *
- * @author hipot, 2019
- * @version 2.4
+ * @author hipot, 2022
+ * @version 2.5
  *
  * HELP:
  * <classes root> is:
@@ -16,8 +16,11 @@
  * ...
  */
 
-// add custom __autoload in stack after \Bitrix\Main\Loader::autoLoad()
-// see: var_dump( spl_autoload_functions() );
+/*
+ * add custom __autoload in stack after \Bitrix\Main\Loader::autoLoad()
+ * see: var_dump( spl_autoload_functions() );
+ * TIP: use only in not-with-composer projects
+ */
 spl_autoload_register(static function ($className) {
 	//echo $className; die();
 	$libDirs = [
@@ -49,5 +52,3 @@ spl_autoload_register(static function ($className) {
 	}
 });
 //\Bitrix\Main\Diag\Debug::dump( spl_autoload_functions() );
-
-?>
