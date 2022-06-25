@@ -1,8 +1,7 @@
 <?php
 namespace Hipot\Utils;
 
-use Bitrix\Main\Config\Configuration,
-	Memcache, ArrayAccess;
+use Memcache, Hipot\Param\MemcacheServerConfig;
 
 /**
  * A lightweight wrapper around the PHP Memcached extension with three goals:
@@ -20,50 +19,41 @@ use Bitrix\Main\Config\Configuration,
  *
  * @see https://www.php.net/manual/ru/book.memcache.php
  */
-class MemcacheWrapper implements ArrayAccess
+class MemcacheWrapper implements \ArrayAccess
 {
 	/**
+	 * Для исключения коллизий
 	 * @var mixed|string
 	 */
-	protected $prefix;
+	private string $prefix;
+
+	/**
+	 * @var MemcacheServerConfig
+	 */
+	private MemcacheServerConfig $config;
 
 	/**
 	 * The underlying Memcached object, which you can access in order to
 	 * override the prefix prepending if you really want.
 	 */
-	protected Memcache $mc;
-
-	/**
-	 * Путь к мемкеш-сокету при ручной конфигурации по нашему регламенту
-	 * @var string
-	 */
-	const MANUAL_SOCKET_PATH = 'unix:///home/bitrix/memcached.sock';
-
-	/**
-	 * Для сохранения итогового подключенного сервера
-	 * @var array
-	 */
-	protected array $serverAddr = [
-		'host'  => 'localhost',
-		'port'  => 11211
-	];
+	private Memcache $mc;
 
 	/**
 	 * MemcachedWrapper constructor.
 	 *
 	 * @param string $prefix = '' Строковый префикс для группировки сходных данных в мемкеше
-	 * @param bool $socket = false Использовать ли настроенный мемкеш-сокет self::MANUAL_SOCKET_PATH = /home/bitrix/memcached.sock
+	 * @param bool   $socket = false Использовать ли настроенный мемкеш-сокет self::MANUAL_SOCKET_PATH = /home/bitrix/memcached.sock
 	 *
 	 * @throws \Hipot\Utils\MemcacheWrapperError
 	 */
-	public function __construct($prefix = '', $socket = false)
+	public function __construct(string $prefix, MemcacheServerConfig $config)
 	{
-		$this->prefix = $prefix;
+		$this->prefix = trim($prefix);
+		$this->config = $config;
 		$this->mc = new Memcache();
 
-		$v = $this->serverAddr = self::getServerAddr($socket);
-
-		if (! $this->mc->pconnect($v["host"], $v["port"])) {
+		$v = $this->config->getServerAddr();
+		if (! $this->mc->connect($v["host"], $v["port"])) {
 			throw new MemcacheWrapperError("Cant connect to memcached: " . $v["host"]);
 		}
 	}
@@ -78,35 +68,6 @@ class MemcacheWrapper implements ArrayAccess
 	}
 
 	/**
-	 * Возвращает адрес для подключения к сокету
-	 * @param bool $socket = true
-	 * @return array
-	 */
-	public static function getServerAddr($socket = true): array
-	{
-		$v = [
-			'host'  => 'localhost',
-			'port'  => 11211
-		];
-		if ($socket) {
-			// socket
-			$v["host"] = self::MANUAL_SOCKET_PATH;
-			$v["port"] = 0;
-		} else {
-			$cacheConfig = Configuration::getValue("cache");
-			$vS = (isset($cacheConfig["memcache"])) ? $cacheConfig["memcache"] : null;
-
-			if ($vS != null && isset($vS["port"])) {
-				$v["port"] = (int)$vS["port"];
-			}
-			if (trim($vS["host"]) != '') {
-				$v["host"] = $vS["host"];
-			}
-		}
-		return $v;
-	}
-
-	/**
 	 * Get all memcached keys. Special function because getAllKeys() is broken since memcached 1.4.23. Should only be needed on php 5.6
 	 *
 	 * cleaned up version of code found on Stackoverflow.com by Maduka Jayalath
@@ -115,7 +76,7 @@ class MemcacheWrapper implements ArrayAccess
 	 */
 	public function getMemcachedKeys()
 	{
-		$v = $this->serverAddr;
+		$v = $this->config->getServerAddr();
 
 		$mem = @fsockopen($v['host'], $v['port']);
 		if ($mem === false) {
@@ -202,13 +163,12 @@ class MemcacheWrapper implements ArrayAccess
 	 *
 	 * @return bool
 	 */
-	public function offsetExists($offset)
+	public function offsetExists($offset): bool
 	{
 		if ($this->mc->get($this->prefix . $offset)) {
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	/**

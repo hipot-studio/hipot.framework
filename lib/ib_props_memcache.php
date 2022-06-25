@@ -44,15 +44,23 @@
  *
  * @use init.php
  * require __DIR__ . '/include/ib_props_memcache.php';
+ * !!! Обязательно перезапускать memcached при изменении инфоблоков в режим хранения свойств 2.0 и обратно
  *
- * @version 1.5.0
- * @author hipot, 2021
+ * TODO need patch file bitrix/modules/iblock/classes/general/iblockproperty.php
+ * bitrix is_set function to isset-construction
+ *
+ * @version 1.5.1
+ * @author hipot, 2022
  */
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
-use Bitrix\Main\Loader;
+use Bitrix\Main\Loader,
+	Hipot\Utils\MemcacheWrapper,
+	Hipot\Param\MemcacheServerConfig,
+	Hipot\Utils\MemcacheWrapperError,
+	Hipot\Utils\UUtils;
 
-if (!class_exists('Memcache') || !class_exists('Hipot\\Utils\\MemcacheWrapper')) {
+if (!class_exists('Memcache') || !class_exists(MemcacheWrapper::class)) {
 	return;
 }
 
@@ -61,10 +69,19 @@ Loader::includeModule('iblock');
 $pr = new CIBlockProperty();
 unset($pr);
 
-$GLOBALS['IBLOCK_CACHE_PROPERTY'] = new Hipot\Utils\MemcacheWrapper('IBLOCK_CACHE_PROPERTY_', true);
+try {
+	$GLOBALS['IBLOCK_CACHE_PROPERTY'] = new MemcacheWrapper(
+		'IBLOCK_CACHE_PROPERTY_',
+		MemcacheServerConfig::create(/** $socket = */!defined('PHP_WINDOWS_VERSION_BUILD'))
+	);
+} catch (MemcacheWrapperError $e) {
+	UUtils::logException($e);
+}
 
 // _tests:
 /*if (isset($_REQUEST['IBLOCK_CACHE_PROPERTY'])) {
+	// var_dump( $GLOBALS['IBLOCK_CACHE_PROPERTY']->getMc()->getExtendedStats() );
+
 	$keys = $GLOBALS['IBLOCK_CACHE_PROPERTY']->getMemcachedKeys();
 	foreach ($keys as $k) {
 		echo $k;
