@@ -7,7 +7,9 @@
  */
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-use \Hipot\BitrixUtils\IblockUtils;
+use Bitrix\Main\Loader;
+use Hipot\BitrixUtils\IblockUtils;
+use Hipot\IbAbstractLayer\IblockElemLinkedChains;
 
 /**
  * Уникальный компонент всяческих листов элементов инфоблока
@@ -17,17 +19,17 @@ use \Hipot\BitrixUtils\IblockUtils;
  */
 class hiIblockListComponent extends CBitrixComponent
 {
-	const /** @noinspection ClassConstantCanBeUsedInspection */
-			LINKED_CHAINS_CLASS = '\\Hipot\\IbAbstractLayer\\IblockElemLinkedChains';
+	public const LINKED_CHAINS_CLASS = IblockElemLinkedChains::class;
 
 	/**
+	 * Repository to get linked-iblock-elements
 	 * @var \Hipot\IbAbstractLayer\IblockElemLinkedChains
 	 */
-	private $obChainBuilder;
+	private IblockElemLinkedChains $obChainBuilder;
 
-	public function onPrepareComponentParams($arParams)
+	public function onPrepareComponentParams($arParams): array
 	{
-		\CpageOption::SetOptionString("main", "nav_page_in_session", "N");
+		$arParams = is_array($arParams) ? $arParams : [];
 
 		$arParams['PAGEN_1']			    = (int)$_REQUEST['PAGEN_1'];
 		$arParams['SHOWALL_1']			    = (int)$_REQUEST['SHOWALL_1'];
@@ -48,10 +50,12 @@ class hiIblockListComponent extends CBitrixComponent
 		$arParams =& $this->arParams;
 		$arResult =& $this->arResult;
 
-		if ($this->startResultCache(false)) {
-			\CModule::IncludeModule("iblock");
+		\CPageOption::SetOptionString("main", "nav_page_in_session", "N");
 
-			if ($arParams["ORDER"]) {
+		if ($this->startResultCache(false)) {
+			Loader::includeModule("iblock");
+
+			if (isset($arParams["ORDER"])) {
 				$arOrder = $arParams["ORDER"];
 			} else {
 				$arOrder = ["SORT" => "ASC"];
@@ -70,7 +74,7 @@ class hiIblockListComponent extends CBitrixComponent
 				$arNavParams["bShowAll"]	= ($arParams['NAV_SHOW_ALL'] == 'Y');
 			}
 
-			$arSelect = array("ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME", "TIMESTAMP_X");
+			$arSelect = ["ID", "IBLOCK_ID", "IBLOCK_SECTION_ID", "DETAIL_PAGE_URL", "NAME", "TIMESTAMP_X"];
 			if ($arParams["SELECT"]) {
 				$arSelect = array_merge($arSelect, $arParams["SELECT"]);
 			}
@@ -79,10 +83,9 @@ class hiIblockListComponent extends CBitrixComponent
 			$rsItems = \CIBlockElement::GetList($arOrder, $arFilter, false, $arNavParams, $arSelect);
 
 			if ($arParams['SELECT_CHAINS'] == 'Y') {
-				// создаем объект, должен создаваться до цикла по элементам, т.к. в него складываются
+				// Создаем объект, должен создаваться до цикла по элементам, т.к. в него складываются
 				// уже выбранные цепочки в качестве кеша
-				$className = static::LINKED_CHAINS_CLASS;
-				$this->obChainBuilder = new $className;
+				$this->obChainBuilder = new static::LINKED_CHAINS_CLASS();
 			}
 
 			while ($arItem = $rsItems->GetNext()) {
@@ -137,9 +140,9 @@ class hiIblockListComponent extends CBitrixComponent
 					];
 				}
 
-				$this->setResultCacheKeys(array(
+				$this->setResultCacheKeys([
 					"NAV_RESULT"
-				));
+				]);
 			} else {
 				if ($arParams["SET_404"] == "Y") {
 					include $_SERVER["DOCUMENT_ROOT"] . "/404_inc.php";

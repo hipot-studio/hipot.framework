@@ -69,11 +69,11 @@ if (! function_exists('__getHl')) {
 	 * @param int|string $hiBlockName числовой или символьный код HL-инфоблока
 	 * @param bool       $staticCache = true сохранять в локальном кеше функции возвращаемые сущности
 	 *
-	 * @return bool
+	 * @return bool|Bitrix\Main\ORM\Data\DataManager
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	function __getHl($hiBlockName, $staticCache = true)
+	function __getHl($hiBlockName, bool $staticCache = true)
 	{
 		static $addedBlocks;
 
@@ -97,16 +97,17 @@ if (! function_exists('__getHl')) {
 if (! function_exists('GetIbEventPropValue')) {
 	/**
 	 * Удобно использовать в событиях инфоблока для получения значений без сдвига массива
+	 * $arFields['PROPERTY_VALUES'][107][    <b>??? - 1259|0|n0</b>    ]['VALUE']
 	 *
-	 * @param mixed $propIdx
+	 * @param mixed $propIdx напр. $arFields['PROPERTY_VALUES'][107]
 	 *
-	 * @return bool | $arFields['PROPERTY_VALUES'][107][    <b>??? - 1259|0|n0</b>    ]['VALUE']
+	 * @return bool | mixed
 	 * @use GetIbEventPropValue($arFields['PROPERTY_VALUES'][107])
 	 */
 	function GetIbEventPropValue($propIdx)
 	{
-		$k = array_keys($propIdx);
-		if (is_array($k) && is_array($propIdx)) {
+		if (is_array($propIdx)) {
+			$k = array_keys($propIdx);
 			return $propIdx[ $k[0] ]['VALUE'];
 		}
 		return false;
@@ -191,6 +192,24 @@ if (! function_exists('array_get')) {
 	}
 }
 
+if (! function_exists('bx_js_encode')) {
+	/**
+	 * Если определить глобальную функцию с секретным именем bx_js_encode,
+	 * то при работе CUtil::PhpToJSObject() будет вызываться именно она и сразу возвращаться ее результат
+	 *
+	 * @param mixed $arData
+	 * @param $bWS
+	 * @param $bSkipTilda
+	 * @param $bExtType
+	 *
+	 * @return mixed
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	function bx_js_encode($arData, $bWS, $bSkipTilda, $bExtType)
+	{
+		return Bitrix\Main\Web\Json::encode($arData);
+	}
+}
 
 
 // \/EOF

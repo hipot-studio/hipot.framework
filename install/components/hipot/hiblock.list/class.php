@@ -7,9 +7,7 @@
  */
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Highloadblock as HL;
 use Bitrix\Highloadblock\HighloadBlockTable;
-use Bitrix\Main\Entity\DataManager;
 
 /**
  * Уникальный компонент списка из Hl-блока
@@ -19,9 +17,9 @@ class hiBlockListComponent extends CBitrixComponent
 	public const CACHE_TTL = 3600 * 24;
 
 	/**
-	 * @var \Bitrix\Main\Entity\DataManager|null
+	 * @var string|null
 	 */
-	private ?DataManager $entity_class;
+	private ?string $entity_class;
 
 	/**
 	 * <pre>
@@ -70,7 +68,7 @@ class hiBlockListComponent extends CBitrixComponent
 		foreach ($requiredModules as $requiredModule) {
 			if (! CModule::IncludeModule($requiredModule)) {
 				ShowError($requiredModule . " not inslaled and required!");
-				return 0;
+				return false;
 			}
 		}
 		if ($this->startResultCache(false)) {
@@ -88,17 +86,18 @@ class hiBlockListComponent extends CBitrixComponent
 			} else {
 				ShowError('cant init HL-block');
 				$this->abortResultCache();
-				return 0;
+				return false;
 			}
 
-			$entity_class = HighloadBlockTable::compileEntity( $hlblock );
+			$obEntity = HighloadBlockTable::compileEntity( $hlblock );
+			$entity_class = $obEntity->getDataClass();
 
-			if (empty($entity_class)) {
+			if (! class_exists($entity_class)) {
 				if ($arParams["SET_404"] == "Y") {
 					include $_SERVER["DOCUMENT_ROOT"] . "/404_inc.php";
 				}
 				ShowError('404 HighloadBlock not found');
-				return 0;
+				return false;
 			}
 
 			// region parameters
@@ -111,11 +110,15 @@ class hiBlockListComponent extends CBitrixComponent
 
 			// limit
 			$limit = [
-				'nPageSize' => (int)$arParams["PAGESIZE"] > 0 ? (int)$arParams["PAGESIZE"] : 10,
 				'iNumPage' => is_set($arParams['PAGEN_1']) ? $arParams['PAGEN_1'] : 1,
-				'bShowAll' => $arParams['NAV_SHOW_ALL'] == 'Y',
-				'nPageTop' => (int)$arParams["NTOPCOUNT"]
+				'bShowAll' => $arParams['NAV_SHOW_ALL'] == 'Y'
 			];
+			if ((int)$arParams["NTOPCOUNT"] > 0) {
+				$limit['nPageTop'] = (int)$arParams["NTOPCOUNT"];
+			}
+			if ((int)$arParams["PAGESIZE"] > 0) {
+				$limit['nPageSize'] = (int)$arParams["PAGESIZE"];
+			}
 
 			$arSelect = ["*"];
 			if (!empty($arParams["SELECT"])) {
@@ -186,6 +189,13 @@ class hiBlockListComponent extends CBitrixComponent
 					$row[$k] = $html;
 					$row["~" . $k] = $v;
 				}
+
+				$row['fields'] = $USER_FIELD_MANAGER->getUserFieldsWithReadyData(
+					'HLBLOCK_'.$hlblock['ID'],
+					$row,
+					LANGUAGE_ID
+				);
+
 				$arResult["ITEMS"][] = $row;
 			}
 

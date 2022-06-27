@@ -48,14 +48,15 @@ $xhprofEnd = static function ($minDiffTime = null) {
 		require_once $pathXhprof . '/xhprof_lib/utils/xhprof_lib.php';
 		require_once $pathXhprof . '/xhprof_lib/utils/xhprof_runs.php';
 
+		/** @noinspection PhpUndefinedClassInspection */
 		$xhprof_runs = new XHProfRuns_Default();
 		$run_id      = $xhprof_runs->save_run($xhprof_data, $xhprofCode);
 	}
 };
 
 // define('ENABLE_XHPROF', true);
-// define('XHPROF_MIN_TIME_SEC', 3);
-if (ENABLE_XHPROF && function_exists('xhprof_enable')) {
+define('XHPROF_MIN_TIME_SEC', 1);
+if ((ENABLE_XHPROF || isset($_REQUEST['ENABLE_XHPROF'])) && function_exists('xhprof_enable')) {
 	$xhprofStart();
 	register_shutdown_function(static function () use ($xhprofEnd) {
 		$xhprofEnd(defined('XHPROF_MIN_TIME_SEC') ? XHPROF_MIN_TIME_SEC : 3);
