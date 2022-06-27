@@ -42,7 +42,7 @@ class SaleUtils
 		}
 		\CModule::IncludeModule('sale');
 
-		$arProps = array();
+		$arProps = [];
 		$res = \CSaleOrderPropsValue::GetOrderProps($orderId);
 		while ($ar = $res->Fetch()) {
 			if ($orderPropsIdInKey) {
@@ -72,12 +72,12 @@ class SaleUtils
 		static $_cache;
 
 		if (!isset($_cache[$orderPropsId])) {
-			$_cache[$orderPropsId] = array();
+			$_cache[$orderPropsId] = [];
 
 			\CModule::IncludeModule('sale');
 			$res = \CSaleOrderPropsVariant::GetList(
-				array("ID" => "ASC"),
-				array("ORDER_PROPS_ID" => $orderPropsId)
+				["ID" => "ASC"],
+				["ORDER_PROPS_ID" => $orderPropsId]
 			);
 			while ($ar = $res->Fetch()) {
 				$_cache[$orderPropsId][] = $ar;
@@ -112,7 +112,7 @@ class SaleUtils
 		$arOrderProps = self::getOrderProps($orderId, false, true);
 		foreach ($arProps as $propCode => $propValue) {
 			if ($arOrderProps[$propCode]) {
-				\CSaleOrderPropsValue::Update($arOrderProps[$propCode]['ID'], array('VALUE' => $propValue));
+				\CSaleOrderPropsValue::Update($arOrderProps[$propCode]['ID'], ['VALUE' => $propValue]);
 				$ret = true;
 				continue;
 			}
@@ -120,13 +120,13 @@ class SaleUtils
 			$orderPropsDir = self::getSaleOrderPropsDir();
 
 			if (array_key_exists($propCode, $orderPropsDir)) {
-				\CSaleOrderPropsValue::Add(array(
+				\CSaleOrderPropsValue::Add([
 					"ORDER_ID" => $orderId,
 					"ORDER_PROPS_ID" => $orderPropsDir[$propCode]["ID"],
 					"NAME" => $orderPropsDir[$propCode]["NAME"],
 					"CODE" => $orderPropsDir[$propCode]["CODE"],
 					"VALUE" => $propValue
-				));
+				]);
 				$ret = true;
 			}
 		}
@@ -211,7 +211,7 @@ class SaleUtils
 
 			\CModule::IncludeModule('sale');
 			$dbOrderProperties = \CSaleOrderProps::GetList(
-				array("ID" => "ASC"),
+				["ID" => "ASC"],
 				[],
 				false,
 				false,
@@ -600,11 +600,11 @@ class SaleUtils
 				$name = $deliveryObj->getName();
 			}
 
-			$shipment->setFields(array(
+			$shipment->setFields([
 				'DELIVERY_ID' => $deliveryId, // $deliveryObj->getId(),
 				'DELIVERY_NAME' => $name,
 				'CURRENCY' => $order->getCurrency(),
-			));
+			]);
 
 			$shipmentCollection->calculateDelivery();
 		}
@@ -633,10 +633,10 @@ class SaleUtils
 			}
 
 			if (!empty($arPaySystem)) {
-				$extPayment->setFields(array(
+				$extPayment->setFields([
 					'PAY_SYSTEM_ID' => $arPaySystem["ID"],
 					'PAY_SYSTEM_NAME' => $arPaySystem["NAME"]
-				));
+				]);
 			} else {
 				$extPayment->delete();
 			}

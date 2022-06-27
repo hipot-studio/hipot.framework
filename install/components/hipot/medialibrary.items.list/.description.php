@@ -21,16 +21,16 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
  * SELECT_FILE_INFO         - Y/N, по-умолчанию N выбрать массив всех файлов из b_file в $arResult['arFileInfo'][ int ID ]
  */
 
-$arComponentDescription = array(
+$arComponentDescription = [
 	"NAME"			=> "medialibrary.items.list",
 	"DESCRIPTION"	=> "",
 	"ICON"			=> "/images/ico.gif",
-	"PATH" => array(
+	"PATH" => [
 		"ID"		=> "hipot_root",
 		"NAME"		=> "hipot"
-	),
-	"AREA_BUTTONS"	=> array(),
+	],
+	"AREA_BUTTONS"	=> [],
 	"CACHE_PATH"	=> "Y",
 	"COMPLEX"		=> "N"
-);
+];
 ?>

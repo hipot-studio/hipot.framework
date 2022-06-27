@@ -104,16 +104,16 @@ Email пользователя: #mail#
 @see https://webexpert.bitrix24.ru/workgroups/group/91/wiki/wexpert%3Arequest/
 */
 
-$arComponentDescription = array(
+$arComponentDescription = [
 	"NAME"			=> "request.form.system",
 	"DESCRIPTION"	=> "",
 	"ICON"			=> "/images/ico.gif",
-	"PATH" => array(
+	"PATH" => [
 		"ID"		=> "hipot_root",
 		"NAME"		=> "hipot"
-	),
-	"AREA_BUTTONS"	=> array(),
+	],
+	"AREA_BUTTONS"	=> [],
 	"CACHE_PATH"	=> "Y",
 	"COMPLEX"		=> "N"
-);
+];
 ?>

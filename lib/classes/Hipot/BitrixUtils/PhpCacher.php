@@ -158,7 +158,7 @@ class PhpCacher
 	{
 		if (defined('BX_COMP_MANAGED_CACHE')) {
 			if (! is_array($tags)) {
-				$tags = array($tags);
+				$tags = [$tags];
 			}
 			foreach ($tags as $tag) {
 				$GLOBALS['CACHE_MANAGER']->ClearByTag($tag);

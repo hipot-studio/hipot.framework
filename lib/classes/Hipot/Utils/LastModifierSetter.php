@@ -136,11 +136,11 @@ class LastModifierSetter
 
 		$arResultEx = $arResult;
 		if (count($arResultEx['ITEMS']) == 0) {
-			$arResultEx = array(
-				'ITEMS'		=> array(
+			$arResultEx = [
+				'ITEMS'		=> [
 					$arResult
-				)
-			);
+				]
+			];
 		}
 
 		// находим из всех выбранных элементов инфоблока самое последнее время изменения

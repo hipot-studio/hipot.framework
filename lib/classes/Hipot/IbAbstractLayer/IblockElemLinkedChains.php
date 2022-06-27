@@ -28,40 +28,41 @@ class IblockElemLinkedChains extends IblockUtils
 {
 	/**
 	 * Корень получаемой цепочки
-	 * @var int
+	 * @var int|null
 	 */
-	private  $__topLevelId;
+	private ?int $__topLevelId;
 
 	/**
 	 * Максимальный уровень вложенности
 	 * @var int
 	 */
-	private  $__maxLevel;
+	private int $__maxLevel;
 
 	/**
 	 * Текущий уровень, для итераций
 	 * @var int
 	 */
-	private  $__level;
+	private int $__level;
 	
 	/**
 	 * Уже выбранные элементы, чтобы не выбирать их вновь (кеш)
 	 * в ключе - ID элемента, в значении весь элемент с цепочкой ниже
 	 * @var array
 	 */
-	private $__cacheItems;
+	private array $__cacheItems;
 
 	public function __construct()
 	{
-		$this->__cacheItems = array();
+		$this->__cacheItems = [];
 	}
 
 	/**
 	 * Инициализация получения цепочки
 	 * !! Нужно вызывать перед каждым вызовом getChains_r()
+	 *
 	 * @param int $maxLevel = 3 Максимальный уровень вложения (O)
 	 */
-	public function init($maxLevel = 3): void
+	public function init(int $maxLevel = 3): void
 	{
 		$this->__topLevelId = NULL;
 		$this->__maxLevel = (int)$maxLevel;
@@ -70,12 +71,14 @@ class IblockElemLinkedChains extends IblockUtils
 
 	/**
 	 * Рекурсивный метод получения цепочек
-	 * @param int $elementId корневой элемент для получения цепочки
+	 *
+	 * @param int   $elementId корневой элемент для получения цепочки
 	 * @param array $arSelect = array() массив выбираемых полей, всегда выбираются "ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME"
 	 * Возвращает цепочку уровнем, указанным в init()
+	 *
 	 * @return array|void
 	 */
-	public function getChains_r($elementId, $arSelect = [])
+	public function getChains_r(int $elementId, array $arSelect = [])
 	{
 		$elementId = (int)$elementId;
 		
@@ -92,7 +95,7 @@ class IblockElemLinkedChains extends IblockUtils
 		
 			$arSelectDef = ["ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME"];
 			$arSelect = array_merge($arSelect, $arSelectDef);
-			$arFilter = ['ID' => (int)$elementId];
+			$arFilter = ['ID' => $elementId];
 			// QUERY 1
 			$rsItems = self::selectElementsByFilter([], $arFilter, false, false, $arSelect);
 	
@@ -136,7 +139,7 @@ class IblockElemLinkedChains extends IblockUtils
 	 *
 	 * @return array|mixed
 	 */
-	public static function getList($arOrder = ["SORT"=>"ASC"], $arFilter = [], $arGroupBy=false, $arNavParams=false, $arSelectFields=[])
+	public static function getList(array $arOrder = ["SORT" => "ASC"], array $arFilter = [], $arGroupBy = false, $arNavParams = false, array $arSelectFields = [])
 	{
 		$arSelectFields[] = 'ID';
 		$arSelectFields[] = 'IBLOCK_ID';

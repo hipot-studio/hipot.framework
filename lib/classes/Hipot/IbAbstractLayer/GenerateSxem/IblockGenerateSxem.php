@@ -422,10 +422,10 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	{
 		$arPROPERTIES = $this->getPropertysByIblock();
 
-		$arReturn = array();
-		$rs = \CIBlock::GetList(array('ID' => 'ASC'), array(), false);
+		$arReturn = [];
+		$rs = \CIBlock::GetList(['ID' => 'ASC'], [], false);
 		while ($ar = $rs->Fetch()) {
-			$ar['PROPERTIES'] = array();
+			$ar['PROPERTIES'] = [];
 			foreach ($arPROPERTIES as $prop) {
 				if ($prop['IBLOCK_ID'] == $ar['ID']) {
 					$ar['PROPERTIES'][] = $prop;
@@ -452,7 +452,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 		$props = new \CIBlockProperty();
 		$rs = $props->GetList(['IBLOCK_ID' => 'ASC', 'SORT' => 'ASC'], ['CHECK_PERMISSIONS' => 'N']);
 
-		$arReturn = array();
+		$arReturn = [];
 		while ($ar = $rs->Fetch()) {
 			$arReturn[] = $ar;
 		}
@@ -471,7 +471,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 		}
 		$arIblocks = $this->getIblockList();
 
-		$arIblocksIdsIndex = array();
+		$arIblocksIdsIndex = [];
 		foreach ($arIblocks as $k => $arIblock) {
 			$arIblocksIdsIndex[ $arIblock['ID'] ] = $k;
 		}
@@ -563,7 +563,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 			);
 		}
 
-		@chmod(dirname($this->__fileGenerate), 0777);
+		//@chmod(dirname($this->__fileGenerate), 0777);
 		return file_put_contents($this->__fileGenerate, '<?' . $out . '?>');
 	}
 }

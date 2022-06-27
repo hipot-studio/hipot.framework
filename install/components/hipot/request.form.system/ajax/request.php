@@ -54,10 +54,10 @@ if ($escPOST['__form__'] == 'recall') {
 		"_POST"			=> $escPOST,
 		'AJAX_CALL'     => 'Y',
 		"POST_NAME"		=> "recall",
-		"REQ_FIELDS"	=> array("phone"),
+		"REQ_FIELDS"	=> ["phone"],
 		"EVENT_TYPE"	=> "RECALL_REQUEST",
 		"EVENT_ID"		=> 0,
-		"ADD_ELEMENT"	=> array(),
+		"ADD_ELEMENT"	=> [],
 		"NO_REDIRECT"	=> "Y"
 	], false, ['HIDE_ICONS' => 'Y']);
 

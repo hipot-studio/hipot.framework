@@ -47,7 +47,7 @@ trait EO_Utils
 		$entity = self::getEntity();
 		$connection = $entity->getConnection();
 
-		$dbHasField = array();
+		$dbHasField = [];
 		foreach ($connection->getTableFields(self::getTableName()) as $field) {
 			if (!$entity->hasField($field->getName())) {
 				$connection->dropColumn(

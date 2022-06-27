@@ -41,16 +41,16 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
  * @version 4.x, см. CHANGELOG.TXT
  */
 
-$arComponentDescription = array(
+$arComponentDescription = [
 	"NAME"			=> "iblock.section list mutator",
 	"DESCRIPTION"	=> "",
 	"ICON"			=> "/images/ico.gif",
-	"PATH" => array(
+	"PATH" => [
 		"ID"		=> "hipot_root",
 		"NAME"		=> "hipot"
-	),
-	"AREA_BUTTONS"	=> array(),
+	],
+	"AREA_BUTTONS"	=> [],
 	"CACHE_PATH"	=> "Y",
 	"COMPLEX"		=> "N"
-);
+];
 ?>

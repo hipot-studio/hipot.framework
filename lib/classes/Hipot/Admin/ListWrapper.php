@@ -114,19 +114,19 @@ class ListWrapper
 	 */
 	public function addHeaders($arFieldsEx)
 	{
-		$this->arFields = array();
+		$this->arFields = [];
 		foreach ($arFieldsEx as $FIELD_NAME => $FIELD_INFO) {
 			$this->arFields[$FIELD_NAME] = $FIELD_INFO["data_type"];
 		}
 
-		$arHeaders = array();
+		$arHeaders = [];
 		foreach ($this->arFields as $FIELD_NAME => $FIELD_TYPE) {
-			$arHeaders[$FIELD_NAME] = array(
+			$arHeaders[$FIELD_NAME] = [
 				"id" => $FIELD_NAME,
 				"content" => $arFieldsEx[$FIELD_NAME]["title"] ? $arFieldsEx[$FIELD_NAME]["title"] : $FIELD_NAME,
 				"sort" => $arFieldsEx[$FIELD_NAME]["sortable"] ? $FIELD_NAME : "",
 				"default" => true,
-			);
+			];
 			if ($FIELD_TYPE == "int" || $FIELD_TYPE == "datetime" || $FIELD_TYPE == "date" || $FIELD_TYPE == "double") {
 				$arHeaders[$FIELD_NAME]["align"] = "right";
 			}
@@ -139,7 +139,7 @@ class ListWrapper
 	{
 		$navyParams = \CDBResult::GetNavParams(\CAdminResult::GetNavSize(
 			$this->sTableID,
-			array('nPageSize' => 20/*, 'sNavID' => $APPLICATION->GetCurPage().'?ENTITY_ID='.$ENTITY_ID*/)
+			['nPageSize' => 20/*, 'sNavID' => $APPLICATION->GetCurPage().'?ENTITY_ID='.$ENTITY_ID*/]
 		));
 
 		$navyParams['PAGEN'] = (int)$navyParams['PAGEN'];
@@ -241,7 +241,7 @@ class ListWrapper
 	 */
 	protected function setRowActions(&$row, $arRes, $bMayDelete = true)
 	{
-		$arActions = array();
+		$arActions = [];
 		if ($bMayDelete) {
 			/*$arActions[] = array(
 				"ICON" => "edit",
@@ -249,12 +249,12 @@ class ListWrapper
 				"TEXT" => Loc::getMessage("acrit_cleanmaster_MAIN_EDIT"),
 				//"ACTION" => $this->lAdmin->ActionRedirect("perfmon_row_edit.php?lang=" . LANGUAGE_ID . "&table_name=" . urlencode($table_name) . "&" . implode("&", $arRowPK)),
 			);*/
-			$arActions[] = array(
+			$arActions[] = [
 				"ICON" => "delete",
 				"DEFAULT" => false,
 				"TEXT" => Loc::getMessage("acrit_cleanmaster_MAIN_DELETE"),
 				"ACTION" => $this->lAdmin->ActionDoGroup($arRes["ID"], "delete", 'profile_table=Y&lang=ru&mid=acrit.cleanmaster&mid_menu=1'),
-			);
+			];
 		}
 
 		if (count($arActions)) {
@@ -262,10 +262,10 @@ class ListWrapper
 		}
 	}
 
-	public function addAdminContextMenuAndCheckXls($aContext = array())
+	public function addAdminContextMenuAndCheckXls($aContext = [])
 	{
 		if (count($aContext) <= 0) {
-			$aContext = array();
+			$aContext = [];
 			/*$aContext[] = array(
 				"TEXT" => GetMessage("acrit_cleanmaster_MAIN_ADD"),
 				"LINK" => "/bitrix/admin/perfmon_row_edit.php?lang=".LANGUAGE_ID."&table_name=".urlencode($table_name),

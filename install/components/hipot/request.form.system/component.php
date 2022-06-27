@@ -10,7 +10,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 /* @var $this CBitrixComponent */
 
 
-$arParams["DEFAULT_SEND_MAIL"] = (in_array($arParams["DEFAULT_SEND_MAIL"], array('Y', 'N'))) ? $arParams["DEFAULT_SEND_MAIL"] : 'Y';
+$arParams["DEFAULT_SEND_MAIL"] = (in_array($arParams["DEFAULT_SEND_MAIL"], ['Y', 'N'])) ? $arParams["DEFAULT_SEND_MAIL"] : 'Y';
 
 /** спам-фильтры */
 include $_SERVER['DOCUMENT_ROOT'] . $this->GetPath() . '/custom_spam_checks.php';
@@ -32,7 +32,7 @@ global $MESS;
 include $_SERVER['DOCUMENT_ROOT'] . $this->GetPath() . '/templates/' . $this->GetTemplateName() . '/lang/ru/template.php';
 
 
-$arResult = array();
+$arResult = [];
 
 
 // дополнительные обработчики выборок
@@ -44,7 +44,7 @@ if (function_exists($functionName)) {
 }
 
 if (! is_array($arParams['_POST'][ $arParams["POST_NAME"] ])) {
-	$arParams['_POST'][ $arParams["POST_NAME"] ] = array();
+	$arParams['_POST'][ $arParams["POST_NAME"] ] = [];
 }
 
 if (! empty($arParams['_POST'][ $arParams["POST_NAME"] ]) && check_bitrix_sessid())
@@ -83,7 +83,7 @@ if (! empty($arParams['_POST'][ $arParams["POST_NAME"] ]) && check_bitrix_sessid
 		}
 	}
 
-	$MAIL_VARS = array();
+	$MAIL_VARS = [];
 	if (empty($arResult["error"]))
 	{
 		foreach ($arParams['_POST'][ $arParams["POST_NAME"] ] as $key => $p) {

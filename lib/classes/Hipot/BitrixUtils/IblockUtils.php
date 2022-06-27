@@ -2,8 +2,9 @@
 namespace Hipot\BitrixUtils;
 
 use Bitrix\Main\Loader,
-	Hipot\Utils\UpdateResult,
+	Hipot\Types\UpdateResult,
 	Hipot\Utils\UUtils,
+	Hipot\IbAbstractLayer\IblockElemLinkedChains,
 
 	Bitrix\Iblock\InheritedProperty\ElementTemplates,
 	Bitrix\Iblock\InheritedProperty\ElementValues,
@@ -36,13 +37,13 @@ class IblockUtils extends _CIBElement
 	 * @param bool $bResort = true перестроить ли дерево, можно отдельно вызывать CIBlockSection::Resort(int IBLOCK_ID);
 	 * @param bool $bUpdateSearch = false обновить ли поиск
 	 *
-	 * @return \Hipot\Utils\UpdateResult
+	 * @return UpdateResult
 	 * @see \CIBlockSection::Add()
 	 */
 	public static function addSectionToDb($arAddFields = [], $bResort = true, $bUpdateSearch = false): UpdateResult
 	{
 		if (! is_array($arAddFields)) {
-			$arAddFields = array();
+			$arAddFields = [];
 		}
 
 		$el = new CIBlockSection();
@@ -63,7 +64,7 @@ class IblockUtils extends _CIBElement
 	 * @param bool  $bResort = true перестроить ли дерево, можно отдельно вызывать CIBlockSection::Resort(int IBLOCK_ID);
 	 * @param bool  $bUpdateSearch = false обновить ли поиск
 	 *
-	 * @return bool | \Hipot\Utils\UpdateResult
+	 * @return bool | UpdateResult
 	 * @see \CIBlockSection::Add()
 	 */
 	public static function updateSectionToDb(int $ID, $arAddFields = [], $bResort = true, $bUpdateSearch = false)
@@ -193,7 +194,7 @@ class IblockUtils extends _CIBElement
 	 * @param array $arAddFields массив к добавлению
 	 * @param bool $bUpdateSearch = false обновить ли поиск
 	 *
-	 * @return \Hipot\Utils\UpdateResult
+	 * @return UpdateResult
 	 * @see \CIBlockElement::Add()
 	 */
 	public static function addElementToDb($arAddFields = [], $bUpdateSearch = false): UpdateResult
@@ -355,7 +356,7 @@ class IblockUtils extends _CIBElement
 
 		$obChainBuilder = null;
 		if ($bSelectChains) {
-			$obChainBuilder = new \Hipot\IbAbstractLayer\IblockElemLinkedChains();
+			$obChainBuilder = new IblockElemLinkedChains();
 			$OnlyPropsValue = false;
 		}
 
@@ -468,9 +469,8 @@ class IblockUtils extends _CIBElement
 		$rs = $DB->Query("select IBLOCK_ID from b_iblock_element where ID=" . $ID);
 		if ($ar = $rs->Fetch()) {
 			return $ar["IBLOCK_ID"];
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	/**
@@ -698,9 +698,9 @@ class IblockUtils extends _CIBElement
 				$result = 'partial';
 			}
 		}
-		CIBlockElement::SetPropertyValuesEx($ID, $IBLOCK_ID, array(
+		CIBlockElement::SetPropertyValuesEx($ID, $IBLOCK_ID, [
 			$prop_code => $ar
-		));
+		]);
 		return $result;
 	}
 

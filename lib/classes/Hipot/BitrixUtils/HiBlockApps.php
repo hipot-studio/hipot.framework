@@ -127,7 +127,7 @@ class HiBlockApps extends HiBlock
 	public static function ShowPostersHtml(string $hlBlockname = 'SupportPoster'): void
 	{
 		$dm			= self::getDataManagerByHiCode($hlBlockname);
-		$arPosters 	= $dm::getList(array(
+		$arPosters 	= $dm::getList([
 			'select' 	=> ['*'],
 			'filter' 	=> [
 				">=UF_DATE_TO" 				=> [date('d.m.Y H:i:s'), false],
@@ -135,7 +135,7 @@ class HiBlockApps extends HiBlock
 			],
 			'order'		=> ['ID' => 'DESC'],
 			'limit'		=> 1
-		))->fetchAll();
+		])->fetchAll();
 
 		if (count($arPosters) > 0) {
 			echo '<div class="global_alert_message">';

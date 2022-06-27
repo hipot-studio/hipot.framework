@@ -18,23 +18,23 @@ if ($this->startResultCache(false)) {
 	
 	// довыборка элементов, если это нужно
 	if ($arParams["SELECT_WITH_ITEMS"] == 'Y') {
-		$arAllItems = $APPLICATION->IncludeComponent($arParams['ITEMS_LIST_COMPONENT_NAME'], '', array(
+		$arAllItems = $APPLICATION->IncludeComponent($arParams['ITEMS_LIST_COMPONENT_NAME'], '', [
 			'ONLY_RETURN_ITEMS'		=> 'Y',
 			'CACHE_TIME'			=> 0		//избыточно, он и так будет 0 из-за ONLY_RETURN_ITEMS => Y
-		));
+		]);
 		
 		// массив связей, в ключе ID коллекции
-		$arAllItemsIndexed = array();
+		$arAllItemsIndexed = [];
 		foreach ($arAllItems['ITEMS'] as $item) {
 			$arAllItemsIndexed[ $item['COLLECTION_ID'] ][] = $item;
 		}
 		unset($arAllItems);
 	}
 	
-	$Params = array(
+	$Params = [
 		'arOrder'		=> ['ID'		=> 'ASC'],
 		'arFilter'		=> ['ACTIVE'	=> 'Y']
-	);
+	];
 	
 	if (count($arParams["ORDER"]) > 0) {
 		$Params['arOrder'] = $arParams["ORDER"];
@@ -60,7 +60,7 @@ if ($this->startResultCache(false)) {
 	unset($arAllItemsIndexed);
 	
 	if (count($arResult['COLLECTIONS']) > 0) {
-		$this->setResultCacheKeys(array());
+		$this->setResultCacheKeys([]);
 		$this->includeComponentTemplate();
 	} else {
 		$this->abortResultCache();

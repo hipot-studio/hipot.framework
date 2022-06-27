@@ -25,16 +25,16 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 * SELECT_CHAINS_DEPTH / глубина выбираемых элементов (по умолчанию 3)
 */
 
-$arComponentDescription = array(
+$arComponentDescription = [
 	"NAME"			=> "iblock.list pages mutator",
 	"DESCRIPTION"	=> "",
 	"ICON"			=> "/images/ico.gif",
-	"PATH" => array(
+	"PATH" => [
 		"ID"		=> "hipot_root",
 		"NAME"		=> "hipot"
-	),
-	"AREA_BUTTONS"	=> array(),
+	],
+	"AREA_BUTTONS"	=> [],
 	"CACHE_PATH"	=> "Y",
 	"COMPLEX"		=> "N"
-);
+];
 ?>

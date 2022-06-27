@@ -1,7 +1,7 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
-$arTypesEx = array();
+$arTypesEx = [];
 
 CModule::IncludeModule("fileman");
 CMedialib::Init();
@@ -9,7 +9,7 @@ CMedialib::Init();
 $rsCol = CMedialibCollection::GetList([
 	'arOrder'	=> ['ML_TYPE' => 'ASC']
 ]);
-$arColIndexed = array();
+$arColIndexed = [];
 foreach ($rsCol as $ar) {
 	$arColIndexed[ $ar['ID'] ] = $ar;
 }

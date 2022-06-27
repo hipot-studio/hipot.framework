@@ -1,10 +1,11 @@
 <?
 namespace Hipot\Utils;
 
-use \Bitrix\Main\Application,
-	\Bitrix\Main\Grid\Declension,
-	\Bitrix\Main\Loader,
-	\Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Application,
+	Bitrix\Main\Grid\Declension,
+	Bitrix\Main\Loader,
+	Bitrix\Main\Web\HttpClient;
+
 use CUtil;
 
 /**
@@ -41,13 +42,13 @@ class UnsortedUtils
 	 */
 	public static function TranslitText($text, $lang = 'ru'): string
 	{
-		return CUtil::translit(trim($text), $lang, array(
+		return CUtil::translit(trim($text), $lang, [
 			'max_len' => 100,
 			'change_case' => "L",
 			'replace_space' => '-',
 			'replace_other' => '-',
 			'delete_repeat_replace' => true
-		));
+		]);
 	}
 
 	/**

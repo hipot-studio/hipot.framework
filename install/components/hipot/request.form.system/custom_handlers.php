@@ -40,12 +40,12 @@ if (! function_exists('CustomRequestHandler_order')) {
 		if ($_FILES['file']['size'] > 0 && intval($_FILES['file']['error']) == 0) {
 			$mailVars['file_descr'] = 'Пользователь прикрепил файл с именем: "' . $_FILES['file']['name'] . "\"\n"
 									. 'Внимание! Файлы, пришедшие по почте могут содержать вирусы, проверяйте их антивирусами.';
-			$mailVars['FILES'] = array(
-				array(
+			$mailVars['FILES'] = [
+				[
 					'SRC'   => $_FILES['file']['tmp_name'],
 					'NAME'  => $_FILES['file']['name']
-				)
-			);
+				]
+			];
 		} else {
 			$mailVars['file_descr'] = '';
 		}

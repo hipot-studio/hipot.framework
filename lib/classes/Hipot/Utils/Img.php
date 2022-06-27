@@ -1,7 +1,7 @@
 <?php
 namespace Hipot\Utils;
 
-use \Intervention\Image\ImageManagerStatic as iiImage;
+use Intervention\Image\ImageManagerStatic as iiImage;
 use CMainPage,
 	COption,
 	Bitrix\Main\IO,
@@ -366,7 +366,7 @@ class Img
 	 * @param int          $h = null Высота (можно передать null для подгонки, <b>один параметр ширину или высоту надо задать!</b>)
 	 * @param string       $m = Img::M_CROP Метод трансформации (см: Img::M_*)
 	 * @param bool         $retAr = false Возвращать массив или строку. По умолчанию строку с путем к файлу
-	 * @param array|string $callbackMi = null Метод, в который передается объект перед сохранением
+	 * @param array|string|callable $callbackMi = null Метод, в который передается объект перед сохранением
 	 *                (использовать анонимные функции пока нельзя)
 	 *
 	 * @return string|array путь к результирующей картинке или массив (шир, выс, путь)
