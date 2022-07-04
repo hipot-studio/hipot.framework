@@ -120,10 +120,12 @@ class IblockElemLinkedChains extends IblockUtils
 	
 	/**
 	 * Преобразование цепочки связанных элементов из массива в объекты абстрактного уровня
+	 *
 	 * @param array $arChain
+	 *
 	 * @return IblockElementItem
 	 */
-	public static function chainArrayToChainObject($arChain): IblockElementItem
+	public static function chainArrayToChainObject(array $arChain): IblockElementItem
 	{
 		return new IblockElementItem($arChain);
 	}

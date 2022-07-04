@@ -1,7 +1,7 @@
 <?php
 namespace Hipot\Utils;
 
-use Memcache, Hipot\Param\MemcacheServerConfig;
+use Memcache;
 
 /**
  * A lightweight wrapper around the PHP Memcached extension with three goals:
@@ -28,11 +28,6 @@ class MemcacheWrapper implements \ArrayAccess
 	private string $prefix;
 
 	/**
-	 * @var MemcacheServerConfig
-	 */
-	private MemcacheServerConfig $config;
-
-	/**
 	 * The underlying Memcached object, which you can access in order to
 	 * override the prefix prepending if you really want.
 	 */
@@ -41,21 +36,13 @@ class MemcacheWrapper implements \ArrayAccess
 	/**
 	 * MemcachedWrapper constructor.
 	 *
-	 * @param string $prefix = '' Строковый префикс для группировки сходных данных в мемкеше
-	 * @param bool   $socket = false Использовать ли настроенный мемкеш-сокет self::MANUAL_SOCKET_PATH = /home/bitrix/memcached.sock
-	 *
-	 * @throws \Hipot\Utils\MemcacheWrapperError
+	 * @param string    $prefix = '' Строковый префикс для группировки сходных данных в мемкеше
+	 * @param Memcache  $mc Объект подключения к memcache
 	 */
-	public function __construct(string $prefix, MemcacheServerConfig $config)
+	public function __construct(string $prefix, Memcache $mc)
 	{
 		$this->prefix = trim($prefix);
-		$this->config = $config;
-		$this->mc = new Memcache();
-
-		$v = $this->config->getServerAddr();
-		if (! $this->mc->connect($v["host"], $v["port"])) {
-			throw new MemcacheWrapperError("Cant connect to memcached: " . $v["host"]);
-		}
+		$this->mc = $mc;
 	}
 
 	/**
@@ -69,16 +56,13 @@ class MemcacheWrapper implements \ArrayAccess
 
 	/**
 	 * Get all memcached keys. Special function because getAllKeys() is broken since memcached 1.4.23. Should only be needed on php 5.6
-	 *
-	 * cleaned up version of code found on Stackoverflow.com by Maduka Jayalath
+	 * @param array{host:string, port:string} $config
 	 *
 	 * @return array|int - all retrieved keys (or negative number on error)
 	 */
-	public function getMemcachedKeys()
+	public function getMemcachedKeys(array $config)
 	{
-		$v = $this->config->getServerAddr();
-
-		$mem = @fsockopen($v['host'], $v['port']);
+		$mem = @fsockopen($config['host'], $config['port']);
 		if ($mem === false) {
 			return -1;
 		}

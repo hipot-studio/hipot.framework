@@ -166,6 +166,18 @@ class PhpCacher
 		}
 	}
 
+	/**
+	 * Для кеширования объектов по id (или code) нужно их складировать в файловую систему по хешу,
+	 * т.е. тег передавать в виде PhpCacher::cache('some_tag' . getCacheSubDirById($id), ...)
+	 *
+	 * @param int|string $id
+	 * @return string
+	 */
+	public static function getCacheSubDirById($id): string
+	{
+		return '/' . substr(md5($id), 2, 2) . '/' . $id;
+	}
+
 	private static function canCurrentUserDropCache(): bool
 	{
 		// if cacher used in init.php

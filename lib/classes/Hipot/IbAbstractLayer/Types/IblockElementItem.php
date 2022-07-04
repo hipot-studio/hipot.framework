@@ -230,9 +230,10 @@ class IblockElementItem extends Base
 
 	/**
 	 * Динамичное создание итема из массива
+	 *
 	 * @param array $arItem массив c полями элемента CIBlockElement::GetList()
 	 */
-	public function __construct($arItem)
+	public function __construct(array $arItem)
 	{
 		foreach ($arItem as $field => $value) {
 			if (!isset($value) || $value === NULL) {

@@ -42,22 +42,34 @@
  *
  * Идея http://dev.1c-bitrix.ru/community/webdev/user/23242/
  *
- * @use init.php
+ * @use
+ * 1/ add connection config in .settings_extra
+ * 'connections' => ['value' => [
+ *      'default' => $defaultSettings['connections']['value']['default'],
+ *      'memcache' => [
+ *              'className' => \Bitrix\Main\Data\MemcacheConnection::class,
+ *              'port' => 0,
+ *              'host' => 'unix:///home/bitrix/memcached.sock'
+ *      ],
+ * ]],
+ * 2/ add need classes within autoloader (MemcacheWrapper, MemcacheWrapperError, UUtils)
+ * 3/ require file in init.php
  * require __DIR__ . '/include/ib_props_memcache.php';
+ *
  * !!! Обязательно перезапускать memcached при изменении инфоблоков в режим хранения свойств 2.0 и обратно
  *
- * TODO need patch file bitrix/modules/iblock/classes/general/iblockproperty.php
+ * 4/ TODO need patch file bitrix/modules/iblock/classes/general/iblockproperty.php
  * bitrix is_set function to isset-construction
  *
- * @version 1.5.1
+ * @version 1.5.2
  * @author hipot, 2022
  */
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Main\Loader,
+	Bitrix\Main\Application,
+	Bitrix\Main\Data\MemcacheConnection,
 	Hipot\Utils\MemcacheWrapper,
-	Hipot\Param\MemcacheServerConfig,
-	Hipot\Utils\MemcacheWrapperError,
 	Hipot\Utils\UUtils;
 
 if (!class_exists('Memcache') || !class_exists(MemcacheWrapper::class)) {
@@ -70,22 +82,27 @@ $pr = new CIBlockProperty();
 unset($pr);
 
 try {
+	/** @var MemcacheConnection $mc */
+	$mc = Application::getConnection('memcache');
+
 	$GLOBALS['IBLOCK_CACHE_PROPERTY'] = new MemcacheWrapper(
 		'IBLOCK_CACHE_PROPERTY_',
-		MemcacheServerConfig::create(/** $socket = */!defined('PHP_WINDOWS_VERSION_BUILD'))
+		$mc->getResource()
 	);
-} catch (MemcacheWrapperError $e) {
+} catch (Error $e) {
 	UUtils::logException($e);
 }
 
 // _tests:
-/*if (isset($_REQUEST['IBLOCK_CACHE_PROPERTY'])) {
+/*
+if (isset($_REQUEST['IBLOCK_CACHE_PROPERTY'])) {
 	// var_dump( $GLOBALS['IBLOCK_CACHE_PROPERTY']->getMc()->getExtendedStats() );
 
-	$keys = $GLOBALS['IBLOCK_CACHE_PROPERTY']->getMemcachedKeys();
+	$keys = $GLOBALS['IBLOCK_CACHE_PROPERTY']->getMemcachedKeys( $mc->getConfiguration() );
 	foreach ($keys as $k) {
 		echo $k;
 		\Bitrix\Main\Diag\Debug::dump($GLOBALS['IBLOCK_CACHE_PROPERTY'][$k]);
 	}
 	exit;
-}*/
+}
+*/
