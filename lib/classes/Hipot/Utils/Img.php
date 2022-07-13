@@ -2,12 +2,13 @@
 namespace Hipot\Utils;
 
 use Intervention\Image\ImageManagerStatic as iiImage;
-use CMainPage,
+use Bitrix\Main\Loader,
+	CMainPage,
 	COption,
 	Bitrix\Main\IO,
 	RuntimeException;
 
-if (extension_loaded('imagick') && class_exists('Imagick')) {
+if (class_exists('Imagick') && extension_loaded('imagick')) {
 	iiImage::configure(['driver' => 'imagick']);
 }
 
@@ -25,10 +26,8 @@ if (class_exists(Img::class)) {
  * @see http://image.intervention.io/
  * @see http://hipot.socialmatrix.net/Codex/cimg-constantly-integrable-modifier-of-graphics/
  *
- * @throws 		Intervention\Image\Exception\*
- *
  * @author		(c) hipot studio
- * @version		3.5.1, 2021
+ * @version		3.5.2, 2022
  */
 class Img
 {
@@ -37,12 +36,12 @@ class Img
 	////////////////////
 
 	/* методы ресайза */
-	const M_CROP			= 'CROP';
-	const M_CROP_TOP		= 'CROP_TOP';
-	const M_FULL			= 'FULL';
-	const M_FULL_S			= 'FULL_S';
-	const M_PROPORTIONAL	= 'PROPORTIONAL';
-	const M_STRETCH			= 'STRETCH';
+	public const M_CROP			    = 'CROP';
+	public const M_CROP_TOP		    = 'CROP_TOP';
+	public const M_FULL			    = 'FULL';
+	public const M_FULL_S			= 'FULL_S';
+	public const M_PROPORTIONAL	    = 'PROPORTIONAL';
+	public const M_STRETCH			= 'STRETCH';
 
 	////////////////////
 	// class fields:
@@ -53,67 +52,67 @@ class Img
 	 * Путь к изображению относительно корня сайта, либо относительно корня документов, либо битрикс ID
 	 * @var string = bxid|abs|rel
 	 */
-	public $path_type;
+	private string $path_type;
 
 	/**
 	 * Абсолютный путь к картинке на сервере
 	 * @var string
 	 */
-	public $src;
+	private string $src;
 
 	/**
 	 * Путь к картинке относительно корня сайта
 	 * @var string
 	 */
-	public $r_src;
+	private string $r_src;
 
 	/**
 	 * Объект с загруженным изображением для работы
-	 * @var \Intervention\Image\Image
+	 * @var \Intervention\Image\Image|mixed
 	 */
-	public $iiImage;
+	private $iiImage;
 
 	/**
 	 * Путь для сохранения изображения
 	 * @var string
 	 */
-	public $path;
+	private string $path;
 
 	/**
 	 * Путь для сохранения изображения относительно корня сайта
 	 * @var string
 	 */
-	public $r_path;
+	private string $r_path;
 
 	/**
 	 * Заполняется при любой трансформации - как идентификатор для кеша.
 	 * @var string
 	 */
-	public $postfix = '';
+	private string $postfix = '';
+
+	/**
+	 * Использованный метод
+	 * @var string
+	 */
+	private string $method;
 
 	/**
 	 * Имя тега, <b>вызывать перед каждым вызовом трансформации</b>
 	 * см SetTag(...)
 	 * @var string
 	 */
-	public static $tagName = '';
-
-	/**
-	 * Использованный метод
-	 * @var string
-	 */
-	public $method;
+	public static string $tagName = '';
 
 	/**
 	 * Сохранять ли полупрозрачность при методах FULL и FULL_S?
 	 * При этом меняется формат на png
 	 * @var bool
 	 */
-	public static $saveAlpha = false;
+	public static bool $saveAlpha = false;
 
 	/**
 	 * Можно переопределить в какой формат в итоге сохранить png|gif|jpeg|webp
-	 * @var bool
+	 * @var bool|string
 	 */
 	public static $decodeToFormat = false;
 
@@ -140,20 +139,22 @@ class Img
 
 		if (!is_numeric($img) && !is_string($img)) {
 			throw new RuntimeException('wrong_input_img_type');
-		} elseif (is_numeric($img)) {
+		}
+
+		if (is_numeric($img)) {
 			// если входит БитриксID картинки
 			$this->path_type		= 'bxid';
 			$this->r_src			= \CFile::GetPath($img);
-			$this->src				= $_SERVER['DOCUMENT_ROOT'] . $this->r_src;
-		} elseif (strpos($img, $_SERVER['DOCUMENT_ROOT']) !== false) {
+			$this->src				= Loader::getDocumentRoot() . $this->r_src;
+		} elseif (strpos($img, Loader::getDocumentRoot()) !== false) {
 			// если входит абсолютный путь к картинке на диске
 			if (! is_file($img)) {
 				throw new RuntimeException('wrong_input_img_type');
 			}
 			$this->path_type		= 'abs';
 			$this->src				= $img;
-			$this->r_src			= str_replace($_SERVER['DOCUMENT_ROOT'], '', $this->src);
-		} elseif (is_file($_SERVER['DOCUMENT_ROOT'] . $img)) {
+			$this->r_src			= str_replace(Loader::getDocumentRoot(), '', $this->src);
+		} elseif (is_file(Loader::getDocumentRoot() . $img)) {
 			// если входит путь к картинке относительно корня сайта
 			$this->path_type		= 'rel';
 			$this->r_src			= $img;
@@ -169,7 +170,7 @@ class Img
 	 * @param bool $ssid = false ID сайта указывается при многосайтовости
 	 * @throws \Bitrix\Main\IO\InvalidPathException
 	 */
-	protected function makeSavePathForBx($ssid = false): void
+	protected function makeSavePathForBx(bool $ssid = false): void
 	{
 		// учет многосайтовости
 		if ($ssid) {
@@ -192,12 +193,10 @@ class Img
 
 	protected function decodeFormat(): void
 	{
-		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (self::$saveAlpha && in_array($this->method, [self::M_FULL, self::M_FULL_S])) {
 			$this->r_path = preg_replace('#(jpe?g)|(gif)$#i', 'png', $this->r_path);
 		}
 		// gif has bug in this methods
-		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (in_array($this->method, [self::M_FULL, self::M_FULL_S])) {
 			$this->r_path = preg_replace('#gif$#i', 'png', $this->r_path);
 		}
@@ -226,7 +225,7 @@ class Img
 	 *
 	 * @throws \RuntimeException
 	 */
-	protected function do_resize($w = null, $h = null, $method = self::M_CROP): void
+	protected function doResize(?int $w = null, ?int $h = null, string $method = self::M_CROP): void
 	{
 		if ($method === false) {
 			throw new RuntimeException('no_resize_method_set');
@@ -280,7 +279,7 @@ class Img
 	 *
 	 * @param bool|int $jpgQuality = false Качество для jpeg (если false берет из настроек главного модуля)
 	 */
-	protected function imagesave($jpgQuality = false): void
+	protected function imageSave($jpgQuality = false): void
 	{
 		CheckDirPath($this->path);
 
@@ -297,23 +296,18 @@ class Img
 	 * @return string|null
 	 * @throws \Bitrix\Main\IO\InvalidPathException
 	 */
-	protected function normalizePath($path)
+	protected function normalizePath(string $path): string
 	{
 		// on winnt all paths is windows-1251 encoding
 		if (constant('BX_UTF') === true && strpos(ToLower(PHP_OS), 'win') !== false) {
 			$path = mb_convert_encoding($path, 'UTF-8', 'WINDOWS-1251');
 		}
-		$path = IO\Path::normalize($path);
-		return $path;
+		return IO\Path::normalize($path);
 	}
 
-	// used in ResizeOverlay
-	public static $lastWm;
-	public static $lastWmPos;
-
-	public static function insertOverlay($mi): void
+	public static function insertOverlay($mi, string $lastWm, string $lastWmPos): void
 	{
-		$mi->iiImage->insert(self::$lastWm, self::$lastWmPos);
+		$mi->iiImage->insert($lastWm, $lastWmPos);
 	}
 
 	//////////////////////////////////////////////////////////////////
@@ -330,7 +324,7 @@ class Img
 	 * ]</pre>
 	 * @param array $params = []
 	 */
-	public static function oneResizeParams($params = []): void
+	public static function oneResizeParams(array $params = []): void
 	{
 		foreach ($params as $name => $value) {
 			$ln = ToLower($name);
@@ -353,7 +347,7 @@ class Img
 	 *
 	 * @param string $tagName = '';
 	 */
-	public static function SetTag($tagName = ''): void
+	public static function SetTag(string $tagName = ''): void
 	{
 		self::$tagName = trim($tagName);
 	}
@@ -361,18 +355,18 @@ class Img
 	/**
 	 * Ресайзит изображение $f
 	 *
-	 * @param string|int|array   $f Картинка (abs|bxid|rel) при массиве нужно чтобы был ключ SRC (тип загрузки rel)
-	 * @param int          $w Ширина = null
-	 * @param int          $h = null Высота (можно передать null для подгонки, <b>один параметр ширину или высоту надо задать!</b>)
-	 * @param string       $m = Img::M_CROP Метод трансформации (см: Img::M_*)
-	 * @param bool         $retAr = false Возвращать массив или строку. По умолчанию строку с путем к файлу
+	 * @param string|int|array      $f Картинка (abs|bxid|rel) при массиве нужно чтобы был ключ SRC (тип загрузки rel)
+	 * @param int|null              $w Ширина = null
+	 * @param int                   $h = null Высота (можно передать null для подгонки, <b>один параметр ширину или высоту надо задать!</b>)
+	 * @param string                $m = Img::M_CROP Метод трансформации (см: Img::M_*)
+	 * @param bool                  $retAr = false Возвращать массив или строку. По умолчанию строку с путем к файлу
 	 * @param array|string|callable $callbackMi = null Метод, в который передается объект перед сохранением
 	 *                (использовать анонимные функции пока нельзя)
 	 *
 	 * @return string|array путь к результирующей картинке или массив (шир, выс, путь)
 	 * @throws \Exception
 	 */
-	public static function Resize($f, $w = null, $h = null, $m = self::M_CROP, $retAr = false, $callbackMi = null)
+	public static function Resize($f, ?int $w = null, ?int $h = null, string $m = self::M_CROP, bool $retAr = false, $callbackMi = null)
 	{
 		$mi = new self();
 		$mi->load($f);
@@ -382,13 +376,13 @@ class Img
 		$mi->makeSavePathForBx();
 
 		if (! $mi->wasCached()) {
-			$mi->do_resize($w, $h, $m);
+			$mi->doResize($w, $h, $m);
 
 			if (is_callable($callbackMi)) {
 				$callbackMi($mi);
 			}
 
-			$mi->imagesave();
+			$mi->imageSave();
 		}
 
 		$r_path = $mi->normalizePath( $mi->r_path );
@@ -415,35 +409,30 @@ class Img
 	/**
 	 * Ресайзит изображение $f и накладывает водный знак $to
 	 *
-	 * @param int|string|array $f Картинка (bxid|rel|abs) на которую будет накладываться
-	 *                          при массиве нужно чтобы был ключ SRC (тип загрузки rel)
-	 * @param string     $to Картинка которая будет накладываться (rel|abs)
+	 * @param int|string|array $f Картинка (bxid|rel|abs) на которую будет накладываться при массиве нужно чтобы был ключ SRC (тип загрузки rel)
+	 * @param string     $to Картинка, которая будет накладываться (rel|abs)
 	 * @param string     $pos = center (default)<br> top-left<br>
 	 *                          top<br> top-right<br> left<br> right<br> bottom-left<br>
 	 *                          bottom<br> bottom-right
-	 * @param string     $w = null Ширина
-	 * @param string     $h = null Высота (можно передать null для подгонки, <b>один параметр ширину или высоту надо задать!</b>)
-	 * @param string     $m Метод трансформации (см: hiImg::M_*)
-	 * @param bool       $retAr = false Возвращать массив или путь к результирующему файлу. По умолчанию путь
+	 * @param ?int     $w = null Ширина
+	 * @param ?int     $h = null Высота (можно передать null для подгонки, <b>один параметр ширину или высоту надо задать!</b>)
+	 * @param string   $m = self::M_PROPORTIONAL Метод трансформации (см: hiImg::M_*)
+	 * @param bool     $retAr = false Возвращать массив или путь к результирующему файлу. По умолчанию путь
 	 *
 	 * @return array|string Путь к картинке или массив (шир, выс, путь)
 	 * @throws \Exception
 	 */
-	public static function ResizeOverlay($f, $to, $pos = 'center', $w, $h, $m, $retAr = false)
+	public static function ResizeOverlay($f, string $to, string $pos = 'center', ?int $w = null, ?int $h = null, string $m = self::M_PROPORTIONAL, bool $retAr = false)
 	{
 		if (strpos($to, $_SERVER['DOCUMENT_ROOT']) === false && is_file($_SERVER['DOCUMENT_ROOT'] . $to)) {
-			$to = $_SERVER['DOCUMENT_ROOT'] . $to;
+			$to = Loader::getDocumentRoot() . $to;
 		}
 		if (! is_file($to)) {
 			throw new RuntimeException('wrong_image_wm ' . $to);
-			return false;
 		}
-
-		// trap used in insertOverlay
-		self::$lastWm		= $to;
-		self::$lastWmPos	= $pos;
-
-		return self::Resize($f, $w, $h, $m, $retAr, [self::class, 'insertOverlay']);
+		return self::Resize($f, $w, $h, $m, $retAr, static function ($mi) use ($to, $pos) {
+			self::insertOverlay($mi, $to, $pos);
+		});
 	}
 
 

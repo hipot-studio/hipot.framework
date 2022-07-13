@@ -1,5 +1,4 @@
-<?
-/** @noinspection PhpIllegalPsrClassPathInspection */
+<?php
 namespace Hipot\BitrixUtils;
 
 use CPHPCache;
@@ -14,13 +13,7 @@ class PhpCacher
 	 * Последняя ошибка при попытке записи в кеш
 	 * @var string
 	 */
-	public static $LAST_ERROR = '';
-
-	/**
-	 * Массив параметров функции для проброса параметров в анонимную функцию
-	 * @var array
-	 */
-	public static $params = [];
+	public static string $LAST_ERROR = '';
 
 	/**
 	 * Записываем и возвращает данные в кеш по пути /bitrix/cache/php/$tagName/ с возможностью указать
@@ -58,10 +51,6 @@ class PhpCacher
 			return false;
 		}
 
-		if (!is_array($params) || empty($params)) {
-			$params = [];
-		}
-
 		$CACHE_ID     = 'cacher_' . md5(serialize($params) . $tagName);
 		$CACHE_DIR    = self::getCacheDir($tagName);
 
@@ -78,12 +67,8 @@ class PhpCacher
 				$GLOBALS['CACHE_MANAGER']->StartTagCache($CACHE_DIR);
 			}
 
-			self::$params = $params;
-
 			// is_callable tests above
 			$data = $callbackFunction($params);
-
-			self::$params = [];
 
 			if (defined('BX_COMP_MANAGED_CACHE')) {
 				$GLOBALS['CACHE_MANAGER']->EndTagCache();
@@ -111,7 +96,7 @@ class PhpCacher
 	 * @return array|bool
 	 * @deprecated use PhpCacher::cache(...)
 	 */
-	public static function returnCacheDataAndSave($tagName, $cacheTime, $callbackFunction, $params = [])
+	public static function returnCacheDataAndSave($tagName, $cacheTime, $callbackFunction, array $params = [])
 	{
 		return self::cache($tagName, $cacheTime, $callbackFunction, $params);
 	}
