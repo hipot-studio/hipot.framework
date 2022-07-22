@@ -16,7 +16,7 @@ $request = \Bitrix\Main\Context::getCurrent()->getRequest();
  * На сайте бета-тестировщик
  * @var bool
  */
-define('IS_BETA_TESTER', $USER->IsAdmin() || $USER->GetLogin() == 'info@hipot-studio.com');
+define('IS_BETA_TESTER', $USER->IsAdmin() || $USER->GetLogin() == 'info@hipot-studio.com' || $USER->GetEmail() == 'hipot@ya.ru');
 
 if (
 	(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') ||

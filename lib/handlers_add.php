@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Установка обработчиков и их описание.
  * Желательно описание (определение класса и метода) делать отдельно от данного файла
@@ -65,6 +65,17 @@ EventManager::getInstance()->addEventHandler("main", "OnBuildGlobalMenu", static
 		foreach ($arMenu['items'] as $i => $item) {
 			$arEx = explode('/', $item['items_id']);
 			$aModuleMenu[$k]['items'][$i]['text'] .= ' /' . $arEx[2] . '/';
+		}
+	}
+});
+
+// RemoveYandexDirectTab in iblock elements
+EventManager::getInstance()->addEventHandler('main', 'OnAdminTabControlBegin', static function (&$TabControl) {
+	if ($GLOBALS['APPLICATION']->GetCurPage() == '/bitrix/admin/iblock_element_edit.php') {
+		foreach ($TabControl->tabs as $Key => $arTab) {
+			if ($arTab['DIV'] == 'seo_adv_seo_adv') {
+				unset($TabControl->tabs[$Key]);
+			}
 		}
 	}
 });

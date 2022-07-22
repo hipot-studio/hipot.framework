@@ -59,8 +59,11 @@ if (! function_exists('__hiCs')) {
 	 */
 	function __hiCs($paramCode, $defaultValue = '')
 	{
+		static $params;
 		try {
-			$params = Hipot\BitrixUtils\HiBlockApps::getCustomSettingsList();
+			if (! isset($params)) {
+				$params = Hipot\BitrixUtils\HiBlockApps::getCustomSettingsList();
+			}
 			if (trim($params[$paramCode]) == '' && trim($defaultValue) != '') {
 				return $defaultValue;
 			}
