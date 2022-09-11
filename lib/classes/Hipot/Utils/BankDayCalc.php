@@ -5,7 +5,6 @@ namespace Hipot\Utils;
  * Работаем с банковскими (рабочими) днями
  * Класс позволяет получить кол-во рабочий дней диапазона дат, либо проверить еще некоторые моменты
  *
- * @author hipot
  * @see http://habrahabr.ru/blogs/php/67092/
  *
  * @example
@@ -91,7 +90,7 @@ class BankDayCalc
 		if ($s !== null && !is_int($s)) {
 			$ts = strtotime($s);
 			if ($ts === -1 || $ts === false) {
-				throw new Exception('Unable to parse date/time value from input: ' . var_export($s, true));
+				throw new \Exception('Unable to parse date/time value from input: ' . var_export($s, true));
 			}
 		} else {
 			$ts = $s;
@@ -212,7 +211,7 @@ class BankDayCalc
 		$end = $this->prepareDate($end_in);
 
 		if ($start > $end) {
-			throw new Exception(sprintf('Start date ("%s") bust be greater then end date ("%s"). ', $start_in, $end_in));
+			throw new \Exception(sprintf('Start date ("%s") bust be greater then end date ("%s"). ', $start_in, $end_in));
 		}
 
 		$bank_days = 0;

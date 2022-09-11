@@ -7,55 +7,37 @@
  * а сам обработчик в файле с классом /include/lib/classes/siteevents.php
  */
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Composite\Page as CompositePage;
+use Bitrix\Main\Application;
+
+$eventManager = EventManager::getInstance();
+$request      = Application::getInstance()->getContext()->getRequest();
 
 // определяем глобальные константы, которые могут зависеть от $APPLICATION и $USER
-EventManager::getInstance()->addEventHandler("main", "OnBeforeProlog", static function () {
+$eventManager->addEventHandler("main", "OnBeforeProlog", static function () {
 	global $APPLICATION, $USER;
 
 	foreach (
 		[
 			__DIR__ . '/constants.php',
-			$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/include/constants.php',
-			$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/include/lib/constants.php',
-			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/include/constants.php',
-			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/include/lib/constants.php'
+			Loader::getDocumentRoot() . '/local/php_interface/include/constants.php',
+			Loader::getDocumentRoot() . '/local/php_interface/include/lib/constants.php',
+			Loader::getDocumentRoot() . '/bitrix/php_interface/include/constants.php',
+			Loader::getDocumentRoot() . '/bitrix/php_interface/include/lib/constants.php'
 		] as $constFile) {
 			if (is_file($constFile)) {
 				include $constFile;
 				break;
 			}
 		}
-
-	// включаем генератор ORM
-	if ($APPLICATION->GetCurPage() == '/bitrix/admin/perfmon_tables.php' && $_GET['orm'] != 'y') {
-		LocalRedirect( $APPLICATION->GetCurPageParam("orm=y") );
-	}
-
-	if (defined("ADMIN_SECTION")) {
-		ob_start();
-		?>
-		<script type="text/javascript">
-			BX.ready(function(){
-				try {
-					var mess = BX.findChild(BX('adm-workarea'), {'class' : 'adm-info-message'}, true);
-					if (mess && mess.textContent && mess.textContent.search('пробная') != -1) {
-						BX.remove( BX.findChild(BX('adm-workarea'), {'class' : 'adm-info-message-wrap'}, true) );
-					}
-				} catch (ignore) {
-				}
-			});
-		</script>
-		<?
-		$APPLICATION->oAsset->addString( ob_get_clean() );
-	}
 });
 
 // проставляем id инфоблоков в административном меню
-EventManager::getInstance()->addEventHandler("main", "OnBuildGlobalMenu", static function (&$aGlobalMenu, &$aModuleMenu) {
-	if (! $GLOBALS['USER']->IsAdmin() || !defined("ADMIN_SECTION")) {
+$eventManager->addEventHandler("main", "OnBuildGlobalMenu", static function (&$aGlobalMenu, &$aModuleMenu) {
+	if (!IS_BETA_TESTER || !defined("ADMIN_SECTION")) {
 		return;
 	}
 	foreach ($aModuleMenu as $k => $arMenu) {
@@ -70,7 +52,7 @@ EventManager::getInstance()->addEventHandler("main", "OnBuildGlobalMenu", static
 });
 
 // RemoveYandexDirectTab in iblock elements
-EventManager::getInstance()->addEventHandler('main', 'OnAdminTabControlBegin', static function (&$TabControl) {
+$eventManager->addEventHandler('main', 'OnAdminTabControlBegin', static function (&$TabControl) {
 	if ($GLOBALS['APPLICATION']->GetCurPage() == '/bitrix/admin/iblock_element_edit.php') {
 		foreach ($TabControl->tabs as $Key => $arTab) {
 			if ($arTab['DIV'] == 'seo_adv_seo_adv') {
@@ -81,9 +63,7 @@ EventManager::getInstance()->addEventHandler('main', 'OnAdminTabControlBegin', s
 });
 
 // draw user picture after login
-EventManager::getInstance()->addEventHandler(
-	"main",
-	"OnAdminListDisplay",
+$eventManager->addEventHandler(	"main", "OnAdminListDisplay",
 	/** @param CAdminUiList $this_al */
 	static function (&$this_al) {
 		if ($this_al->table_id == "tbl_user") {
@@ -99,29 +79,22 @@ EventManager::getInstance()->addEventHandler(
 	}
 );
 
-// верхняя постраничка в админке в лентах
-/*AddEventHandler("main", "OnAdminListDisplay", static function ($this_al) {
-	/* @var $this_al CAdminList * /
-	if (in_array($this_al->table_id, ['tbl_user'])) {
-		return;
-	}
-	echo $this_al->sNavText;
-});*/
-
 // очищаем настройки формы по-умолчанию для всех админов
 // @see https://www.hipot-studio.com/Codex/form_iblock_element_settings/
-EventManager::getInstance()->addEventHandler('main', 'OnEndBufferContent', static function (&$content) {
-	if (!isset($_POST['p']) || !is_array($_POST['p']) || count($_POST['p']) <= 0) {
+$eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$content) use ($request) {
+	$p = $request->getPost('p');
+
+	if (!isset($p) || !is_array($p) || count($p) <= 0) {
 		return;
 	}
 
 	global $APPLICATION, $DB, $CACHE_MANAGER;
 
-	$pCfg 		= array_shift($_POST['p']);
+	$pCfg 		= array_shift($p);
 
 	if ($APPLICATION->GetCurPage() != '/bitrix/admin/user_options.php'
 		|| $pCfg['c'] != 'form' || $pCfg['d'] != 'Y'
-		|| !preg_match('#^form_((section)|(element))_[\d]+$#', $pCfg['n'])
+		|| !preg_match('#^form_((section)|(element))_\d+$#', $pCfg['n'])
 	) {
 		return;
 	}
@@ -132,7 +105,7 @@ EventManager::getInstance()->addEventHandler('main', 'OnEndBufferContent', stati
 });
 
 // отрисовка 404 страницы с прерыванием текущего буфера и замены его на содержимое 404
-EventManager::getInstance()->addEventHandler('main', 'OnEndBufferContent', static function (&$cont) {
+$eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$content) use ($request) {
 	global $APPLICATION;
 
 	// process 404 in content part
@@ -141,17 +114,17 @@ EventManager::getInstance()->addEventHandler('main', 'OnEndBufferContent', stati
 		|| ($GLOBALS['httpCode'] == 404 && $APPLICATION->GetCurPage() != '/404.php')
 
 	) {
-		$contCacheFile  = $_SERVER['DOCUMENT_ROOT'] . '/upload/404_cache.html';
+		$contCacheFile  = Loader::getDocumentRoot() . '/upload/404_cache.html';
 
 		if (is_file($contCacheFile) && ((time() - filemtime($contCacheFile)) > 3600)) {
 			unlink($contCacheFile);
 		}
 
-		$cont = file_get_contents($contCacheFile);
-		if (trim($cont) == '') {
+		$content = file_get_contents($contCacheFile);
+		if (trim($content) == '') {
 			$el = new HttpClient();
-			$cont = $el->get((CMain::IsHTTPS() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . '/404.php');
-			file_put_contents($contCacheFile, $cont);
+			$content = $el->get((CMain::IsHTTPS() ? 'https://' : 'http://') . $request->getServer()->getServerName() . '/404.php');
+			file_put_contents($contCacheFile, $content);
 		}
 
 		CompositePage::getInstance()->markNonCacheable();
@@ -161,12 +134,9 @@ EventManager::getInstance()->addEventHandler('main', 'OnEndBufferContent', stati
 });
 
 // drop unused cache to per-product discount on cli run
-EventManager::getInstance()->addEventHandler('catalog', 'OnGetDiscountResult', static function (&$arResult) {
+$eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function (&$arResult) {
 
 	if (PHP_SAPI == 'cli') {
-		/*$property = new \ReflectionProperty("CAllCatalogDiscount", "arCacheProduct");
-		$property->setAccessible(true);
-		$property->setValue("CAllCatalogDiscount", []);*/
 		\CCatalogDiscount::ClearDiscountCache([
 			'PRODUCT'       => true,
 			/*'SECTIONS'      => true,
@@ -178,6 +148,6 @@ EventManager::getInstance()->addEventHandler('catalog', 'OnGetDiscountResult', s
 });
 
 // immediately drop custom setting hl-block cache
-EventManager::getInstance()->addEventHandler('', 'CustomSettingsOnAfterUpdate',   ['Hipot\\BitrixUtils\\HiBlockApps', 'clearCustomSettingsCacheHandler']);
-EventManager::getInstance()->addEventHandler('', 'CustomSettingsOnAfterAdd',      ['Hipot\\BitrixUtils\\HiBlockApps', 'clearCustomSettingsCacheHandler']);
-EventManager::getInstance()->addEventHandler('', 'CustomSettingsOnAfterDelete',   ['Hipot\\BitrixUtils\\HiBlockApps', 'clearCustomSettingsCacheHandler']);
+$eventManager->addEventHandler('', 'CustomSettingsOnAfterUpdate',   ['Hipot\\BitrixUtils\\HiBlockApps', 'clearCustomSettingsCacheHandler']);
+$eventManager->addEventHandler('', 'CustomSettingsOnAfterAdd',      ['Hipot\\BitrixUtils\\HiBlockApps', 'clearCustomSettingsCacheHandler']);
+$eventManager->addEventHandler('', 'CustomSettingsOnAfterDelete',   ['Hipot\\BitrixUtils\\HiBlockApps', 'clearCustomSettingsCacheHandler']);

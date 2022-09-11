@@ -15,6 +15,7 @@ use function AddEventHandler;
 /**
  * Установка заголовка Last-Modified для статики и динамики.
  * Также обработка заголовка HTTP_IF_MODIFIED_SINCE
+ * @deprecated 
  */
 class LastModifierSetter
 {

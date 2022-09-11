@@ -32,7 +32,7 @@ $xhprofEnd = static function ($minDiffTime = null) {
 	$diffTime    = $getMicrotime() - $tStart;
 
 	// limit 1 secs to write logs
-	if (is_null($minDiffTime) || $diffTime > (int)$minDiffTime) {
+	if (is_null($minDiffTime) || $diffTime > (float)$minDiffTime) {
 		$timeF      = round($diffTime, 3) . "";
 		$timeF      = str_replace('.', '-', $timeF);
 		$client     = PHP_SAPI == 'cli' ? 'shell' : 'http';
