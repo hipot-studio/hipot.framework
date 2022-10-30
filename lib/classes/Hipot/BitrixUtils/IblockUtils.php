@@ -920,6 +920,24 @@ class IblockUtils extends _CIBElement
 	 * @param array &$element			Element data.
 	 * @return void
 	 */
+	public static function setSectionPanelButtons(&$section): void
+	{
+		$buttons = \CIBlock::GetPanelButtons(
+			$section['IBLOCK_ID'],
+			0,
+			$section['ID'],
+			['SESSID' => false, 'CATALOG' => true]
+		);
+		$section['EDIT_LINK'] = $buttons['edit']['edit_section']['ACTION_URL'];
+		$section['DELETE_LINK'] = $buttons['edit']['delete_section']['ACTION_URL'];
+	}
+
+	/**
+	 * Add Hermitage button links for element.
+	 *
+	 * @param array &$element			Element data.
+	 * @return void
+	 */
 	public static function setElementPanelButtons(&$element): void
 	{
 		$buttons = \CIBlock::GetPanelButtons(
