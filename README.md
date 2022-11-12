@@ -1,6 +1,6 @@
 # Мини-фреймворк hipot.framework для создания проектов на bitrix
-(с) hipot, 2017 - 2022<br>
-mailto: info AT hipot-studio DOT com<br>
+(с) hipot, 2017 - 2022\
+mailto: info AT hipot-studio DOT com\
 ![hipot logo](docs/img/hipot_logo.jpg)
 
 ### Требования:
@@ -15,6 +15,16 @@ bitrix 20+, PHP 7.4+
 <li>класс для работы с инфоблоками Hipot\BitrixUtils\IblockUtils
 <li>api для трансформации изображений Hipot\Utils\Img</li>
 <li>с кешированием Hipot\BitrixUtils\PhpCacher
+
+```php
+/** @global $USER \CUser */
+use Hipot\BitrixUtils\PhpCacher;
+$cachedUser = PhpCacher::cache('cached_users' . PhpCacher::getCacheSubDirById($USER->GetID()), 3600, static fn() => $USER);
+/** @var $cachedUser \CUser */
+\Bitrix\Main\Diag\Debug::dump($cachedUser->GetID());
+```
+</li>
+
 <li>с магазином Hipot\BitrixUtils\SaleUtils
 <li>различные утилиты Hipot\Utils\UnsortedUtils</ul>
   
@@ -22,7 +32,7 @@ bitrix 20+, PHP 7.4+
   
 ### Установка:
 - Пока для ручного копирования деталей, 
-в дальнешем будет модуль hipot.framework:
+в дальнейшем будет модуль hipot.framework:
 - скопировать папку модуля в папку /local/modules/ (для новых проектов) или /bitrix/modules/ для рабочих
 - установить в админке модуль, чтобы он зарегистрировал себя
 - можно добавить нужные классы в автозагрузчик (PSR-0, см. hipot_code_style_34.pdf)

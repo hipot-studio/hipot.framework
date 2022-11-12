@@ -917,10 +917,11 @@ class IblockUtils extends _CIBElement
 	/**
 	 * Add Hermitage button links for element.
 	 *
-	 * @param array &$element			Element data.
+	 * @param array &$section Section data
+	 *
 	 * @return void
 	 */
-	public static function setSectionPanelButtons(&$section): void
+	public static function setSectionPanelButtons(array &$section): void
 	{
 		$buttons = \CIBlock::GetPanelButtons(
 			$section['IBLOCK_ID'],
@@ -936,9 +937,10 @@ class IblockUtils extends _CIBElement
 	 * Add Hermitage button links for element.
 	 *
 	 * @param array &$element			Element data.
+	 *
 	 * @return void
 	 */
-	public static function setElementPanelButtons(&$element): void
+	public static function setElementPanelButtons(array &$element): void
 	{
 		$buttons = \CIBlock::GetPanelButtons(
 			$element['IBLOCK_ID'],
