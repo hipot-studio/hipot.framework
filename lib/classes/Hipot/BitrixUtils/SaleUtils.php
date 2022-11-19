@@ -1,4 +1,5 @@
 <?
+
 namespace Hipot\BitrixUtils;
 
 use Bitrix\Main\Loader;
@@ -18,6 +19,7 @@ Loader::includeModule('sale');
  *
  * @version 1.86
  * @author hipot studio
+ * @deprecated
  */
 class SaleUtils
 {
@@ -29,13 +31,12 @@ class SaleUtils
 	/**
 	 * Получаем массив свойств заказа по ID
 	 *
-	 *
 	 * @param int  $orderId - ID заказа
 	 * @param bool $orderPropsIdInKey - в ключе ID свойства
 	 *
 	 * @return array - код свойства => значение
 	 */
-	static function getOrderProps($orderId, $orderPropsIdInKey = false)
+	public static function getOrderProps($orderId, $orderPropsIdInKey = false)
 	{
 		if (($orderId = (int)$orderId) <= 0) {
 			return false;
@@ -43,7 +44,7 @@ class SaleUtils
 		\CModule::IncludeModule('sale');
 
 		$arProps = [];
-		$res = \CSaleOrderPropsValue::GetOrderProps($orderId);
+		$res     = \CSaleOrderPropsValue::GetOrderProps($orderId);
 		while ($ar = $res->Fetch()) {
 			if ($orderPropsIdInKey) {
 				$hash = $ar['ORDER_PROPS_ID'];
@@ -137,9 +138,9 @@ class SaleUtils
 	/**
 	 * Получить корзину текущего пользователя
 	 *
-	 * @param    array      $arSelect - какие поля выбирать
-	 * @param    bool       $needBasketProps = false - выбирать ли свойства корзины
-	 * @param    string|int $orderId = 'NULL' можно выбрать строки конкретного заказа
+	 * @param array      $arSelect - какие поля выбирать
+	 * @param bool       $needBasketProps = false - выбирать ли свойства корзины
+	 * @param string|int $orderId = 'NULL' можно выбрать строки конкретного заказа
 	 *
 	 * @return array
 	 */
@@ -187,10 +188,10 @@ class SaleUtils
 				["ID" => "ASC"],
 				["BASKET_ID" => array_keys($arBasketItems)]
 			);
-			$i = 0;
+			$i   = 0;
 			while ($ar = $res->Fetch()) {
-				$k = (trim($ar['CODE']) != '') ? $ar['CODE'] : $i++;
-				$arBasketItems[ $ar['BASKET_ID'] ]['PROPS'][ $k ] = $ar;
+				$k                                            = (trim($ar['CODE']) != '') ? $ar['CODE'] : $i++;
+				$arBasketItems[$ar['BASKET_ID']]['PROPS'][$k] = $ar;
 			}
 		}
 
@@ -228,11 +229,11 @@ class SaleUtils
 	/**
 	 * Обновление цены у товара
 	 *
-	 * @param int $PRODUCT_ID код товара
-	 * @param int $PRICE_TYPE_ID код цены товара
-	 * @param float $PRICE цена
+	 * @param int    $PRODUCT_ID код товара
+	 * @param int    $PRICE_TYPE_ID код цены товара
+	 * @param float  $PRICE цена
 	 * @param string $CURRENCY = 'RUB' валюта цены
-	 * @param array $additionFields можно переопределить поля перед добалением/обновлением корзины
+	 * @param array  $additionFields можно переопределить поля перед добалением/обновлением корзины
 	 *
 	 * @return bool успешно или нет обновлена цена $PRICE_TYPE_ID у товара $PRODUCT_ID
 	 */
@@ -259,7 +260,7 @@ class SaleUtils
 			if ($PRICE == 0) {
 				\CPrice::Delete($arr["ID"]);
 			} else {
-				if (! \CPrice::Update($arr["ID"], $arFields)) {
+				if (!\CPrice::Update($arr["ID"], $arFields)) {
 					echo('Error update price ' . $APPLICATION->GetException()->GetString());
 					return false;
 				}
@@ -298,33 +299,33 @@ class SaleUtils
 
 		DiscountCouponsManager::init();
 
-		$siteId = \Bitrix\Main\Context::getCurrent()->getSite();
+		$siteId        = \Bitrix\Main\Context::getCurrent()->getSite();
 		$deliveryPrice = false;
 
-		$anonimUser = $USER->GetByLogin( self::ANONIM_ORDER_USER_EMAIL )->Fetch();
+		$anonimUser = $USER->GetByLogin(self::ANONIM_ORDER_USER_EMAIL)->Fetch();
 
 		$arOrderAdd = [
-			'LID'               =>  $siteId,
-			'PERSON_TYPE_ID'    => $personTypeId,
-			'PAYED'             => 'N',
-			'DATE_PAYED'        => false,
-			'EMP_PAYED_ID'      => false,
-			'CANCELED'          => 'N',
-			'DATE_CANCELED'     => false,
-			'EMP_CANCELED_ID'   => false,
-			'REASON_CANCELED'   => '',
+			'LID' => $siteId,
+			'PERSON_TYPE_ID' => $personTypeId,
+			'PAYED' => 'N',
+			'DATE_PAYED' => false,
+			'EMP_PAYED_ID' => false,
+			'CANCELED' => 'N',
+			'DATE_CANCELED' => false,
+			'EMP_CANCELED_ID' => false,
+			'REASON_CANCELED' => '',
 			'STATUS_ID' => 'N',
 			'EMP_STATUS_ID' => false,
 			'PRICE_DELIVERY' => $deliveryPrice,
 			'ALLOW_DELIVERY' => 'N',
-			'DATE_ALLOW_DELIVERY'  => false,
+			'DATE_ALLOW_DELIVERY' => false,
 			'EMP_ALLOW_DELIVERY_ID' => false,
 			'PRICE' => $orderProps['PRICE'],
-			'CURRENCY'  => $currencyCode,
+			'CURRENCY' => $currencyCode,
 			'DISCOUNT_VALUE' => false,
-			'USER_ID'   => (int)$orderProps['USER_ID'] <= 0 ? $anonimUser['ID'] : $orderProps['USER_ID'],
+			'USER_ID' => (int)$orderProps['USER_ID'] <= 0 ? $anonimUser['ID'] : $orderProps['USER_ID'],
 			'PAY_SYSTEM_ID' => $paySystemId,
-			'DELIVERY_ID' =>  $deliveryId,
+			'DELIVERY_ID' => $deliveryId,
 			'USER_DESCRIPTION' - $orderProps['USER_DESCRIPTION'],
 			'ADDITIONAL_INFO' => '',
 			'COMMENTS' => '',
@@ -336,7 +337,7 @@ class SaleUtils
 			if (trim($propV) == '' || in_array($prop, ['USER_ID'])) {
 				continue;
 			}
-			$arOrderAdd[ $prop ] = $propV;
+			$arOrderAdd[$prop] = $propV;
 		}
 
 		$ORDER_ID = \CSaleOrder::Add($arOrderAdd);
@@ -370,13 +371,15 @@ class SaleUtils
 
 	/**
 	 * Получить полный адрес по местоположению, если он есть в базе
+	 *
 	 * @param int $CITY
+	 *
 	 * @return string
 	 */
 	public static function GetFullLocationNameById($CITY)
 	{
 		$pr['CITY']['VALUE_FULL'] = '';
-		$cityLocation = \CSaleLocation::GetByID((int)$CITY);
+		$cityLocation             = \CSaleLocation::GetByID((int)$CITY);
 		$pr['CITY']['VALUE_FULL'] = $cityLocation['COUNTRY_NAME_LANG'] . ' ' . $cityLocation['REGION_NAME_LANG'] . ' ' . $cityLocation['CITY_NAME_LANG'];
 		unset($cityLocation);
 		return $pr['CITY']['VALUE_FULL'];
@@ -386,12 +389,12 @@ class SaleUtils
 	 * @param $PRODUCT_ID
 	 * @param $arItemProduct
 	 *
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @return \Bitrix\Main\ORM\Data\AddResult | \Bitrix\Main\ORM\Data\UpdateResult | false
 	 * @throws \Bitrix\Main\ArgumentNullException
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
-	 * @return \Bitrix\Main\ORM\Data\AddResult | \Bitrix\Main\ORM\Data\UpdateResult | false
+	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	public static function updateProduct($PRODUCT_ID, $arItemProduct = [])
 	{
@@ -404,9 +407,9 @@ class SaleUtils
 			],
 			'select' => ['*']
 		]);
-		if (! $arProduct = $res->fetch()) {
+		if (!$arProduct = $res->fetch()) {
 			$useStoreControl = (string)\Bitrix\Main\Config\Option::get('catalog', 'default_use_store_control') === 'Y';
-			$arFields = [
+			$arFields        = [
 				'ID' => $PRODUCT_ID,
 				'QUANTITY_TRACE' => \Bitrix\Catalog\ProductTable::STATUS_DEFAULT,
 				'CAN_BUY_ZERO' => \Bitrix\Catalog\ProductTable::STATUS_DEFAULT,
@@ -445,6 +448,7 @@ class SaleUtils
 
 	/**
 	 * Получить скидки у продукта из инфоблока
+	 *
 	 * @param int $PRODUCT_ID
 	 * @param int $IBLOCK_ID = 0
 	 *
@@ -460,7 +464,7 @@ class SaleUtils
 		}
 
 		static $arMainCatalog;
-		if (! isset($arMainCatalog[$IBLOCK_ID])) {
+		if (!isset($arMainCatalog[$IBLOCK_ID])) {
 			$arMainCatalog[$IBLOCK_ID] = \CCatalogSku::GetInfoByIBlock($IBLOCK_ID);
 
 			$siteList = [];
@@ -477,7 +481,7 @@ class SaleUtils
 
 		$arParams = [];
 		if (\CCatalogSku::TYPE_OFFERS == $arMainCatalog['CATALOG_TYPE']) {
-			$arParams['SKU'] = 'Y';
+			$arParams['SKU']        = 'Y';
 			$arParams['SKU_PARAMS'] = [
 				'IBLOCK_ID' => $arMainCatalog['IBLOCK_ID'],
 				'PRODUCT_IBLOCK_ID' => $arMainCatalog['PRODUCT_IBLOCK_ID'],
@@ -487,14 +491,14 @@ class SaleUtils
 		$arParams['DISCOUNT_FIELDS'] = [
 			"ACTIVE_FROM", 'ACTIVE_TO', 'NAME', 'ID', 'SITE_ID', 'SORT', 'NAME', 'VALUE_TYPE', 'VALUE'
 		];
-		$arParams['SITE_ID'] = $arMainCatalog[$IBLOCK_ID]['SITE_ID'];
+		$arParams['SITE_ID']         = $arMainCatalog[$IBLOCK_ID]['SITE_ID'];
 
 		$arDiscountList = \CCatalogDiscount::GetDiscountForProduct(['ID' => $PRODUCT_ID, 'IBLOCK_ID' => $IBLOCK_ID], $arParams);
 		if (PHP_SAPI == 'cli') {
 			\CCatalogDiscount::ClearDiscountCache([
-				'PRODUCT'       => true,
-				'SECTIONS'      => true,
-				'PROPERTIES'    => true
+				'PRODUCT' => true,
+				'SECTIONS' => true,
+				'PROPERTIES' => true
 			]);
 		}
 		return (array)$arDiscountList;
@@ -524,17 +528,17 @@ class SaleUtils
 	 * @param array $orderProps свойства заказа, которые надо проставить (символьный код свойства 1 => значение 1, ..., также обрабатываются USER_DESCRIPTION -
 	 *                          комментарий пользователя, MANAGER_DESCRIPTION - комментарий администратора
 	 * @param array $goodIds массив, в ключах ID товаров, а в значении
-	 * @param null $goodsListCallback кел-бек функция, позволяет менять товары перед сохранением
+	 * @param null  $goodsListCallback кел-бек функция, позволяет менять товары перед сохранением
 	 * <code>
 	 *      function ($basket) {
 	 *          $basketItems = $basket->getBasketItems();
-	 *			foreach ($basketItems as $basketItem) {
-	 *			}
+	 *            foreach ($basketItems as $basketItem) {
+	 *            }
 	 *          return $basket;
 	 *      }
 	 * </code>
-	 * @param null $currencyCode = если null - берется с опции 'sale::default_currency'
-	 * @param int  $personTypeId = 1 обычно обычный физик, но завел на всякий
+	 * @param null  $currencyCode = если null - берется с опции 'sale::default_currency'
+	 * @param int   $personTypeId = 1 обычно обычный физик, но завел на всякий
 	 *
 	 * @return int
 	 * @throws \Bitrix\Main\ArgumentException
@@ -561,7 +565,7 @@ class SaleUtils
 		DiscountCouponsManager::init();
 
 		$siteId = \Bitrix\Main\Context::getCurrent()->getSite();
-		$order = Order::create($siteId, \CSaleUser::GetAnonymousUserID());
+		$order  = Order::create($siteId, \CSaleUser::GetAnonymousUserID());
 
 		$order->setPersonTypeId($personTypeId);
 
@@ -578,8 +582,8 @@ class SaleUtils
 		}
 
 		/*Shipment*/
-		$shipmentCollection = $order->getShipmentCollection();
-		$shipment = $shipmentCollection->createItem();
+		$shipmentCollection     = $order->getShipmentCollection();
+		$shipment               = $shipmentCollection->createItem();
 		$shipmentItemCollection = $shipment->getShipmentItemCollection();
 		$shipment->setField('CURRENCY', $order->getCurrency());
 		$shipment->setField('DELIVERY_ID', $deliveryId);
@@ -588,7 +592,7 @@ class SaleUtils
 			$shipmentItem->setQuantity($item->getQuantity());
 		}
 		$arDeliveryServiceAll = Delivery\Services\Manager::getRestrictedObjectsList($shipment);
-		$shipmentCollection = $shipment->getCollection();
+		$shipmentCollection   = $shipment->getCollection();
 
 		if (!empty($arDeliveryServiceAll)) {
 			reset($arDeliveryServiceAll);
@@ -611,11 +615,10 @@ class SaleUtils
 		/**/
 
 
-
 		/*Payment*/
 		$arPaySystemServiceAll = [];
-		$paySystemId = (int)$paySystemId;
-		$paymentCollection = $order->getPaymentCollection();
+		$paySystemId           = (int)$paySystemId;
+		$paymentCollection     = $order->getPaymentCollection();
 
 		$remainingSum = $order->getPrice() - $paymentCollection->getSum();
 		if ($remainingSum > 0 || $order->getPrice() == 0) {
@@ -660,10 +663,10 @@ class SaleUtils
 
 		if ($orderId) {
 			\CSaleOrder::Update($orderId, [
-				'USER_ID'               => $orderProps['USER_ID'],
-				'USER_DESCRIPTION'      => $orderProps['USER_DESCRIPTION'],
-				'COMMENTS'              => $orderProps['MANAGER_DESCRIPTION'],
-				'CURRENCY'              => $currencyCode
+				'USER_ID' => $orderProps['USER_ID'],
+				'USER_DESCRIPTION' => $orderProps['USER_DESCRIPTION'],
+				'COMMENTS' => $orderProps['MANAGER_DESCRIPTION'],
+				'CURRENCY' => $currencyCode
 			]);
 		}
 
@@ -672,7 +675,7 @@ class SaleUtils
 
 	/**
 	 * @param   $propertyCollection
-	 * @param $code
+	 * @param   $code
 	 *
 	 * @return \Bitrix\Sale\PropertyValueCollection
 	 */
@@ -729,11 +732,11 @@ class SaleUtils
 	/**
 	 * Получить время изменения акций модуля sale
 	 *
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @return int timestamp
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
-	 * @return int timestamp
+	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	public static function getSaleDiscountModTs()
 	{
@@ -744,7 +747,7 @@ class SaleUtils
 		];
 		if (\Bitrix\Main\Config\Option::get('sale', 'use_sale_discount_only', false) === 'Y'
 			&& \Bitrix\Main\Loader::includeModule('catalog')) {
-			$getListParams['runtime'] = [
+			$getListParams['runtime']                       = [
 				new \Bitrix\Main\Entity\ReferenceField(
 					"CATALOG_DISCOUNT",
 					'Bitrix\Catalog\DiscountTable',
@@ -755,7 +758,7 @@ class SaleUtils
 		}
 		$getListParams['limit'] = 1;
 
-		$discount = \Bitrix\Sale\Internals\DiscountTable::getList($getListParams)->fetch();
+		$discount   = \Bitrix\Sale\Internals\DiscountTable::getList($getListParams)->fetch();
 		$discountTs = $discount['TIMESTAMP_X'];
 		/* @var $discountTs \Bitrix\Main\Type\DateTime */
 		return $discountTs->format('U');

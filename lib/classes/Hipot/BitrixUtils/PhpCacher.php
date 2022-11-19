@@ -58,7 +58,7 @@ class PhpCacher
 	 * @param array                    $params - массив параметров функции (deprecated, для старых версий php)
 	 * данные параметры влияют на идентификатор кеша $CACHE_ID
 	 *
-	 * @return boolean|array|null
+	 * @return boolean|array|null|mixed
 	 */
 	public static function cache(string $tagName, int $cacheTime, callable $callbackFunction, array $params = [])
 	{
@@ -165,7 +165,7 @@ class PhpCacher
 	 * @param string $tagName
 	 * @return boolean|string
 	 */
-	private static function getCacheDir(string $tagName)
+	private static function getCacheDir(string $tagName): string
 	{
 		if (($tagName = trim($tagName)) == '') {
 			return false;
@@ -173,6 +173,10 @@ class PhpCacher
 		return '/php/' . $tagName;
 	}
 
+	/**
+	 * @return bool
+	 * @internal
+	 */
 	private function canCurrentUserDropCache(): bool
 	{
 		// if cacher used in init.php
