@@ -2,14 +2,15 @@
 /**
  * hipot studio source file
  * User: <hipot AT ya DOT ru>
- * Date: 02.01.2019 21:34
- * @version pre 1.0
+ * Date: 2022
+ * @version 2.0
  */
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+namespace Hipot\Components;
 
-use Bitrix\Main\Loader;
-use Hipot\BitrixUtils\IblockUtils;
-use Hipot\IbAbstractLayer\IblockElemLinkedChains;
+defined('B_PROLOG_INCLUDED') || die();
+
+use Hipot\BitrixUtils\IblockUtils,
+	Bitrix\Main;
 
 /**
  * Уникальный компонент всяческих листов элементов инфоблока
@@ -17,19 +18,19 @@ use Hipot\IbAbstractLayer\IblockElemLinkedChains;
  * @version 5.x, см. CHANGELOG.TXT
  * @copyright 2019, hipot studio
  */
-class hiIblockListComponent extends CBitrixComponent
+class IblockList extends \CBitrixComponent
 {
-	public const LINKED_CHAINS_CLASS = IblockElemLinkedChains::class;
+	const /** @noinspection ClassConstantCanBeUsedInspection */
+			LINKED_CHAINS_CLASS = '\\Hipot\\IbAbstractLayer\\IblockElemLinkedChains';
 
 	/**
-	 * Repository to get linked-iblock-elements
 	 * @var \Hipot\IbAbstractLayer\IblockElemLinkedChains
 	 */
-	private IblockElemLinkedChains $obChainBuilder;
+	private $obChainBuilder;
 
-	public function onPrepareComponentParams($arParams): array
+	public function onPrepareComponentParams($arParams)
 	{
-		$arParams = is_array($arParams) ? $arParams : [];
+		\CpageOption::SetOptionString("main", "nav_page_in_session", "N");
 
 		$arParams['PAGEN_1']			    = (int)$_REQUEST['PAGEN_1'];
 		$arParams['SHOWALL_1']			    = (int)$_REQUEST['SHOWALL_1'];
@@ -50,12 +51,10 @@ class hiIblockListComponent extends CBitrixComponent
 		$arParams =& $this->arParams;
 		$arResult =& $this->arResult;
 
-		\CPageOption::SetOptionString("main", "nav_page_in_session", "N");
+		if ($this->startResultCache(false, $this->getAdditionalCacheId())) {
+			\CModule::IncludeModule("iblock");
 
-		if ($this->startResultCache(false)) {
-			Loader::includeModule("iblock");
-
-			if (isset($arParams["ORDER"])) {
+			if ($arParams["ORDER"]) {
 				$arOrder = $arParams["ORDER"];
 			} else {
 				$arOrder = ["SORT" => "ASC"];
@@ -74,7 +73,7 @@ class hiIblockListComponent extends CBitrixComponent
 				$arNavParams["bShowAll"]	= ($arParams['NAV_SHOW_ALL'] == 'Y');
 			}
 
-			$arSelect = ["ID", "IBLOCK_ID", "IBLOCK_SECTION_ID", "DETAIL_PAGE_URL", "NAME", "TIMESTAMP_X"];
+			$arSelect = array("ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME", "TIMESTAMP_X");
 			if ($arParams["SELECT"]) {
 				$arSelect = array_merge($arSelect, $arParams["SELECT"]);
 			}
@@ -83,9 +82,10 @@ class hiIblockListComponent extends CBitrixComponent
 			$rsItems = \CIBlockElement::GetList($arOrder, $arFilter, false, $arNavParams, $arSelect);
 
 			if ($arParams['SELECT_CHAINS'] == 'Y') {
-				// Создаем объект, должен создаваться до цикла по элементам, т.к. в него складываются
+				// создаем объект, должен создаваться до цикла по элементам, т.к. в него складываются
 				// уже выбранные цепочки в качестве кеша
-				$this->obChainBuilder = new static::LINKED_CHAINS_CLASS();
+				$className = static::LINKED_CHAINS_CLASS;
+				$this->obChainBuilder = new $className;
 			}
 
 			while ($arItem = $rsItems->GetNext()) {
@@ -129,7 +129,8 @@ class hiIblockListComponent extends CBitrixComponent
 						$navComponentObject,
 						"",
 						$arParams['NAV_TEMPLATE'],
-						($arParams["NAV_SHOW_ALWAYS"] == 'Y')
+						($arParams["NAV_SHOW_ALWAYS"] == 'Y'),
+						$this
 					);
 
 					$arResult["NAV_RESULT"] = [
@@ -140,9 +141,9 @@ class hiIblockListComponent extends CBitrixComponent
 					];
 				}
 
-				$this->setResultCacheKeys([
+				$this->setResultCacheKeys(array(
 					"NAV_RESULT"
-				]);
+				));
 			} else {
 				if ($arParams["SET_404"] == "Y") {
 					include $_SERVER["DOCUMENT_ROOT"] . "/404_inc.php";
@@ -162,4 +163,37 @@ class hiIblockListComponent extends CBitrixComponent
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	protected function getAdditionalCacheId(): array
+	{
+		return [
+			$this->arParams['CACHE_GROUPS'] === 'N' ? false : $this->getUserGroupsCacheId(),
+		];
+	}
+
+	/**
+	 * Return user groups. Now worked only with current user.
+	 *
+	 * @return array
+	 */
+	protected function getUserGroups(): array
+	{
+		/** @global \CUser $USER */
+		global $USER;
+		$result = [2];
+		if (isset($USER) && $USER instanceof \CUser) {
+			$result = $USER->GetUserGroupArray();
+			Main\Type\Collection::normalizeArrayValuesByInt($result, true);
+		}
+		return $result;
+	}
+
+	/**
+	 * Return user groups string for cache id.
+	 *
+	 * @return string
+	 */
+	protected function getUserGroupsCacheId(): string
+	{
+		return implode(',', $this->getUserGroups());
+	}
 }

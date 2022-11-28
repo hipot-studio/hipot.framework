@@ -19,12 +19,12 @@ foreach ($reqParams as $param) {
 $arResult 		= [];
 
 $CACHE_TIME		= (COption::GetOptionString("main", "component_cache_on", "Y") == "N")
-					? 0
-					: (int)$arParams['CACHE_TIME'];
+	? 0
+	: (int)$arParams['CACHE_TIME'];
 $CACHE_ID		= __FILE__ . '|' . serialize($arParams);
 $cachePath		= 'php/' . ToLower($arParams['CACHE_TAG']) . '/';
 
-$obMenuCache = new CPHPCache;
+$obMenuCache = new CPHPCache();
 
 if ($obMenuCache->StartDataCache($CACHE_TIME, $CACHE_ID, $cachePath)) {
 
@@ -47,7 +47,6 @@ if ($obMenuCache->StartDataCache($CACHE_TIME, $CACHE_ID, $cachePath)) {
 		if (count($arParams["SELECT"]) > 0) {
 			$arSelect = array_merge($arSelect, $arParams["SELECT"]);
 		}
-
 		$rsItems = CIBlockElement::GetList($arOrder, $arFilter, false, false, $arSelect);
 		while ($arItem = $rsItems->GetNext()) {
 			$link_params = (count($arParams["SELECT"]) > 0) ? $arItem : [];

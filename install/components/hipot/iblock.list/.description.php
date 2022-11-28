@@ -12,6 +12,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 * SELECT / какие еще поля могут понадобится по-умолчанию array("ID", "CODE", "DETAIL_PAGE_URL", "NAME")
 * GET_PROPERTY / Y – вывести все свойства
 * CACHE_TIME / время кеша
+* CACHE_GROUPS / N - кешировать ли группы пользователей (для интерфейса эрмитаж)
 *
 * Дополнительные параметры:
 *

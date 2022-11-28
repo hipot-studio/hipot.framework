@@ -5,12 +5,13 @@
  * Date: 02.01.2019 21:47
  * @version pre 1.0
  */
+namespace Hipot\Components;
 
-class hiIblockSectionComponent extends CBitrixComponent
+class IblockSection extends \CBitrixComponent
 {
 	public function onPrepareComponentParams($arParams)
 	{
-		CpageOption::SetOptionString('main', 'nav_page_in_session', 'N');
+		\CPageOption::SetOptionString('main', 'nav_page_in_session', 'N');
 
 		if (! isset($arParams['CACHE_TIME'])) {
 			$arParams['CACHE_TIME'] = 3600;
@@ -45,7 +46,7 @@ class hiIblockSectionComponent extends CBitrixComponent
 
 		if ($this->startResultCache(false)) {
 
-			CModule::IncludeModule('iblock');
+			\CModule::IncludeModule('iblock');
 
 			$arOrder = ['SORT' => 'ASC'];
 			if (! empty($arParams['ORDER'])) {
@@ -59,7 +60,7 @@ class hiIblockSectionComponent extends CBitrixComponent
 
 			// не реализованный выбор подсекций
 			if ((int)$arFilter['SECTION_ID'] > 0) {
-				$thisSection = CIBlockSection::GetByID((int)$arFilter['SECTION_ID'])->Fetch();
+				$thisSection = \CIBlockSection::GetByID((int)$arFilter['SECTION_ID'])->Fetch();
 
 				if ((int)$thisSection['ID'] == 0) {
 					$arFilter['ID']			= false;
@@ -96,10 +97,10 @@ class hiIblockSectionComponent extends CBitrixComponent
 			/**
 			 * QUERY
 			 */
-			$rsSect = CIBlockSection::GetList($arOrder, $arFilter, false, $arSelect, $arNavStartParams);
+			$rsSect = \CIBlockSection::GetList($arOrder, $arFilter, false, $arSelect, $arNavStartParams);
 			while ($arSect = $rsSect->GetNext()) {
 				if ($arParams['SELECT_COUNT']) {
-					$cntElemsRes = CIBlockElement::GetList(
+					$cntElemsRes = \CIBlockElement::GetList(
 						["SORT" => "ASC"],
 						array_merge($arElemCountFilter, ['SECTION_ID' => $arSect['ID']]),
 						[], false, ['ID']
@@ -146,7 +147,8 @@ class hiIblockSectionComponent extends CBitrixComponent
 						$navComponentObject,
 						"",
 						$arParams['NAV_TEMPLATE'],
-						($arParams["NAV_SHOW_ALWAYS"] == 'Y')
+						($arParams["NAV_SHOW_ALWAYS"] == 'Y'),
+						$this
 					);
 				}
 

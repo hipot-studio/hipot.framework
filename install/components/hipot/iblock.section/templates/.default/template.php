@@ -12,9 +12,6 @@
 /** @var CBitrixComponent $component */
 
 $this->setFrameMode(true);
+
+\Bitrix\Main\Diag\Debug::dump($arResult);
 ?>
-<?//echo "<pre>"; print_r($arResult); echo "</pre>";?>
-
-<?//=$arResult["NAV_STRING"]?>
-
-
