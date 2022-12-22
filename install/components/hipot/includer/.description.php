@@ -6,16 +6,16 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
  * Основной параметр - это шаблон
  */
 
-$arComponentDescription = [
+$arComponentDescription = array(
 	"NAME"			=> "includer",
 	"DESCRIPTION"	=> "",
 	"ICON"			=> "/images/ico.gif",
-	"PATH" => [
+	"PATH" => array(
 		"ID"		=> "hipot_root",
 		"NAME"		=> "hipot"
-	],
-	"AREA_BUTTONS"	=> [],
+	),
+	"AREA_BUTTONS"	=> array(),
 	"CACHE_PATH"	=> "Y",
 	"COMPLEX"		=> "N"
-];
+);
 ?>

@@ -18,17 +18,17 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
  * @copyright hipot, 2017
  */
 
-$arComponentDescription = [
+$arComponentDescription = array(
 	"NAME"			=> basename(__DIR__),
 	"DESCRIPTION"	=> "",
 	"ICON"			=> "/images/ico.gif",
-	"PATH" => [
+	"PATH" => array(
 		"ID"		=> "hipot_root",
 		"NAME"		=> "hipot"
-	],
-	"AREA_BUTTONS"	=> [],
+	),
+	"AREA_BUTTONS"	=> array(),
 	"CACHE_PATH"	=> "Y",
 	"COMPLEX"		=> "N"
-];
+);
 
 ?>

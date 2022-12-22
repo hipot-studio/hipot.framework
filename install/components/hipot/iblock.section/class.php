@@ -75,7 +75,7 @@ class IblockSection extends \CBitrixComponent
 			}
 
 			$arSelect = [];
-			if (count($arParams['SELECT']) > 0) {
+			if (is_array($arParams['SELECT']) && count($arParams['SELECT']) > 0) {
 				$arSelect = array_merge($arSelect, $arParams['SELECT']);
 			}
 

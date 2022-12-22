@@ -12,7 +12,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 * SELECT / какие еще поля могут понадобится по-умолчанию array("ID", "CODE", "DETAIL_PAGE_URL", "NAME")
 * GET_PROPERTY / Y – вывести все свойства
 * CACHE_TIME / время кеша
-* CACHE_GROUPS / N - кешировать ли группы пользователей (для интерфейса эрмитаж)
 *
 * Дополнительные параметры:
 *
@@ -26,16 +25,16 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 * SELECT_CHAINS_DEPTH / глубина выбираемых элементов (по умолчанию 3)
 */
 
-$arComponentDescription = [
+$arComponentDescription = array(
 	"NAME"			=> "iblock.list pages mutator",
 	"DESCRIPTION"	=> "",
 	"ICON"			=> "/images/ico.gif",
-	"PATH" => [
+	"PATH" => array(
 		"ID"		=> "hipot_root",
 		"NAME"		=> "hipot"
-	],
-	"AREA_BUTTONS"	=> [],
+	),
+	"AREA_BUTTONS"	=> array(),
 	"CACHE_PATH"	=> "Y",
 	"COMPLEX"		=> "N"
-];
+);
 ?>
