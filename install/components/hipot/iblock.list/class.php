@@ -16,12 +16,12 @@ use Hipot\BitrixUtils\IblockUtils,
  * Уникальный компонент всяческих листов элементов инфоблока
  *
  * @version 5.x, см. CHANGELOG.TXT
- * @copyright 2019, hipot studio
+ * @copyright 2022, hipot studio
  */
 class IblockList extends \CBitrixComponent
 {
 	const /** @noinspection ClassConstantCanBeUsedInspection */
-			LINKED_CHAINS_CLASS = '\\Hipot\\IbAbstractLayer\\IblockElemLinkedChains';
+		LINKED_CHAINS_CLASS = '\\Hipot\\IbAbstractLayer\\IblockElemLinkedChains';
 
 	/**
 	 * @var \Hipot\IbAbstractLayer\IblockElemLinkedChains
@@ -52,7 +52,7 @@ class IblockList extends \CBitrixComponent
 		$arResult =& $this->arResult;
 
 		if ($this->startResultCache(false, $this->getAdditionalCacheId())) {
-			\CModule::IncludeModule("iblock");
+			Main\Loader::includeModule("iblock");
 
 			if ($arParams["ORDER"]) {
 				$arOrder = $arParams["ORDER"];
@@ -73,10 +73,12 @@ class IblockList extends \CBitrixComponent
 				$arNavParams["bShowAll"]	= ($arParams['NAV_SHOW_ALL'] == 'Y');
 			}
 
-			$arSelect = array("ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME", "TIMESTAMP_X");
+			$arSelect = ["ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME", "TIMESTAMP_X"];
 			if ($arParams["SELECT"]) {
 				$arSelect = array_merge($arSelect, $arParams["SELECT"]);
 			}
+
+			$arResult["ITEMS"] = [];
 
 			// QUERY 1 MAIN
 			$rsItems = \CIBlockElement::GetList($arOrder, $arFilter, false, $arNavParams, $arSelect);
@@ -85,7 +87,7 @@ class IblockList extends \CBitrixComponent
 				// создаем объект, должен создаваться до цикла по элементам, т.к. в него складываются
 				// уже выбранные цепочки в качестве кеша
 				$className = static::LINKED_CHAINS_CLASS;
-				$this->obChainBuilder = new $className;
+				$this->obChainBuilder = new $className();
 			}
 
 			while ($arItem = $rsItems->GetNext()) {
@@ -141,12 +143,12 @@ class IblockList extends \CBitrixComponent
 					];
 				}
 
-				$this->setResultCacheKeys(array(
+				$this->setResultCacheKeys([
 					"NAV_RESULT"
-				));
+				]);
 			} else {
 				if ($arParams["SET_404"] == "Y") {
-					include $_SERVER["DOCUMENT_ROOT"] . "/404_inc.php";
+					include Main\Loader::getDocumentRoot() . "/404_inc.php";
 				}
 
 				$this->abortResultCache();
@@ -163,7 +165,7 @@ class IblockList extends \CBitrixComponent
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	protected function getAdditionalCacheId(): array
+	private function getAdditionalCacheId(): array
 	{
 		return [
 			$this->arParams['CACHE_GROUPS'] === 'N' ? false : $this->getUserGroupsCacheId(),
@@ -175,7 +177,7 @@ class IblockList extends \CBitrixComponent
 	 *
 	 * @return array
 	 */
-	protected function getUserGroups(): array
+	private function getUserGroups(): array
 	{
 		/** @global \CUser $USER */
 		global $USER;
@@ -192,7 +194,7 @@ class IblockList extends \CBitrixComponent
 	 *
 	 * @return string
 	 */
-	protected function getUserGroupsCacheId(): string
+	private function getUserGroupsCacheId(): string
 	{
 		return implode(',', $this->getUserGroups());
 	}

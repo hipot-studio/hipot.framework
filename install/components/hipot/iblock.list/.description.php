@@ -1,5 +1,5 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
+defined('B_PROLOG_INCLUDED') || die();
 
 /**
 * Основные параметры:
@@ -38,4 +38,3 @@ $arComponentDescription = [
 	"CACHE_PATH"	=> "Y",
 	"COMPLEX"		=> "N"
 ];
-?>

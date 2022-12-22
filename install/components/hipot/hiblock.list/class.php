@@ -5,14 +5,19 @@
  * Date: 13.04.2021 17:03
  * @version pre 1.0
  */
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+namespace Hipot\Components;
 
-use Bitrix\Highloadblock\HighloadBlockTable;
+defined('B_PROLOG_INCLUDED') || die();
+
+use Bitrix\Highloadblock\HighloadBlockTable,
+	Bitrix\Main\Loader;
+
+use function ShowError;
 
 /**
  * Уникальный компонент списка из Hl-блока
  */
-class hiBlockListComponent extends CBitrixComponent
+class HiBlockList extends \CBitrixComponent
 {
 	public const CACHE_TTL = 3600 * 24;
 
@@ -45,7 +50,7 @@ class hiBlockListComponent extends CBitrixComponent
 	 */
 	public function onPrepareComponentParams($arParams)
 	{
-		\CpageOption::SetOptionString("main", "nav_page_in_session", "N");
+		\CPageOption::SetOptionString("main", "nav_page_in_session", "N");
 
 		$arParams['PAGEN_1']			    = (int)$_REQUEST['PAGEN_1'];
 		$arParams['SHOWALL_1']			    = (int)$_REQUEST['SHOWALL_1'];
@@ -66,7 +71,7 @@ class hiBlockListComponent extends CBitrixComponent
 
 		$requiredModules = ['highloadblock', 'iblock'];
 		foreach ($requiredModules as $requiredModule) {
-			if (! CModule::IncludeModule($requiredModule)) {
+			if (! Loader::includeModule($requiredModule)) {
 				ShowError($requiredModule . " not inslaled and required!");
 				return false;
 			}
