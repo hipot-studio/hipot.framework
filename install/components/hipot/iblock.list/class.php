@@ -2,12 +2,15 @@
 /**
  * hipot studio source file
  * User: <hipot AT ya DOT ru>
- * Date: 02.01.2019 21:34
- * @version pre 1.0
+ * Date: 2022
+ * @version 2.0
  */
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+namespace Hipot\Components;
 
-use Hipot\BitrixUtils\IblockUtils;
+defined('B_PROLOG_INCLUDED') || die();
+
+use Hipot\BitrixUtils\IblockUtils,
+	Bitrix\Main;
 
 /**
  * Уникальный компонент всяческих листов элементов инфоблока
@@ -15,7 +18,7 @@ use Hipot\BitrixUtils\IblockUtils;
  * @version 5.x, см. CHANGELOG.TXT
  * @copyright 2019, hipot studio
  */
-class hiIblockListComponent extends CBitrixComponent
+class IblockList extends \CBitrixComponent
 {
 	const /** @noinspection ClassConstantCanBeUsedInspection */
 			LINKED_CHAINS_CLASS = '\\Hipot\\IbAbstractLayer\\IblockElemLinkedChains';
@@ -48,7 +51,7 @@ class hiIblockListComponent extends CBitrixComponent
 		$arParams =& $this->arParams;
 		$arResult =& $this->arResult;
 
-		if ($this->startResultCache(false)) {
+		if ($this->startResultCache(false, $this->getAdditionalCacheId())) {
 			\CModule::IncludeModule("iblock");
 
 			if ($arParams["ORDER"]) {
@@ -70,7 +73,7 @@ class hiIblockListComponent extends CBitrixComponent
 				$arNavParams["bShowAll"]	= ($arParams['NAV_SHOW_ALL'] == 'Y');
 			}
 
-			$arSelect = ["ID", "IBLOCK_ID", "IBLOCK_SECTION_ID", "DETAIL_PAGE_URL", "NAME", "TIMESTAMP_X"];
+			$arSelect = array("ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME", "TIMESTAMP_X");
 			if ($arParams["SELECT"]) {
 				$arSelect = array_merge($arSelect, $arParams["SELECT"]);
 			}
@@ -126,7 +129,8 @@ class hiIblockListComponent extends CBitrixComponent
 						$navComponentObject,
 						"",
 						$arParams['NAV_TEMPLATE'],
-						($arParams["NAV_SHOW_ALWAYS"] == 'Y')
+						($arParams["NAV_SHOW_ALWAYS"] == 'Y'),
+						$this
 					);
 
 					$arResult["NAV_RESULT"] = [
@@ -137,9 +141,9 @@ class hiIblockListComponent extends CBitrixComponent
 					];
 				}
 
-				$this->setResultCacheKeys([
+				$this->setResultCacheKeys(array(
 					"NAV_RESULT"
-				]);
+				));
 			} else {
 				if ($arParams["SET_404"] == "Y") {
 					include $_SERVER["DOCUMENT_ROOT"] . "/404_inc.php";
@@ -159,4 +163,37 @@ class hiIblockListComponent extends CBitrixComponent
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	protected function getAdditionalCacheId(): array
+	{
+		return [
+			$this->arParams['CACHE_GROUPS'] === 'N' ? false : $this->getUserGroupsCacheId(),
+		];
+	}
+
+	/**
+	 * Return user groups. Now worked only with current user.
+	 *
+	 * @return array
+	 */
+	protected function getUserGroups(): array
+	{
+		/** @global \CUser $USER */
+		global $USER;
+		$result = [2];
+		if (isset($USER) && $USER instanceof \CUser) {
+			$result = $USER->GetUserGroupArray();
+			Main\Type\Collection::normalizeArrayValuesByInt($result, true);
+		}
+		return $result;
+	}
+
+	/**
+	 * Return user groups string for cache id.
+	 *
+	 * @return string
+	 */
+	protected function getUserGroupsCacheId(): string
+	{
+		return implode(',', $this->getUserGroups());
+	}
 }

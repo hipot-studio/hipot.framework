@@ -429,8 +429,6 @@ class UnsortedUtils
 			?>
 			<script>
 				BX.ready(() => {
-					<?php
-					/*
 					BX.addCustomEvent('PlayerManager.Player:onAfterInit', (player) => {
 						if (typeof $(player.getElement()).data('resize_koef') === 'undefined') {
 							$(player.getElement()).data('resize_koef', $(player.getElement()).height() / $(player.getElement()).width()).css({
@@ -443,11 +441,6 @@ class UnsortedUtils
 								'height': $(player.getElement()).width() * $(player.getElement()).data('resize_koef')
 							});
 						}).resize();
-					});
-					*/?>
-					BX.addCustomEvent('PlayerManager.Player:onBeforeInit', (player) => {
-						// https://docs.videojs.com/player#fluid
-						player.params['fluid'] = true;
 					});
 				});
 			</script>

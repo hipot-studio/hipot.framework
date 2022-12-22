@@ -464,7 +464,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	 * @return bool
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function generate(): bool
+	public function generate()
 	{
 		if (! Loader::includeModule('iblock')) {
 			return false;

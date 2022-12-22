@@ -901,7 +901,7 @@ class IblockUtils extends _CIBElement
 		$obSearch = new \CSearch();
 		$obSearch->Search([
 			'QUERY'         => $query,
-			//'SITE_ID'       => SITE_ID,
+			'SITE_ID'       => SITE_ID,
 			'MODULE_ID'     => 'iblock',
 		], ["RANK" => "DESC"], [
 			"=MODULE_ID" => "iblock",
