@@ -11,11 +11,10 @@ class IblockGenerateSxemManager
 	 * @return bool
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function updateSxem()
+	public static function updateSxem($fileToGenerateSxema)
 	{
 		self::deleteSxem();
 
-		global $fileToGenerateSxema;
 		$oWeIblockGenerateSxem = new IblockGenerateSxem($fileToGenerateSxema);
 		return $oWeIblockGenerateSxem->generate();
 	}
