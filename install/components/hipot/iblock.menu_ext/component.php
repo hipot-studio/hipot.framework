@@ -14,6 +14,7 @@ foreach ($reqParams as $param) {
 		return false;
 	}
 }
+$arParams["SELECT"] = (array)$arParams["SELECT"];
 
 // сюда соберем все пункты меню
 $arResult 		= [];

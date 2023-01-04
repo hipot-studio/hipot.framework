@@ -1,12 +1,10 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
+namespace Hipot\Components;
 
-class hiIncluderComponent extends CBitrixComponent
+class Includer extends \CBitrixComponent
 {
 	public function executeComponent()
 	{
 		$this->includeComponentTemplate();
 	}
 }
-
-?>

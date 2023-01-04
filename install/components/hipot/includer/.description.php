@@ -18,4 +18,3 @@ $arComponentDescription = [
 	"CACHE_PATH"	=> "Y",
 	"COMPLEX"		=> "N"
 ];
-?>
