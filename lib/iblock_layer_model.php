@@ -29,11 +29,11 @@ if (! defined('ABSTRACT_LAYER_SAULT')) {
  * @var string
  * @global
  */
-$fileToGenerateSxema = $GLOBALS['fileToGenerateSxema'] = Loader::getDocumentRoot() . '/bitrix/modules/generated_iblock_sxem.php';
+$fileToGenerateSxema = Loader::getDocumentRoot() . '/bitrix/modules/generated_iblock_sxem.php';
 if (! file_exists($fileToGenerateSxema)) {
 	IblockGenerateSxemManager::updateSxem($fileToGenerateSxema);
 }
 // устанавливаем обработку событий
-IblockGenerateSxemManager::setUpdateHandlers();
+IblockGenerateSxemManager::setUpdateHandlers($fileToGenerateSxema);
 
 // endregion /*** END Abstract Iblock Elements Layer ***/
