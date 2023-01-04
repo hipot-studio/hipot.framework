@@ -1,22 +1,27 @@
 <?php
 namespace Hipot\IbAbstractLayer\GenerateSxem;
 
+use Bitrix\Main\EventManager;
+
 /**
  * Управленец обновлением схемы
  */
 class IblockGenerateSxemManager
 {
+	private static string $fileToGenerateSxema;
+
 	/**
 	 * Генератор схемы по классам и подсказки по ним
 	 * @return bool
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function updateSxem()
+	public static function updateSxem(string $fileToGenerateSxema)
 	{
-		self::deleteSxem();
+		self::setLastSxem($fileToGenerateSxema);
 
-		global $fileToGenerateSxema;
-		$oWeIblockGenerateSxem = new IblockGenerateSxem($fileToGenerateSxema);
+		self::deleteSxem(self::getLastSxem());
+
+		$oWeIblockGenerateSxem = new IblockGenerateSxem(self::getLastSxem());
 		return $oWeIblockGenerateSxem->generate();
 	}
 
@@ -24,13 +29,21 @@ class IblockGenerateSxemManager
 	 * удаление схемы
 	 * @return bool
 	 */
-	public static function deleteSxem()
+	public static function deleteSxem(string $fileToGenerateSxema)
 	{
-		global $fileToGenerateSxema;
 		if (file_exists($fileToGenerateSxema)) {
 			return unlink($fileToGenerateSxema);
 		}
 		return true;
+	}
+
+	public static function setLastSxem(string $fileToGenerateSxema)
+	{
+		self::$fileToGenerateSxema = $fileToGenerateSxema;
+	}
+	public static function getLastSxem(): string
+	{
+		return self::$fileToGenerateSxema;
 	}
 
 	/**
@@ -40,7 +53,7 @@ class IblockGenerateSxemManager
 	public static function OnAfterIBlockAddHandler(&$arFields)
 	{
 		if ($arFields["ID"] > 0) {
-			self::deleteSxem();
+			self::deleteSxem(self::getLastSxem());
 		}
 	}
 
@@ -51,7 +64,7 @@ class IblockGenerateSxemManager
 	public static function OnAfterIBlockUpdateHandler(&$arFields)
 	{
 		if ($arFields["RESULT"]) {
-			self::deleteSxem();
+			self::deleteSxem(self::getLastSxem());
 		}
 	}
 
@@ -61,7 +74,7 @@ class IblockGenerateSxemManager
 	 */
 	public static function OnIBlockDeleteHandler($ID)
 	{
-		self::deleteSxem();
+		self::deleteSxem(self::getLastSxem());
 	}
 
 	/**
@@ -71,7 +84,7 @@ class IblockGenerateSxemManager
 	public static function OnAfterIBlockPropertyAddHandler(&$arFields)
 	{
 		if ($arFields["ID"] > 0) {
-			self::deleteSxem();
+			self::deleteSxem(self::getLastSxem());
 		}
 	}
 
@@ -82,7 +95,7 @@ class IblockGenerateSxemManager
 	public static function OnAfterIBlockPropertyUpdateHandler(&$arFields)
 	{
 		if ($arFields["RESULT"]) {
-			self::deleteSxem();
+			self::deleteSxem(self::getLastSxem());
 		}
 	}
 
@@ -92,22 +105,24 @@ class IblockGenerateSxemManager
 	 */
 	public static function OnIBlockPropertyDeleteHandler($ID)
 	{
-		self::deleteSxem();
+		self::deleteSxem(self::getLastSxem());
 	}
 
 
 	/**
 	 * Установка событий обновления схемы
 	 */
-	public static function setUpdateHandlers()
+	public static function setUpdateHandlers($fileToGenerateSxema): void
 	{
+		self::setLastSxem($fileToGenerateSxema);
+
 		$events = [
 			"OnAfterIBlockAdd", "OnAfterIBlockUpdate", "OnIBlockDelete",
 			"OnAfterIBlockPropertyAdd", "OnAfterIBlockPropertyUpdate", "OnIBlockPropertyDelete"
 		];
 		foreach ($events as $e) {
 			if (is_callable([__CLASS__, $e . 'Handler'])) {
-				AddEventHandler("iblock", $e, [__CLASS__, $e . 'Handler']);
+				EventManager::getInstance()->addEventHandler("iblock", $e, [__CLASS__, $e . 'Handler']);
 			}
 		}
 	}
