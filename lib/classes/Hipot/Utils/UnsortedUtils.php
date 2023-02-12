@@ -40,7 +40,7 @@ class UnsortedUtils
 	 *
 	 * @return string
 	 */
-	public static function TranslitText($text, $lang = 'ru'): string
+	public static function TranslitText($text, string $lang = 'ru'): string
 	{
 		return CUtil::translit(trim($text), $lang, [
 			'max_len' => 100,
@@ -49,64 +49,6 @@ class UnsortedUtils
 			'replace_other' => '-',
 			'delete_repeat_replace' => true
 		]);
-	}
-
-	/**
-	 * Функция определения кодировки строки
-	 * Удобно для автоматического определения кодировки csv-файла
-	 *
-	 * Почему не mb_detect_encoding()? Если кратко — он не работает.
-	 *
-	 * @param string $string строка в неизвестной кодировке
-	 * @param int $pattern_size = 50
-	 *        если строка больше этого размера, то определение кодировки будет
-	 *        производиться по шаблону из $pattern_size символов, взятых из середины
-	 *        переданной строки. Это сделано для увеличения производительности на больших текстах.
-	 * @return string 'cp1251' 'utf-8' 'ascii' '855' 'KOI8R' 'ISO-IR-111' 'CP866' 'KOI8U'
-	 *
-	 * @see http://habrahabr.ru/post/107945/
-	 * @see http://forum.dklab.ru/viewtopic.php?t=37833
-	 * @see http://forum.dklab.ru/viewtopic.php?t=37830
-	 * @use iconv
-	 */
-	public static function detect_encoding($string, $pattern_size = 50): string
-	{
-		$list = [
-			'cp1251',
-			'utf-8',
-			'ascii',
-			'855',
-			'KOI8R',
-			'ISO-IR-111',
-			'CP866',
-			'KOI8U'
-		];
-		$c = strlen($string);
-		if ($c > $pattern_size) {
-			$string = substr($string, floor(($c - $pattern_size) / 2), $pattern_size);
-			$c = $pattern_size;
-		}
-
-		$reg1 = '/(\xE0|\xE5|\xE8|\xEE|\xF3|\xFB|\xFD|\xFE|\xFF)/i';
-		$reg2 = '/(\xE1|\xE2|\xE3|\xE4|\xE6|\xE7|\xE9|\xEA|\xEB|\xEC|\xED|\xEF|\xF0|\xF1|\xF2|\xF4|\xF5|\xF6|\xF7|\xF8|\xF9|\xFA|\xFC)/i';
-
-		$mk = 10000;
-		$enc = 'ascii';
-		foreach ($list as $item) {
-			$sample1 = @iconv($item, 'cp1251', $string);
-			$gl = @preg_match_all($reg1, $sample1, $arr);
-			$sl = @preg_match_all($reg2, $sample1, $arr);
-			if (!$gl || !$sl) {
-				continue;
-			}
-			$k = abs(3 - ($sl / $gl));
-			$k += $c - $gl - $sl;
-			if ($k < $mk) {
-				$enc = $item;
-				$mk = $k;
-			}
-		}
-		return $enc;
 	}
 
 	/**
@@ -127,22 +69,6 @@ class UnsortedUtils
 	}
 
 	/**
-	 * Выполняет команду в OS в фоне и без получения ответа
-	 *
-	 * @param string $cmd команда на выполнение
-	 * @see exec()
-	 * @deprecated
-	 */
-	public static function execInBackground($cmd): void
-	{
-		if (strpos(php_uname(), "Windows") === 0) {
-			pclose(popen("start /B " . $cmd, "r"));
-		} else {
-			exec($cmd . " > /dev/null &");
-		}
-	}
-
-	/**
 	 * Получить путь к php с учетом особенностей utf8 битрикс
 	 * @return string
 	 */
@@ -150,9 +76,9 @@ class UnsortedUtils
 	{
 		$phpPath = 'php';
 		if (! defined('BX_UTF')) {
-			$phpPath .= ' -d mbstring.func_overload=0 -d mbstring.internal_encoding=CP1251 ';
+			$phpPath .= ' -d default_charset="cp1251" ';
 		} else {
-			$phpPath .= ' -d mbstring.func_overload=2 -d mbstring.internal_encoding=UTF-8 ';
+			$phpPath .= ' -d default_charset="utf-8" ';
 		}
 		return $phpPath;
 	}
@@ -173,9 +99,9 @@ class UnsortedUtils
 	{
 		if ($left1_ts <= $left2_ts) {
 			return $right1_ts >= $left2_ts;
-		} else {
-			return $left1_ts <= $right2_ts;
 		}
+
+		return $left1_ts <= $right2_ts;
 	}
 
 	/**
@@ -186,12 +112,10 @@ class UnsortedUtils
 	public static function getTableFieldsFromDB(string $tableName): array
 	{
 		$a = [];
-		if (trim($tableName) != '') {
-			$query	= "SHOW COLUMNS FROM " . $tableName;
-			$res	= $GLOBALS['DB']->Query($query);
-
-			while ($row = $res->Fetch()) {
-				$a[] = $row['Field'];
+		if (trim($tableName) != '' && Application::getConnection()->isTableExists($tableName)) {
+			$fields = Application::getConnection()->getTableFields($tableName);
+			foreach ($fields as $field) {
+				$a[] = $field->getName();
 			}
 		}
 		return $a;
@@ -202,10 +126,10 @@ class UnsortedUtils
 	 * @param $url
 	 * @return bool|false|string
 	 */
-	public static function getPageContentByUrl($url)
+	public static function getPageContentByUrl($url): string
 	{
 		$el = new HttpClient();
-		return $el->get( $url );
+		return (string)$el->get( $url );
 	}
 
 	public static function getHttpHeadersByUrl($url): array
@@ -217,35 +141,6 @@ class UnsortedUtils
 		$headers = $el->head( $url )->toArray();
 		$headers['status'] = $el->getStatus();
 		return $headers;
-	}
-
-	/**
-	 * Возвращает размер удаленного файла
-	 *
-	 * @param string $path Путь к удаленному файлу
-	 * @return int | bool
-	 */
-	public static function remote_filesize($path)
-	{
-		preg_match('#(ht|f)tp(s)?://(?P<host>[a-zA-Z-_]+.[a-zA-Z]{2,4})(?P<name>/[\S]+)#', $path, $m);
-		$x = 0;
-		$stop = false;
-		$fp = fsockopen($m['host'], 80, $errno, $errstr, 30);
-		fwrite($fp, "HEAD $m[name] HTTP/1.0\nHOST: $m[host]\n\n");
-		while (!feof($fp) && !$stop) {
-			$y = fgets($fp, 2048);
-			if ($y == "\r\n") {
-				$stop = true;
-			}
-			$x .= $y;
-		}
-		fclose($fp);
-
-		if (preg_match("#Content-Length:\s*([\d]+)#i", $x, $size)) {
-			return $size[1];
-		} else {
-			return false;
-		}
 	}
 
 	/**
@@ -290,11 +185,12 @@ class UnsortedUtils
 				\CFormResult::Mail($RESULT_ID);
 
 				return new UpdateResult(['RESULT' => $RESULT_ID,    'STATUS' => UpdateResult::STATUS_OK]);
-			} else {
-				global $strError;
-				return new UpdateResult(['RESULT' => $strError,     'STATUS' => UpdateResult::STATUS_ERROR]);
 			}
+
+			global $strError;
+			return new UpdateResult(['RESULT' => $strError,     'STATUS' => UpdateResult::STATUS_ERROR]);
 		}
+		return false;
 	}
 
 	/**
@@ -343,8 +239,9 @@ class UnsortedUtils
 	 */
 	public static function getComponent($name, $template = '', $params = [], &$componentResult = null): string
 	{
+		/** @var $GLOBALS array{'DB':\CDatabase, 'APPLICATION':\CMain, 'USER':\CUser, 'USER_FIELD_MANAGER':\CUserTypeManager, 'CACHE_MANAGER':\CCacheManager, 'stackCacheManager':\CStackCacheManager} */
 		ob_start();
-		$componentResult = $GLOBALS['APPLICATION']->IncludeComponent($name, $template, $params);
+		$componentResult = $GLOBALS['APPLICATION']->IncludeComponent($name, $template, $params, null, [], true);
 		return ob_get_clean();
 	}
 
@@ -358,6 +255,7 @@ class UnsortedUtils
 	 */
 	public static function getIncludeArea($path, $params = [], $functionParams = []): string
 	{
+		/** @var $GLOBALS array{'DB':\CDatabase, 'APPLICATION':\CMain, 'USER':\CUser, 'USER_FIELD_MANAGER':\CUserTypeManager, 'CACHE_MANAGER':\CCacheManager, 'stackCacheManager':\CStackCacheManager} */
 		ob_start();
 		$GLOBALS['APPLICATION']->IncludeFile($path, $params, $functionParams);
 		return ob_get_clean();
@@ -415,8 +313,8 @@ class UnsortedUtils
 	 * @param string $videoFile
 	 * @param int $width
 	 * @param int $height
-	 * @param $component
-	 * @param bool $adaptiveFixs установка ширины плеера согласно текущей ширины блока, но с соотношением переданной ширины/высоты
+	 * @param \CBitrixComponent|null $component
+	 * @param bool $adaptiveFixs = true установка ширины плеера согласно текущей ширины блока, но с соотношением переданной ширины/высоты
 	 *
 	 * @return void
 	 */
@@ -484,6 +382,114 @@ class UnsortedUtils
 			], $component, ["HIDE_ICONS" => "Y"]
 		);
 	}
+
+	// region old deprecated
+
+	/**
+	 * Возвращает размер удаленного файла
+	 *
+	 * @param string $path Путь к удаленному файлу
+	 * @return int | bool
+	 * @deprecated
+	 */
+	public static function remote_filesize($path)
+	{
+		preg_match('#(ht|f)tp(s)?://(?P<host>[a-zA-Z-_]+.[a-zA-Z]{2,4})(?P<name>/[\S]+)#', $path, $m);
+
+		$x = 0;
+		$stop = false;
+		$fp = fsockopen($m['host'], 80, $errno, $errStr, 30);
+		fwrite($fp, "HEAD $m[name] HTTP/1.0\nHOST: $m[host]\n\n");
+		while (!feof($fp) && !$stop) {
+			$y = fgets($fp, 2048);
+			if ($y == "\r\n") {
+				$stop = true;
+			}
+			$x .= $y;
+		}
+		fclose($fp);
+
+		if (preg_match("#Content-Length:\s*(\d+)#i", $x, $size)) {
+			return $size[1];
+		}
+
+		return false;
+	}
+
+	/**
+	 * Выполняет команду в OS в фоне и без получения ответа
+	 *
+	 * @param string $cmd команда на выполнение
+	 * @see exec()
+	 * @deprecated
+	 */
+	public static function execInBackground($cmd): void
+	{
+		if (strpos(php_uname(), "Windows") === 0) {
+			pclose(popen("start /B " . $cmd, "r"));
+		} else {
+			exec($cmd . " > /dev/null &");
+		}
+	}
+
+	/**
+	 * Функция определения кодировки строки
+	 * Удобно для автоматического определения кодировки csv-файла
+	 *
+	 * Почему не mb_detect_encoding()? Если кратко — он не работает.
+	 *
+	 * @param string $string строка в неизвестной кодировке
+	 * @param int $pattern_size = 50
+	 *        если строка больше этого размера, то определение кодировки будет
+	 *        производиться по шаблону из $pattern_size символов, взятых из середины
+	 *        переданной строки. Это сделано для увеличения производительности на больших текстах.
+	 * @return string 'cp1251' 'utf-8' 'ascii' '855' 'KOI8R' 'ISO-IR-111' 'CP866' 'KOI8U'
+	 *
+	 * @see http://habrahabr.ru/post/107945/
+	 * @see http://forum.dklab.ru/viewtopic.php?t=37833
+	 * @see http://forum.dklab.ru/viewtopic.php?t=37830
+	 */
+	public static function detect_encoding($string, $pattern_size = 50): string
+	{
+		$list = [
+			'cp1251',
+			'utf-8',
+			'ascii',
+			'855',
+			'KOI8R',
+			'ISO-IR-111',
+			'CP866',
+			'KOI8U'
+		];
+		$c = strlen($string);
+		if ($c > $pattern_size) {
+			$string = substr($string, floor(($c - $pattern_size) / 2), $pattern_size);
+			$c = $pattern_size;
+		}
+
+		$reg1 = '/(\xE0|\xE5|\xE8|\xEE|\xF3|\xFB|\xFD|\xFE|\xFF)/i';
+		$reg2 = '/(\xE1|\xE2|\xE3|\xE4|\xE6|\xE7|\xE9|\xEA|\xEB|\xEC|\xED|\xEF|\xF0|\xF1|\xF2|\xF4|\xF5|\xF6|\xF7|\xF8|\xF9|\xFA|\xFC)/i';
+
+		$mk = 10000;
+		$enc = 'ascii';
+		foreach ($list as $item) {
+			$sample1 = @iconv($item, 'cp1251', $string);
+			$gl = @preg_match_all($reg1, $sample1, $arr);
+			$sl = @preg_match_all($reg2, $sample1, $arr);
+			if (!$gl || !$sl) {
+				continue;
+			}
+			$k = abs(3 - ($sl / $gl));
+			$k += $c - $gl - $sl;
+			if ($k < $mk) {
+				$enc = $item;
+				$mk = $k;
+			}
+		}
+		return $enc;
+	}
+
+	// endregion
 
 } // end class
 

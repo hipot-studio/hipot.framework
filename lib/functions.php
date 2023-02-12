@@ -228,4 +228,12 @@ if (! function_exists('bx_js_encode')) {
 }
 */
 
+
+if (! function_exists('str_contains')) {
+	function str_contains($haystack, $needle): bool
+	{
+		return $needle !== '' && mb_strpos($haystack, $needle) !== false;
+	}
+}
+
 // \/EOF

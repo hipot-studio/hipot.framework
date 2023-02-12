@@ -45,6 +45,7 @@ trait EO_Utils
 	public static function updateDataTable(): void
 	{
 		$entity = self::getEntity();
+		/** @var Data\Connection|DB\Connection $connection */
 		$connection = $entity->getConnection();
 
 		$dbHasField = [];

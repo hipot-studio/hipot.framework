@@ -73,6 +73,7 @@ use Bitrix\Main\Loader,
 	Hipot\Utils\UUtils;
 
 if (!class_exists('Memcache') || !class_exists(MemcacheWrapper::class)) {
+	UUtils::logException(new \Bitrix\Main\SystemException('no memcache classes to ' . basename(__FILE__)));
 	return;
 }
 

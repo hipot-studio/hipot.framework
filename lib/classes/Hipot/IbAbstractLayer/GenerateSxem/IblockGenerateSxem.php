@@ -402,10 +402,6 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 
 
 
-
-
-
-
 	/**
 	 * Генератор схемы по классам и подсказки по ним
 	 * @param string $fileGenerate
@@ -564,7 +560,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 		}
 
 		//@chmod(dirname($this->__fileGenerate), 0777);
-		return file_put_contents($this->__fileGenerate, '<?' . $out . '?>');
+		return file_put_contents($this->__fileGenerate, '<?php ' . $out);
 	}
 }
 
