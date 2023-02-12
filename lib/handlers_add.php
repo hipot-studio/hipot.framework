@@ -12,6 +12,7 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Composite\Page as CompositePage;
 use Bitrix\Main\Application;
+use Hipot\BitrixUtils\HiBlockApps;
 
 $eventManager = EventManager::getInstance();
 $request      = Application::getInstance()->getContext()->getRequest();
@@ -53,6 +54,7 @@ $eventManager->addEventHandler("main", "OnBuildGlobalMenu", static function (&$a
 
 // RemoveYandexDirectTab in iblock elements
 $eventManager->addEventHandler('main', 'OnAdminTabControlBegin', static function (&$TabControl) {
+	/** @var $GLOBALS array{'DB':\CDatabase, 'APPLICATION':\CMain, 'USER':\CUser, 'USER_FIELD_MANAGER':\CUserTypeManager, 'CACHE_MANAGER':\CCacheManager, 'stackCacheManager':\CStackCacheManager} */
 	if ($GLOBALS['APPLICATION']->GetCurPage() == '/bitrix/admin/iblock_element_edit.php') {
 		foreach ($TabControl->tabs as $Key => $arTab) {
 			if ($arTab['DIV'] == 'seo_adv_seo_adv') {
@@ -87,11 +89,9 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 	if (!isset($p) || !is_array($p) || count($p) <= 0) {
 		return;
 	}
+	global $APPLICATION;
 
-	global $APPLICATION, $DB, $CACHE_MANAGER;
-
-	$pCfg 		= array_shift($p);
-
+	$pCfg = array_shift($p);
 	if ($APPLICATION->GetCurPage() != '/bitrix/admin/user_options.php'
 		|| $pCfg['c'] != 'form' || $pCfg['d'] != 'Y'
 		|| !preg_match('#^form_((section)|(element))_\d+$#', $pCfg['n'])
@@ -100,8 +100,8 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 	}
 
 	/** @noinspection SqlResolve */
-	$DB->Query("DELETE FROM b_user_option WHERE CATEGORY = 'form' AND NAME = '" . $pCfg['n'] . "' AND COMMON = 'N'");
-	$CACHE_MANAGER->CleanDir("user_option");
+	Application::getConnection()->query("DELETE FROM b_user_option WHERE CATEGORY = 'form' AND NAME = '" . $pCfg['n'] . "' AND COMMON = 'N'");
+	Application::getInstance()->getManagedCache()->cleanDir("user_option");
 });
 
 // отрисовка 404 страницы с прерыванием текущего буфера и замены его на содержимое 404
@@ -110,9 +110,7 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 
 	// process 404 in content part
 	if ((defined('ERROR_404') && constant('ERROR_404') == 'Y' && $APPLICATION->GetCurPage() != '/404.php')
-
 		|| ($GLOBALS['httpCode'] == 404 && $APPLICATION->GetCurPage() != '/404.php')
-
 	) {
 		$contCacheFile  = Loader::getDocumentRoot() . '/upload/404_cache.html';
 
@@ -123,7 +121,7 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 		$content = file_get_contents($contCacheFile);
 		if (trim($content) == '') {
 			$el = new HttpClient();
-			$content = $el->get((CMain::IsHTTPS() ? 'https://' : 'http://') . $request->getServer()->getServerName() . '/404.php');
+			$content = $el->get(($request->isHttps() ? 'https://' : 'http://') . $request->getServer()->getServerName() . '/404.php');
 			file_put_contents($contCacheFile, $content);
 		}
 
@@ -135,7 +133,6 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 
 // drop unused cache to per-product discount on cli run
 $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function (&$arResult) {
-
 	if (PHP_SAPI == 'cli') {
 		\CCatalogDiscount::ClearDiscountCache([
 			'PRODUCT'       => true,
@@ -144,10 +141,9 @@ $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function
 		]);
 	}
 	return true;
-
 });
 
 // immediately drop custom setting hl-block cache
-$eventManager->addEventHandler('', 'CustomSettingsOnAfterUpdate',   ['Hipot\\BitrixUtils\\HiBlockApps', 'clearCustomSettingsCacheHandler']);
-$eventManager->addEventHandler('', 'CustomSettingsOnAfterAdd',      ['Hipot\\BitrixUtils\\HiBlockApps', 'clearCustomSettingsCacheHandler']);
-$eventManager->addEventHandler('', 'CustomSettingsOnAfterDelete',   ['Hipot\\BitrixUtils\\HiBlockApps', 'clearCustomSettingsCacheHandler']);
+$eventManager->addEventHandler('', 'CustomSettingsOnAfterUpdate',   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
+$eventManager->addEventHandler('', 'CustomSettingsOnAfterAdd',      [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
+$eventManager->addEventHandler('', 'CustomSettingsOnAfterDelete',   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
