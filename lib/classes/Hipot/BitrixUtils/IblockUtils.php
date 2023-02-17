@@ -1,6 +1,7 @@
 <?
 namespace Hipot\BitrixUtils;
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader,
 	Hipot\Types\UpdateResult,
 	Hipot\Utils\UUtils,
@@ -220,7 +221,7 @@ class IblockUtils extends _CIBElement
 	 * @param array $arAddFields массив к добавлению
 	 * @param bool  $bUpdateSearch = false обновить ли поиск
 	 *
-	 * @return bool | \Hipot\Utils\UpdateResult
+	 * @return bool | \Hipot\Types\UpdateResult
 	 * @see \CIBlockElement::Update()
 	 */
 	public static function updateElementToDb(int $ID, $arAddFields = [], $bUpdateSearch = false)
@@ -950,6 +951,70 @@ class IblockUtils extends _CIBElement
 		);
 		$element['EDIT_LINK'] = $buttons['edit']['edit_element']['ACTION_URL'];
 		$element['DELETE_LINK'] = $buttons['edit']['delete_element']['ACTION_URL'];
+	}
+
+	/**
+	 * Получить минимальную цену из $priceCodes у элемента $element.
+	 * Чтобы максимально сократить число запросов - передавать уже выбранный элемент с полями: ID, IBLOCK_ID, 'CATALOG_GROUP_*'
+	 *
+	 * @param array{'ID': int} &$element У элемента заполняются массивы с ценами 'PRICES', 'MIN_PRICE' и данными по каталогу 'CATALOG_GROUP_*'
+	 * @param array             $priceCodes = ['BASE']
+	 * @param bool              $bVATInclude = true
+	 *
+	 * @return array{'DISCOUNT_VALUE':float, 'VALUE':float, 'PRINT_VALUE':string, 'PRINT_DISCOUNT_VALUE':string, 'CURRENCY':string}
+	 */
+	public static function getElementMinPrice(array &$element, array $priceCodes = ['BASE'], bool $bVATInclude = true): array
+	{
+		$element['ID'] = (int)$element['ID'];
+
+		if ($element['ID'] <= 0) {
+			throw new \InvalidArgumentException("Hasn't ID on element param: " . print_r($element, true));
+		}
+		if (count($priceCodes) <= 0) {
+			throw new \InvalidArgumentException("Hasn't priceCodes param: " . print_r($priceCodes, true));
+		}
+
+		$result = [];
+
+		if ((int)$element['IBLOCK_ID'] <= 0) {
+			$element['IBLOCK_ID'] = self::getElementIblockId($element['ID']);
+		}
+
+		static $prices;
+		if ($prices === null) {
+			$prices = \CIBlockPriceTools::GetCatalogPrices($element['IBLOCK_ID'], $priceCodes);
+		}
+
+		$bNeedSelect = true;
+		$arSelect = ['ID', 'IBLOCK_ID'];
+		foreach ($prices as $value) {
+			$arSelect[] = $value['SELECT'];
+			$catalogPriceValue = 'CATALOG_PRICE_'.$value['ID'];
+			$catalogCurrencyValue = 'CATALOG_CURRENCY_'.$value['ID'];
+			if (isset($element[$catalogPriceValue], $element[$catalogCurrencyValue])) {
+				$bNeedSelect = false;
+			}
+		}
+
+		if ($bNeedSelect) {
+			$element = self::selectElementsByFilterArray(['ID' => 'ASC'], [
+				'ID' => $element['ID'],
+				'IBLOCK_ID' => $element['IBLOCK_ID']
+			], false, false, $arSelect);
+		}
+
+		$element['PRICES'] = \CIBlockPriceTools::GetItemPrices(
+			$element['IBLOCK_ID'],
+			$prices,
+			$element,
+			$bVATInclude,
+			['CURRENCY_ID' => Option::get("sale", "default_currency", "RUB")]
+		);
+		if (!empty($element['PRICES'])) {
+			$element['MIN_PRICE'] = $result = \CIBlockPriceTools::getMinPriceFromList($element['PRICES']);
+		}
+
+		return $result;
 	}
 
 } // end class
