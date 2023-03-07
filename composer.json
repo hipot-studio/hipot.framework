@@ -5,6 +5,7 @@
     "intervention/image": "^2.5"
   },
   "config": {
+    "allow-plugins": true,
     "vendor-dir": "../local/vendor",
     "optimize-autoloader": true,
     "apcu-autoloader": true

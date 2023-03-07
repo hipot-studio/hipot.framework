@@ -103,5 +103,14 @@ return [
 			'debug'		=> true,	// opt
 			'log_file'	=> $_SERVER['DOCUMENT_ROOT'] . '/mailer.log' // opt
 		]
+	],
+
+	'services' => [
+		'value' => [
+			'main.imageEngine' => [
+				'className' => \Bitrix\Main\File\Image\Imagick::class
+			]
+		],
+		'readonly' => true
 	]
 ];

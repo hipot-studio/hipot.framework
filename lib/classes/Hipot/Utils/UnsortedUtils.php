@@ -4,7 +4,8 @@ namespace Hipot\Utils;
 use Bitrix\Main\Application,
 	Bitrix\Main\Grid\Declension,
 	Bitrix\Main\Loader,
-	Bitrix\Main\Web\HttpClient;
+	Bitrix\Main\Web\HttpClient,
+	Hipot\Types\UpdateResult;
 
 use CUtil;
 

@@ -24,11 +24,6 @@ Loader::includeModule('sale');
 class SaleUtils
 {
 	/**
-	 * должен быть создан в базе
-	 */
-	const ANONIM_ORDER_USER_EMAIL = 'anonimus@supersite.ru';
-
-	/**
 	 * Получаем массив свойств заказа по ID
 	 *
 	 * @param int  $orderId - ID заказа
@@ -302,7 +297,8 @@ class SaleUtils
 		$siteId        = \Bitrix\Main\Context::getCurrent()->getSite();
 		$deliveryPrice = false;
 
-		$anonimUser = $USER->GetByLogin(self::ANONIM_ORDER_USER_EMAIL)->Fetch();
+		// see "sale" : "anonymous_user_id"
+		$anonymUserId = \CSaleUser::GetAnonymousUserID();
 
 		$arOrderAdd = [
 			'LID' => $siteId,
@@ -323,7 +319,7 @@ class SaleUtils
 			'PRICE' => $orderProps['PRICE'],
 			'CURRENCY' => $currencyCode,
 			'DISCOUNT_VALUE' => false,
-			'USER_ID' => (int)$orderProps['USER_ID'] <= 0 ? $anonimUser['ID'] : $orderProps['USER_ID'],
+			'USER_ID' => (int)$orderProps['USER_ID'] <= 0 ? $anonymUserId : $orderProps['USER_ID'],
 			'PAY_SYSTEM_ID' => $paySystemId,
 			'DELIVERY_ID' => $deliveryId,
 			'USER_DESCRIPTION' - $orderProps['USER_DESCRIPTION'],
