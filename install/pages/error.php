@@ -189,7 +189,7 @@ $request = Application::getInstance()->getContext()->getRequest();
 		]);
 	}?>
 
-	<br /><br />Обновите страницу - скоро все всего заработает.
+	<br /><br />Обновите страницу - скоро все заработает.
 </div>
 <div class="clearer"></div>
 <!--/noindex-->
