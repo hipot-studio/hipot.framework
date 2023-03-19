@@ -148,7 +148,7 @@ class IblockList extends \CBitrixComponent
 				]);
 			} else {
 				if ($arParams["SET_404"] == "Y") {
-					include Main\Loader::getDocumentRoot() . "/404_inc.php";
+					include Main\Loader::getDocumentRoot() . SITE_DIR . "/404_inc.php";
 				}
 
 				$this->abortResultCache();

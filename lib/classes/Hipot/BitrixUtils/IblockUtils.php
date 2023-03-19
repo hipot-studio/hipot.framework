@@ -1,12 +1,12 @@
-<?
+<?php
 namespace Hipot\BitrixUtils;
 
-use Bitrix\Main\Config\Option;
-use Bitrix\Main\Loader,
-	Hipot\Types\UpdateResult,
+use Hipot\Types\UpdateResult,
 	Hipot\Utils\UUtils,
-	Hipot\IbAbstractLayer\IblockElemLinkedChains,
+	Hipot\IbAbstractLayer\IblockElemLinkedChains;
 
+use	Bitrix\Main\Loader,
+	Bitrix\Main\Config\Option,
 	Bitrix\Iblock\InheritedProperty\ElementTemplates,
 	Bitrix\Iblock\InheritedProperty\ElementValues,
 	Bitrix\Iblock\InheritedProperty\SectionTemplates,
@@ -101,7 +101,7 @@ class IblockUtils extends _CIBElement
 	 *
 	 * @return \CIBlockResult | int
 	 */
-	public static function selectSectionsByFilter($arOrder, $arFilter, $bIncCnt = false, $arSelect = [], $arNavStartParams = false)
+	public static function selectSectionsByFilter($arOrder, $arFilter, bool $bIncCnt = false, $arSelect = [], $arNavStartParams = false)
 	{
 		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (! in_array('ID', $arSelect)) {
@@ -125,13 +125,16 @@ class IblockUtils extends _CIBElement
 	 *
 	 * @return array|boolean
 	 */
-	public static function selectSectionsByFilterArray($arOrder, $arFilter, $bIncCnt = false,
+	public static function selectSectionsByFilterArray($arOrder, $arFilter, bool $bIncCnt = false,
 	                                                   $arSelect = [], $arNavStartParams = false): array
 	{
 		$arResult = [];
 		$rsSect = self::selectSectionsByFilter($arOrder, $arFilter, $bIncCnt, $arSelect, $arNavStartParams);
 		while ($arSect = $rsSect->GetNext()) {
 			$arResult[] = $arSect;
+		}
+		if (count($arResult) == 1) {
+			$arResult = current($arResult);
 		}
 		return $arResult;
 	}
@@ -192,13 +195,13 @@ class IblockUtils extends _CIBElement
 	/**
 	 * Добавление элемента в инфоблок, возвращает ошибку либо ID результата, см. return
 	 *
-	 * @param array $arAddFields массив к добавлению
+	 * @param array $arAddFields массив к добавлению. Свойства добавлять через ключ 'PROPERTY_VALUES'
 	 * @param bool $bUpdateSearch = false обновить ли поиск
 	 *
 	 * @return UpdateResult
 	 * @see \CIBlockElement::Add()
 	 */
-	public static function addElementToDb($arAddFields = [], $bUpdateSearch = false): UpdateResult
+	public static function addElementToDb($arAddFields = [], bool $bUpdateSearch = false): UpdateResult
 	{
 		if (! is_array($arAddFields)) {
 			$arAddFields = [];
@@ -209,9 +212,9 @@ class IblockUtils extends _CIBElement
 
 		if ($ID) {
 			return new UpdateResult(['RESULT' => $ID,				'STATUS' => UpdateResult::STATUS_OK]);
-		} else {
-			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
 		}
+
+		return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
 	}
 
 	/**
@@ -250,9 +253,9 @@ class IblockUtils extends _CIBElement
 
 		if ($bUpd) {
 			return new UpdateResult(['RESULT' => $ID,				'STATUS' => UpdateResult::STATUS_OK]);
-		} else {
-			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
 		}
+
+		return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
 	}
 
 	/**

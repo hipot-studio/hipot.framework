@@ -6,6 +6,8 @@
  * @global $USER_FIELD_MANAGER \CUserTypeManager
  */
 
+global $APPLICATION;
+
 header("HTTP/1.0 404 Not Found\r\n");
 @define("ERROR_404","Y");
 ?>
@@ -18,10 +20,10 @@ if (LANGUAGE_ID == 'en') {
 	<ul>
 		<li>page has been deleted</li>
 		<li>page has been renamed</li>
-		<li>you made a mistake in the address (http://<?=$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']?>)</li>
+		<li>you made a mistake in the address (https://<?=$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']?>)</li>
 	</ul>
 	<br>
-	Please go to <a href="/">home page</a> site and try again or use <strong>site map</strong>:
+	Please go to <a href="<?=SITE_DIR?>">home page</a> site and try again or use <strong>site map</strong>:
 	
 	<?
 	/*\Bitrix\Main\Config\Option::set("main", "map_top_menu_type", 	"en_top");
@@ -35,10 +37,10 @@ if (LANGUAGE_ID == 'en') {
 	<ul>
 		<li>страница была удалена</li>
 		<li>страница была переименована</li>
-		<li>Вы допустили ошибку в адресе (http://<?=$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']?>)</li>
+		<li>Вы допустили ошибку в адресе (https://<?=$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']?>)</li>
 	</ul>
 	<br>
-	Пожалуйста, перейдите на <a href="/">главную страницу</a> сайта и попробуйте еще раз или воспользуйтесь <strong>картой сайта</strong>:
+	Пожалуйста, перейдите на <a href="<?=SITE_DIR?>">главную страницу</a> сайта и попробуйте еще раз или воспользуйтесь <strong>картой сайта</strong>:
 
 	<?
 	/*\Bitrix\Main\Config\Option::set("main", "map_top_menu_type", 	"top");
@@ -48,7 +50,7 @@ if (LANGUAGE_ID == 'en') {
 ?>
 <br /><br />
 
-<?$APPLICATION->IncludeComponent("bitrix:main.map", "", array(
+<?$APPLICATION->IncludeComponent("bitrix:main.map", "", [
 	"COMPONENT_TEMPLATE"		=> ".default",
 	"CACHE_TYPE"				=> "A",
 	"CACHE_TIME"				=> 0,
@@ -56,4 +58,4 @@ if (LANGUAGE_ID == 'en') {
 	"LEVEL"						=> 3,
 	"COL_NUM"					=> 1,
 	"SHOW_DESCRIPTION"			=> "N",
-), false);?>
+], false);?>
