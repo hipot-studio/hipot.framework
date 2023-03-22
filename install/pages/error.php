@@ -1,15 +1,45 @@
 <?php
 // see \Bitrix\Main\Diag\HttpExceptionHandlerOutput
 defined('B_PROLOG_INCLUDED') || die();
+
+/**  @var \Error|\Exception $exception */
+
 use Bitrix\Main\Diag\ExceptionHandlerFormatter,
 	Bitrix\Main\Application,
 	Bitrix\Main\Engine\CurrentUser,
 	Bitrix\Main\Mail\Event;
 
 $developerEmail = 'info@hipot-studio.com';
+$request        = Application::getInstance()->getContext()->getRequest();
 
-$request = Application::getInstance()->getContext()->getRequest();
-/**  @var \Error|\Exception $exception */
+$sendEmailToSupport = static function () use ($exception, $developerEmail, $request) {
+	$html = 'Данные об ошибке:' . "\n";
+	$html .= ExceptionHandlerFormatter::format($exception, true);
+
+	$html .= "\n\nДополнительные переменные:\n" . "\n";
+	$html .= '<pre>'. wordwrap(print_r([
+			'request'   => $request->toArray(),
+			'cookie'    => $request->getCookieList()->toArray(),
+			'session'   => $_SESSION,
+			'server'    => $request->getServer()->toArray(),
+		] , true), 100) . "</pre>\n". "\n";
+
+	Event::send([
+		"EVENT_NAME" => "DEBUG_MESSAGE",
+		"LID" => SITE_ID,
+		"C_FIELDS" => [
+			"EMAIL"         => $developerEmail,
+			"SUBJECT"       => 'Ошибка PHP ' . $request->getServer()->getServerName() . $request->getRequestUri(),
+			"HTML"          => $html
+		],
+	]);
+};
+
+if (PHP_SAPI == 'cli') {
+	$sendEmailToSupport();
+	echo ExceptionHandlerFormatter::format($exception, false);
+	return;
+}
 ?>
 <!--noindex-->
 <style>
@@ -166,28 +196,12 @@ $request = Application::getInstance()->getContext()->getRequest();
 		<div class="error-raw">
 			<?echo ExceptionHandlerFormatter::format($exception, true);?>
 		</div>
-	<?} else {
-		$html = 'Данные об ошибке:' . "\n";
-		$html .= ExceptionHandlerFormatter::format($exception, true);
+	<?}
 
-		$html .= "\n\nДополнительные переменные:\n" . "\n";
-		$html .= '<pre>'. wordwrap(print_r([
-				'request'   => $request->toArray(),
-				'cookie'    => $request->getCookieList()->toArray(),
-				'session'   => $_SESSION,
-				'server'    => $request->getServer()->toArray(),
-			] , true), 100) . "</pre>\n". "\n";
-
-		Event::send([
-			"EVENT_NAME" => "DEBUG_MESSAGE",
-			"LID" => SITE_ID,
-			"C_FIELDS" => [
-				"EMAIL"         => $developerEmail,
-				"SUBJECT"       => 'Ошибка PHP ' . $request->getServer()->getServerName() . $request->getRequestUri(),
-				"HTML"          => $html
-			],
-		]);
-	}?>
+	if (! defined('IS_BETA_TESTER')) {
+		$sendEmailToSupport();
+	}
+	?>
 
 	<br /><br />Обновите страницу - скоро все заработает.
 </div>
