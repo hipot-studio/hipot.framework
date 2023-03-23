@@ -192,7 +192,7 @@ if (PHP_SAPI == 'cli') {
 	<small>Вы можете <a href="mailto:<?=$developerEmail?>?subject=Ошибка+PHP+<?=htmlspecialcharsbx($request->getServer()->getServerName() . $request->getRequestUri())?>">написать нам</a>, указав подробности,
 		если вы не впервые видите данную ошибку</small><br />
 
-	<?if (CurrentUser::get()->isAdmin()) {?>
+	<?if (CurrentUser::get()?->isAdmin()) {?>
 		<div class="error-raw">
 			<?echo ExceptionHandlerFormatter::format($exception, true);?>
 		</div>

@@ -3,6 +3,16 @@
 /** @see http://www.intervolga.ru/blog/projects/d7-analogi-lyubimykh-funktsiy-v-1s-bitriks/ */
 /** @see https://github.com/SidiGi/bitrix-info/wiki */
 
+/**
+ * @global $APPLICATION \CMain
+ * @global $USER \CUser
+ * @global $DB \CDatabase
+ * @global $USER_FIELD_MANAGER \CUserTypeManager
+ * @global $BX_MENU_CUSTOM \CMenuCustom
+ * @global $stackCacheManager \CStackCacheManager
+ */
+/** @var $GLOBALS array{'DB' : \CDatabase, 'APPLICATION' : \CMain, 'USER' : \CUser, 'USER_FIELD_MANAGER' : \CUserTypeManager, 'CACHE_MANAGER' : \CCacheManager, 'stackCacheManager' : \CStackCacheManager} */
+
 // ALL uses
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -33,6 +43,12 @@ Asset::getInstance()->addCss(SITE_TEMPLATE_PATH . "/styles/fix.css");
 Asset::getInstance()->addString("<link href='http://fonts.googleapis.com/css?family=PT+Sans:400&subset=cyrillic' rel='stylesheet' type='text/css'>");
 
 ////////////////////////////////////////////////////////////
+
+//D0:
+$USER->IsAdmin();
+
+//D7:
+\Bitrix\Main\Engine\CurrentUser::get()->isAdmin();
 
 // Old school
 CModule::IncludeModule("iblock");
@@ -443,6 +459,11 @@ $page->deleteAll();
 ?>
 
 <?
+\Bitrix\Main\Text\HtmlFilter::encode();
+htmlspecialcharsbx();
+?>
+
+<?
 $connection = \Bitrix\Main\Application::getConnection();
 // останавливаем выполнение запросов
 $connection->disableQueryExecuting();
@@ -466,4 +487,21 @@ $rsData = Bitrix\Iblock\ElementTable::getList( /*...*/ );
 $sql = $rsData->getTrackerQuery()->getSql();
 // or
 print_r( \Bitrix\Main\Application::getConnection()->getTracker() );
+?>
+
+<?
+// 1 флаг
+global $DB;
+$DB->ShowSqlStat = true;
+
+// 2 выполнение запросов
+
+// 3 Отображаем статистику:
+$shortInfo = array_reduce(
+	$DB->arQueryDebug,
+	static function ($carry, \Bitrix\Main\Diag\SqlTrackerQuery $info) {
+		$carry[] = $info->getTime() . ' : ' . $info->getSql();
+		return $carry;
+	}, []
+);
 ?>
