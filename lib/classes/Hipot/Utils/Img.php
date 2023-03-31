@@ -1,6 +1,7 @@
 <?php
 namespace Hipot\Utils;
 
+use Bitrix\Main\ArgumentException;
 use Intervention\Image\ImageManagerStatic as iiImage;
 use Bitrix\Main\Loader,
 	CMainPage,
@@ -435,6 +436,56 @@ class Img
 		});
 	}
 
+	/**
+	 * Провести ресайз тегов img в описании html
+	 * @param string $htmlText
+	 * @param callable $resizer функция выполняющая действие, пример:
+	 * <pre>
+	 * static function (string $src): array {
+	 *      Img::oneResizeParams([
+	 *          'tag'       => basename(__DIR__),
+	 *          'decodeToFormat'  => 'webp',
+	 *          'saveAlpha'       => false,
+	 *      ]);
+	 *      return Img::Resize($matches['src'], 1024, null, Img::M_PROPORTIONAL, true);     // return array from Resize-method
+	 * };
+	 * </pre>
+	 * @param bool $wrapLink = false Обернуть ли уменьшенную копию изображения в ссылку на оригинал
+	 * @return string
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public static function resizeImagesInHtml(string $htmlText, callable $resizer, bool $wrapLink = false): string
+	{
+		if (! is_callable($resizer)) {
+			throw new ArgumentException('no resizer callback found');
+		}
+
+		return preg_replace_callback('#<img(?<params1>[^>]*)src=["\']?(?<src>[^"\']+)["\']?(?<params2>[^>]*)>#i', static function ($matches) use ($resizer, $wrapLink) {
+			$arSmallSrc = [];
+			try {
+				$arSmallSrc = $resizer($matches['src']);
+
+				foreach (['params1', 'params2'] as $p) {
+					$matches[$p] = preg_replace('#width\s*=(["\'])?(\d+)(["\'])?#i', '', $matches[$p]);
+					$matches[$p] = preg_replace('#height\s*=(["\'])?(\d+)(["\'])?#i', '', $matches[$p]);
+				}
+				$matches['params1'] .= sprintf(' width="%s" height="%s"', $arSmallSrc['width'], $arSmallSrc['height']);
+			} catch (\Exception $e) {
+				UUtils::logException($e);
+				$arSmallSrc['src'] = $matches['src'];
+			}
+
+			$result = '';
+			if ($wrapLink) {
+				$result .= '<a href="' . $matches['src'] . '">';
+			}
+			$result .= '<img '.$matches['params1'].' src="' . $arSmallSrc['src'] . '" ' . $matches['params2'] . '>';
+			if ($wrapLink) {
+				$result .= '</a>';
+			}
+			return $result;
+		}, $htmlText);
+	}
 
 } // end class
 

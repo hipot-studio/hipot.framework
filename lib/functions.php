@@ -24,24 +24,44 @@ if (! function_exists('my_print_r')) {
 	 * my_print_r($ar, false); //выведет всем в виде HTML-комментария
 	 * my_print_r($ar, true, false); //выведет всем на экран (не рекомендуется)</pre>
 	 * @noinspection ForgottenDebugOutputInspection*/
-	function my_print_r($what, bool $in_browser = true, bool $check_admin = true, bool $backtrace = false)
+	function my_print_r($what, bool $in_browser = true, bool $check_admin = true, bool $backtrace = false): void
 	{
-		if ($in_browser && $check_admin && !$GLOBALS['USER']->IsAdmin() && !IS_BETA_TESTER) {
+		global $USER;
+
+		$bSapi = PHP_SAPI === 'cli';
+		if ($bSapi) {
+			$check_admin = false;
+		}
+
+		$bAdmin = (method_exists($USER, 'IsAdmin') && $USER->IsAdmin()) || (defined('IS_BETA_TESTER') && IS_BETA_TESTER);
+		if ($in_browser && $check_admin && !$bAdmin) {
 			echo "<!-- my_print_r admin need! -->";
 			return;
 		}
 
-		echo $in_browser ? "<pre>" : "<!--";
-		if ( is_array($what) )  {
-			print_r($what);
+		if (function_exists('d')) {
+			d($what);
+		} else if (method_exists(\Bitrix\Main\Diag\Debug::class, 'dump')) {
+			\Bitrix\Main\Diag\Debug::dump($what);
 		} else {
-			var_dump($what);
+			if (! $bSapi) {
+				echo $in_browser ? "<pre>" : "<!--";
+			}
+			if (is_array($what))  {
+				print_r($what);
+			} else {
+				var_dump($what);
+			}
+			if (! $bSapi) {
+				echo $in_browser ? "</pre>" : "-->";
+			}
 		}
+
 		if ($backtrace) {
 			$arBacktrace = debug_backtrace();
 			echo '<h4>' . $arBacktrace[0]["file"] . ', ' . $arBacktrace[0]["line"] . '</h4>';
 		}
-		echo $in_browser ? "</pre>" : "-->";
+
 	}
 }
 
@@ -104,52 +124,6 @@ if (! function_exists('__getHl')) {
 		}
 
 		return $addedBlocks[$hiBlockName];
-	}
-}
-
-if (! function_exists('GetIbEventPropValue')) {
-	/**
-	 * Удобно использовать в событиях инфоблока для получения значений без сдвига массива
-	 * $arFields['PROPERTY_VALUES'][107][    <b>??? - 1259|0|n0</b>    ]['VALUE']
-	 *
-	 * @param mixed $propIdx напр. $arFields['PROPERTY_VALUES'][107]
-	 *
-	 * @return bool | mixed
-	 * @use GetIbEventPropValue($arFields['PROPERTY_VALUES'][107])
-	 */
-	function GetIbEventPropValue($propIdx)
-	{
-		if (is_array($propIdx)) {
-			$k = array_keys($propIdx);
-			return $propIdx[ $k[0] ]['VALUE'];
-		}
-		return false;
-	}
-}
-
-if (! function_exists('TransformImagesInHtml')) {
-	/**
-	 * трансформим картинки в html до требуемой ширины (регулярки)
-	 *
-	 * @param string $html
-	 * @param int $maxImgWidth = 750
-	 * @return string|mixed
-	 */
-	function TransformImagesInHtml($html, $maxImgWidth = 750, $linkToOrigClass = ' class="lightbox" target="_blank" ')
-	{
-
-		$htmlEx = preg_replace('#width\s*=(["\'])?([0-9]+)(["\'])?#is', '', $html);
-		$htmlEx = preg_replace('#height\s*=(["\'])?([0-9]+)(["\'])?#is', '', $htmlEx);
-		$htmlEx = preg_replace_callback('#<img(.*?)src=["\']?([^"\']+)["\']?(.*?)>#is', static function ($matches) use ($maxImgWidth, $linkToOrigClass) {
-			$transformSrc = $matches[2];
-			$origSrc = $matches[2];
-
-			$transformSrc = CImg::Resize($transformSrc, $maxImgWidth, false, CImg::M_FULL);
-
-			return "<a href=\"" . $origSrc . "\" " . $linkToOrigClass . "><img src=\"" . $transformSrc . "\" alt=\"\" border=\"0\" /></a>";
-		}, $htmlEx);
-
-		return $htmlEx;
 	}
 }
 
@@ -228,8 +202,13 @@ if (! function_exists('bx_js_encode')) {
 }
 */
 
-
 if (! function_exists('str_contains')) {
+	/**
+	 * TODO php7.4 rudiment
+	 * @param $haystack
+	 * @param $needle
+	 * @return bool
+	 */
 	function str_contains($haystack, $needle): bool
 	{
 		return $needle !== '' && mb_strpos($haystack, $needle) !== false;
