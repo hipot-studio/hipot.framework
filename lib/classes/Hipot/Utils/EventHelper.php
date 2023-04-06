@@ -24,7 +24,7 @@ class EventHelper
 	{
 		if (is_array($propIdx)) {
 			$k = array_keys($propIdx);
-			return $propIdx[ $k[0] ]['VALUE'];
+			return $propIdx[ $k[0] ]['VALUE'] ?? $propIdx[ $k[0] ];
 		}
 		return false;
 	}
