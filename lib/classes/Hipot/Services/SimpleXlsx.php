@@ -4,8 +4,9 @@
  * Created 06.03.2023 12:56
  * @version pre 1.0
  */
-namespace Hipot\Utils;
+namespace Hipot\Services;
 
+use Hipot\Utils\UUtils;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;

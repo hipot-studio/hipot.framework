@@ -41,10 +41,10 @@ class UnsortedUtils
 	 *
 	 * @return string
 	 */
-	public static function TranslitText($text, string $lang = 'ru'): string
+	public static function TranslitText($text, string $lang = 'ru', int $maxLen = 100): string
 	{
 		return CUtil::translit(trim($text), $lang, [
-			'max_len' => 100,
+			'max_len' => $maxLen,
 			'change_case' => "L",
 			'replace_space' => '-',
 			'replace_other' => '-',

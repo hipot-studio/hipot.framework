@@ -12,6 +12,7 @@ use Bitrix\Main\Data;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\DB;
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\ORM\Fields\ScalarField;
 use Bitrix\Main\Result;
 
@@ -102,6 +103,22 @@ trait EO_Utils
 		} catch (\Throwable $e) {
 			$connection->rollbackTransaction();
 			throw $e;
+		}
+	}
+
+	/**
+	 * Deletes rows by filter.
+	 * @param array $filter Filter does not look like filter in getList. It depends by current implementation.
+	 * @return void
+	 */
+	public static function deleteBatch(array $filter)
+	{
+		$whereSql = Query::buildFilterSql(static::getEntity(), $filter);
+
+		if ($whereSql != '') {
+			$tableName = static::getTableName();
+			$connection = Main\Application::getConnection();
+			$connection->queryExecute("DELETE FROM {$tableName} WHERE {$whereSql}");
 		}
 	}
 }

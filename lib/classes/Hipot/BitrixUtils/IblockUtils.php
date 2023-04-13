@@ -708,6 +708,10 @@ class IblockUtils extends _CIBElement
 		return $result;
 	}
 
+	public static function checkPropertyExistsByNameOrCode($fieldVal, int $iblockId, $fieldType = 'name')
+	{
+		return self::checkExistsByNameOrCode($fieldVal, $iblockId, $fieldType, 'b_iblock_property');
+	}
 	// endregion
 
 	// region /*********************** seo values **************************/
@@ -860,7 +864,7 @@ class IblockUtils extends _CIBElement
 		/** @noinspection TypeUnsafeArraySearchInspection */
 		if ($iblockId == 0 || trim($field) == ''
 			|| !in_array(trim($fieldType, '?=%!<> '), $iblockFields)
-			|| !in_array(ToLower($table), ['b_iblock_element', 'b_iblock_section'])
+			|| !in_array(ToLower($table), ['b_iblock_element', 'b_iblock_section', 'b_iblock_property'])
 		) {
 			return false;
 		}
