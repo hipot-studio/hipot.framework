@@ -1,5 +1,5 @@
 <?php
-namespace Hipot\Utils;
+namespace Hipot\Services;
 
 /**
  * Работаем с банковскими (рабочими) днями

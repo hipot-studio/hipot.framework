@@ -78,4 +78,28 @@ class ObjectArItem implements ArrayAccess
 			unset($this->{$offset});
 		}
 	}
+
+	// misc:
+
+	/**
+	 * Рекурсивное преобразование объекта в массив
+	 *
+	 * @param object|array|mixed $obj объект для преобразования
+	 * @return array|mixed
+	 */
+	public static function toArr($obj): array
+	{
+		if (!is_object($obj) && !is_array($obj)) {
+			return $obj;
+		}
+		if (is_object($obj)) {
+			$obj = get_object_vars($obj);
+		}
+		if (is_array($obj)) {
+			foreach ($obj as $key => $val) {
+				$obj[$key] = self::toArr($val);
+			}
+		}
+		return $obj;
+	}
 }

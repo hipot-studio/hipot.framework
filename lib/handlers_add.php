@@ -18,7 +18,7 @@ $eventManager = EventManager::getInstance();
 $request      = Application::getInstance()->getContext()->getRequest();
 
 // определяем глобальные константы, которые могут зависеть от $APPLICATION и $USER
-$eventManager->addEventHandler("main", "OnBeforeProlog", static function () {
+$eventManager->addEventHandler("main", "OnBeforeProlog", static function () use ($request) {
 	global $APPLICATION, $USER;
 
 	foreach (

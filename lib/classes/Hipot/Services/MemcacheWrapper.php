@@ -1,5 +1,5 @@
 <?php
-namespace Hipot\Utils;
+namespace Hipot\Services;
 
 use Memcache;
 
@@ -158,7 +158,7 @@ class MemcacheWrapper implements \ArrayAccess
 	/**
 	 * @param mixed $offset
 	 *
-	 * @return array|false|mixed|string
+	 * @return string|array|bool
 	 */
 	public function offsetGet($offset)
 	{
@@ -170,12 +170,12 @@ class MemcacheWrapper implements \ArrayAccess
 	 * @param mixed $value
 	 *
 	 * @return bool|void
-	 * @throws \Hipot\Utils\MemcacheWrapperError
+	 * @throws \RuntimeException
 	 */
 	public function offsetSet($offset, $value)
 	{
 		if ($offset === null) {
-			throw new MemcacheWrapperError("Tried to set null offset");
+			throw new \RuntimeException("Tried to set null offset");
 		}
 		return $this->mc->set($this->prefix . $offset, $value);
 	}

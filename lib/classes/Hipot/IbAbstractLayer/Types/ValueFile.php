@@ -23,7 +23,7 @@ class ValueFile extends Base
 
 	/**
 	 * Дата изменения записи
-	 * @var timestamp
+	 * @var int
 	 */
 	public $TIMESTAMP_X;
 

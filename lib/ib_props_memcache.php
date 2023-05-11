@@ -69,7 +69,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Main\Loader,
 	Bitrix\Main\Application,
 	Bitrix\Main\Data\MemcacheConnection,
-	Hipot\Utils\MemcacheWrapper,
+	Hipot\Services\MemcacheWrapper,
 	Hipot\Utils\UUtils;
 
 if (!class_exists('Memcache') || !class_exists(MemcacheWrapper::class)) {

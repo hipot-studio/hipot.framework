@@ -28,7 +28,7 @@ trait EO_Utils
 	 * @return DB\Result;
 	 * @throws \Bitrix\Main\DB\SqlQueryException
 	 */
-	protected static function addFieldDataTable(ScalarField $field): DB\Result
+	private static function addFieldDataTable(ScalarField $field): DB\Result
 	{
 		/** @var Data\Connection|DB\Connection $connection */
 		$connection = self::getEntity()->getConnection();
@@ -76,7 +76,7 @@ trait EO_Utils
 	 * @throws SqlQueryException
 	 * @throws \Throwable
 	 */
-	public static function wrapTransaction(callable $callback, ...$arguments)
+	public static function wrapTransaction(callable $callback, ...$arguments): bool
 	{
 		$connection = Application::getConnection();
 
@@ -120,5 +120,22 @@ trait EO_Utils
 			$connection = Main\Application::getConnection();
 			$connection->queryExecute("DELETE FROM {$tableName} WHERE {$whereSql}");
 		}
+	}
+
+	/**
+	 * Получить список колонок SQL-запросом, либо если уже был получен, то просто вернуть
+	 * @param string $tableName имя таблицы
+	 * @return array
+	 */
+	public static function getTableFields(string $tableName): array
+	{
+		$a = [];
+		if (trim($tableName) != '' && Application::getConnection()->isTableExists($tableName)) {
+			$fields = Application::getConnection()->getTableFields($tableName);
+			foreach ($fields as $field) {
+				$a[] = $field->getName();
+			}
+		}
+		return $a;
 	}
 }
