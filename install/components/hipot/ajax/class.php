@@ -33,47 +33,11 @@ class HipotAjaxControllerComponent extends \CBitrixComponent implements Controll
 	{
 		// Предустановленные фильтры находятся в папке main/lib/engine/actionfilter
 		return [
-			'loadIblockLikeTemplates' => [
-				'prefilters' => [
-					new ActionFilter\HttpMethod(
-						[ActionFilter\HttpMethod::METHOD_POST]
-					),
-					new ActionFilter\Csrf(),
-				],
-				'postfilters' => []
-			],
-			'saveIblockLike' => [
-				'prefilters' => [
-					new ActionFilter\HttpMethod(
-						[ActionFilter\HttpMethod::METHOD_POST]
-					),
-					new ActionFilter\Csrf(),
-				],
-				'postfilters' => []
-			],
 			'setCookieWarningRead' => [
 				'prefilters' => [
 					new ActionFilter\HttpMethod(
 						[ActionFilter\HttpMethod::METHOD_GET]
 					),
-				],
-				'postfilters' => []
-			],
-			'checkLibraryPassword' => [
-				'prefilters' => [
-					new ActionFilter\HttpMethod(
-						[ActionFilter\HttpMethod::METHOD_POST]
-					),
-					new ActionFilter\Csrf(),
-				],
-				'postfilters' => []
-			],
-			'getVideoHtmlCode' => [
-				'prefilters' => [
-					new ActionFilter\HttpMethod(
-						[ActionFilter\HttpMethod::METHOD_POST]
-					),
-					new ActionFilter\Csrf(),
 				],
 				'postfilters' => []
 			],
