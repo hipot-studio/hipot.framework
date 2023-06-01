@@ -131,23 +131,22 @@ if (! function_exists('array_trim_r')) {
 	/**
 	 * Удаляет из массива пустые элементы с пустыми значениями рекурсивно.
 	 *
-	 * @param {array} $ar
-	 *
-	 * @return mixed
+	 * @param array $ar
+	 * @return array
 	 */
-	function array_trim_r($ar)
+	function array_trim_r(array $ar): array
 	{
-		$res = [];
+		$arRes = [];
 		foreach ($ar as $k => $v) {
 			if (is_array($v)) {
-				$res[$k] = array_trim_r($v);
+				$arRes[$k] = array_trim_r($v);
 			} else {
-				if (trim($v) != '') {
-					$res[$k] = $v;
+				if (trim((string)$v) != '') {
+					$arRes[$k] = $v;
 				}
 			}
 		}
-		return $res;
+		return $arRes;
 	}
 }
 

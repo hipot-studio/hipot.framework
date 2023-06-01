@@ -1,8 +1,11 @@
 {
   "require": {
-    "php": ">=7.4.0",
+    "php": ">=8.0.0",
     "wikimedia/composer-merge-plugin": "dev-master",
-    "intervention/image": "^2.5"
+    "intervention/image": "^2.5",
+    "psr/container": "1.0.*",
+    "psr/http-client": "1.0.*",
+    "psr/http-message": "1.0.*"
   },
   "config": {
     "allow-plugins": true,
