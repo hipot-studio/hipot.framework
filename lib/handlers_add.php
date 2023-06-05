@@ -9,9 +9,9 @@
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\Application;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Composite\Page as CompositePage;
-use Bitrix\Main\Application;
 use Hipot\BitrixUtils\HiBlockApps;
 
 $eventManager = EventManager::getInstance();
@@ -24,6 +24,7 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 	foreach (
 		[
 			__DIR__ . '/constants.php',
+			__DIR__ . '/lib/constants.php',     // handler in ini.php
 			Loader::getDocumentRoot() . '/local/php_interface/include/constants.php',
 			Loader::getDocumentRoot() . '/local/php_interface/include/lib/constants.php',
 			Loader::getDocumentRoot() . '/bitrix/php_interface/include/constants.php',

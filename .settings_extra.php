@@ -5,6 +5,8 @@
  * Date: 18.11.2019 0:39
  * @version pre 1.0
  */
+use Bitrix\Main\Loader;
+
 $defaultSettings = require __DIR__ . '/.settings.php';
 
 return [
@@ -34,6 +36,19 @@ return [
 				]
 			],
 		]
+	],*/
+	/*'session' => [
+		'value' => [
+			'mode' => 'default',
+			'handlers' => [
+				'general' => [
+					'type' => 'redis',
+					'port' => '6379',
+					'host' => '127.0.0.1',
+					'serializer' => \Redis::SERIALIZER_PHP
+				],
+			],
+		],
 	],*/
 	'crypto' => [
 		'value' => [
@@ -101,7 +116,7 @@ return [
 		'value'	=> [
 			'enabled'	=> true,
 			'debug'		=> true,	// opt
-			'log_file'	=> $_SERVER['DOCUMENT_ROOT'] . '/mailer.log' // opt
+			'log_file'	=> Loader::getDocumentRoot() . '/mailer.log' // opt
 		]
 	],
 

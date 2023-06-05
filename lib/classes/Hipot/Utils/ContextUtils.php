@@ -199,4 +199,13 @@ trait ContextUtils
 		$exceptionHandler = $application->getExceptionHandler();
 		$exceptionHandler->writeToLog($exception);
 	}
+
+	public static function getInlineBase64Image(string $img_file): ?string
+	{
+		if (! file_exists($img_file)) {
+			return null;
+		}
+
+		return 'data: '.mime_content_type($img_file).';base64,'.base64_encode(file_get_contents($img_file));
+	}
 }

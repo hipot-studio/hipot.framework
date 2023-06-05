@@ -18,6 +18,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Hipot\BitrixUtils\IblockUtils;
 use Bitrix\Main\IO\Directory;
+use Bitrix\Main\Page\Asset;
 
 Loc::loadMessages(__FILE__);
 
@@ -94,13 +95,20 @@ class HipotAjaxControllerComponent extends \CBitrixComponent implements Controll
 	public function loadDynamicBlockAction(string $blockName, ?string $lang = LANGUAGE_ID): ?array
 	{
 		$existsTemplates = [];
-		$directory = new Directory(Loader::getDocumentRoot() . '/local/templates/.default/components/hipot/ajax');
-		if ($directory->isExists()) {
-			foreach ($directory->getChildren() as $child) {
-				$existsTemplates[] = $child->getName();
+		[$componentNamespace, $componentName] = explode(':', $this->getName());
+		$checkDynamicBlockPaths = [
+			'/local/templates/.default/components/' . $componentNamespace . '/' . $componentName,
+			'/bitrix/templates/.default/components/' . $componentNamespace . '/' . $componentName,
+			SITE_TEMPLATE_PATH . '/components/' . $componentNamespace . '/' . $componentName,
+		];
+		foreach ($checkDynamicBlockPaths as $checkPath) {
+			$directory = new Directory(Loader::getDocumentRoot() . $checkPath);
+			if ($directory->isExists()) {
+				foreach ($directory->getChildren() as $child) {
+					$existsTemplates[] = $child->getName();
+				}
 			}
 		}
-
 		if (! in_array($blockName, $existsTemplates)) {
 			$this->errorCollection[] = new Error("Block is unknown to load");
 			return null;
@@ -122,6 +130,12 @@ class HipotAjaxControllerComponent extends \CBitrixComponent implements Controll
 
 	public function executeComponent()
 	{
+		// file with all client handlers
+		if ($this->arParams['ADD_BLOCK_LOADER_JS'] == 'Y') {
+			\CJSCore::Init(['ajax']);
+			Asset::getInstance()->addJs($this->getPath() . '/js/block_loader.js');
+		}
+
 		// only to show html-templates
 		$this->includeComponentTemplate();
 	}
