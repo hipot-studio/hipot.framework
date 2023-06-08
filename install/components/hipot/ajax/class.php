@@ -4,33 +4,34 @@
  * Created 10.01.2022 21:13
  * @version pre 1.0
  */
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+defined('B_PROLOG_INCLUDED') || die();
 
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Engine\ActionFilter;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\Cookie;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Web\Json;
-use Hipot\BitrixUtils\IblockUtils;
-use Bitrix\Main\IO\Directory;
 use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\IO\Directory;
+use Hipot\BitrixUtils\IblockUtils;
+use Bitrix\Main\ORM\Data\DataManager;
 
 Loc::loadMessages(__FILE__);
 
 /**
- * ajax controller for mgu site
+ * universal ajax controller component (with html-templates)
  * @copyright <info@hipot-studio.com>
  */
-class HipotAjaxControllerComponent extends \CBitrixComponent implements Controllerable, Errorable
+class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Errorable
 {
 	protected ErrorCollection $errorCollection;
 
-	public function configureActions()
+	public function configureActions(): array
 	{
 		// Предустановленные фильтры находятся в папке main/lib/engine/actionfilter
 		return [
@@ -125,6 +126,7 @@ class HipotAjaxControllerComponent extends \CBitrixComponent implements Controll
 
 		return $response;
 	}
+
 
 	///// endregion
 
