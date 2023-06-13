@@ -193,7 +193,7 @@ trait ContextUtils
 	 * @param \Exception|\Bitrix\Main\SystemException $exception
 	 * @return void
 	 */
-	public static function logException($exception): void
+	public static function logException(\Throwable $exception): void
 	{
 		$application = Application::getInstance();
 		$exceptionHandler = $application->getExceptionHandler();
@@ -207,5 +207,27 @@ trait ContextUtils
 		}
 
 		return 'data: '.mime_content_type($img_file).';base64,'.base64_encode(file_get_contents($img_file));
+	}
+
+	/**
+	 * Останавливаем выполнение SQL- запросов
+	 * @return void
+	 * @see getQueueStoppedQueryExecution()
+	 */
+	public static function stopSqlQueryExecution(): void
+	{
+		\Bitrix\Main\Application::getConnection()->disableQueryExecuting();
+	}
+
+	/**
+	 * Включаем выполнение запросов и получаем дамп накопившихся sql запросов
+	 * @return array|null
+	 * @see stopSqlQueryExecution()
+	 */
+	public static function getQueueStoppedQueryExecution(): ?array
+	{
+		$connection = \Bitrix\Main\Application::getConnection();
+		$connection->enableQueryExecuting();
+		return $connection->getDisabledQueryExecutingDump();
 	}
 }

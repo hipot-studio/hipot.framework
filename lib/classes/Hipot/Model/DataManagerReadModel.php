@@ -11,9 +11,9 @@ use Bitrix\Main\Entity\DataManager;
 
 class DataManagerReadModel
 {
-	private $entityObject;
+	private array $entityObject;
 
-	public function __construct($entityObject)
+	public function __construct(array $entityObject)
 	{
 		$this->entityObject = $entityObject;
 	}
@@ -21,15 +21,21 @@ class DataManagerReadModel
 	/**
 	 * @return mixed
 	 */
-	public function getEntityObject()
+	public function getEntityObject(): array
 	{
 		return $this->entityObject;
 	}
 
-	public static function buildById($className, $entityId): self
+	public static function buildById($className, int $entityId): self
 	{
-		/** @var DataManager $className */
+		/**
+		 * @var DataManagerReadModelInterface $className
+		 * @noinspection VirtualTypeCheckInspection
+		 */
 		$obj = $className::getById($entityId)->fetch();
+		if (method_exists($className, 'modifyRowAfterGet')) {
+			$obj = $className::modifyRowAfterGet($obj);
+		}
 		return new self($obj);
 	}
 }

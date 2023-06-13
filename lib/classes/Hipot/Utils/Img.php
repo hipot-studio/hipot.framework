@@ -323,7 +323,7 @@ class Img
 	 *   'decodeToFormat'  => 'jpg'              // принудительно выставить формат итогового изображения png|gif|jpeg
 	 *   'saveAlpha'       => false,             // M_FULL и M_FULL_S превращать в png
 	 * ]</pre>
-	 * @param array $params = []
+	 * @param array{'tag':string, 'decodeToFormat':string, 'saveAlpha': bool} $params = []
 	 */
 	public static function oneResizeParams(array $params = []): void
 	{
