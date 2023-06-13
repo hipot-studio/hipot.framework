@@ -56,8 +56,9 @@ class HipotAjaxController extends Controller
 				DataManagerReadModel::class,
 				'entity',
 				function ($className, $entityType, $entityId) {
+					// here you may autoload your custom class
 					return DataManagerReadModel::buildById(
-						HiBlock::getHightloadBlockTable(false, $entityType, true),
+						HiBlock::getHightloadBlockTable(0, $entityType, true),
 						$entityId
 					);
 				}
@@ -69,7 +70,7 @@ class HipotAjaxController extends Controller
 
 	public function getEntityStatAction(string $entityType, array $entityOrder, array $filter = []): string
 	{
-		$dm = HiBlock::getHightloadBlockTable(false, $entityType, true);
+		$dm = HiBlock::getHightloadBlockTable(0, $entityType, true);
 
 		$orderBy = key($entityOrder);
 		$orderOrder = current($entityOrder);

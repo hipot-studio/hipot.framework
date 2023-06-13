@@ -82,7 +82,7 @@ class HiBlock
 		if (trim($hiBlockName) == '') {
 			return false;
 		}
-		return self::getHightloadBlockTable(false, $hiBlockName, true);
+		return self::getHightloadBlockTable(0, $hiBlockName, true);
 	}
 
 	/**
