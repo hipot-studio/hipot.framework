@@ -5,7 +5,6 @@
  * Date: 03.08.2019 23:30
  * @version pre 1.0
  */
-
 namespace Hipot\Model;
 
 use Bitrix\Main;

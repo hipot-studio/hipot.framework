@@ -6,9 +6,6 @@
  */
 namespace Hipot\Model;
 
-// old DataManager used in hl-blocks
-use Bitrix\Main\Entity\DataManager;
-
 class DataManagerReadModel
 {
 	private array $entityObject;
@@ -29,12 +26,12 @@ class DataManagerReadModel
 	public static function buildById($className, int $entityId): self
 	{
 		/**
-		 * @var DataManagerReadModelInterface $className
+		 * @var HiBaseModel $className
 		 * @noinspection VirtualTypeCheckInspection
 		 */
 		$obj = $className::getById($entityId)->fetch();
-		if (method_exists($className, 'modifyRowAfterGet')) {
-			$obj = $className::modifyRowAfterGet($obj);
+		if (method_exists($className, 'toReadModel')) {
+			$obj = $className::toReadModel($obj);
 		}
 		return new self($obj);
 	}
