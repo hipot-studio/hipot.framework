@@ -6,7 +6,7 @@
  */
 namespace Hipot\Model;
 
-class DataManagerReadModel
+final class DataManagerReadModel
 {
 	private array $entityObject;
 

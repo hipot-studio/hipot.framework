@@ -164,6 +164,7 @@ trait EO_Utils
 		$orderSql = rtrim($orderSql, ', ');
 
 		try {
+			/** @noinspection SqlNoDataSourceInspection */
 			$offset = $connection->query(
 				"SELECT `ID`, `rank` FROM
 						(SELECT 
@@ -173,7 +174,7 @@ trait EO_Utils
 						ORDER BY {$orderSql}
 						WHERE {$whereSql}
 						) AS `list`
-					WHERE `ID` = " . $id)->fetch();
+					WHERE `ID` = {$id}")->fetch();
 		} catch (\Throwable $ignore) {
 			UUtils::logException($ignore);
 			$offset = [
