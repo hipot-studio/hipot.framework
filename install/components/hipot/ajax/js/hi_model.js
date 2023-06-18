@@ -15,6 +15,8 @@ function HiModel()
 				responseData = JSON.parse(response.data);
 			}
 			thenRun(responseData, response);
+		}, function (response) {
+			thenRun({}, response);
 		});
 	};
 	this.getModelStat = function (entityName, entityOrder, filter, initRun)
