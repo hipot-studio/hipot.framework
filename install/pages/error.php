@@ -1,5 +1,5 @@
 <?php
-// see \Bitrix\Main\Diag\HttpExceptionHandlerOutput
+/* @see \Bitrix\Main\Diag\HttpExceptionHandlerOutput::renderExceptionMessage() */
 defined('B_PROLOG_INCLUDED') || die();
 
 /**  @var \Error|\Exception $exception */
@@ -10,26 +10,35 @@ use Bitrix\Main\Diag\ExceptionHandlerFormatter,
 	Bitrix\Main\Mail\Event;
 
 $developerEmail = 'info@hipot-studio.com';
-$request        = Application::getInstance()->getContext()->getRequest();
+$request        = Application::getInstance()?->getContext()?->getRequest();
 
-$sendEmailToSupport = static function () use ($exception, $developerEmail, $request) {
+$sendEmailToSupport = static function () use ($exception, $developerEmail, $request, $argv) {
 	$html = 'Данные об ошибке:' . "\n";
 	$html .= ExceptionHandlerFormatter::format($exception, true);
 
 	$html .= "\n\nДополнительные переменные:\n" . "\n";
 	$html .= '<pre>'. wordwrap(print_r([
-			'request'   => $request->toArray(),
-			'cookie'    => $request->getCookieList()->toArray(),
+			'request'   => is_null($request) ? $_REQUEST    : $request->toArray(),
+			'cookie'    => is_null($request) ? $_COOKIE     : $request->getCookieList()->toArray(),
 			'session'   => $_SESSION,
-			'server'    => $request->getServer()->toArray(),
+			'server'    => is_null($request) ? $_SERVER     : $request->getServer()->toArray(),
+			'PHP_SAPI'  => PHP_SAPI
 		] , true), 100) . "</pre>\n". "\n";
+
+	$subject = 'Ошибка PHP ';
+	if (PHP_SAPI == 'cli') {
+		$subject .= $argv[0];
+	} else {
+		$subject .= (is_null($request) ? $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI']
+			: $request->getServer()->getServerName() . $request->getRequestUri());
+	}
 
 	Event::send([
 		"EVENT_NAME" => "DEBUG_MESSAGE",
-		"LID" => SITE_ID,
+		"LID" => defined('SITE_ID') ? SITE_ID : Application::getInstance()?->getContext()?->getLanguage(),
 		"C_FIELDS" => [
 			"EMAIL"         => $developerEmail,
-			"SUBJECT"       => 'Ошибка PHP ' . $request->getServer()->getServerName() . $request->getRequestUri(),
+			"SUBJECT"       => $subject,
 			"HTML"          => $html
 		],
 	]);
