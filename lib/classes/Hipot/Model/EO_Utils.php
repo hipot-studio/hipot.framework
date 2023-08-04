@@ -21,7 +21,7 @@ use Hipot\Utils\UUtils;
  * Дополнительные утилиты для сущностей
  * @package Hipot\BitrixUtils
  */
-trait EO_UtilsTrait
+trait EO_Utils
 {
 	/**
 	 * @param ScalarField $field

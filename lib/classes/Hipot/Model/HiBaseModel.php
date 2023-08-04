@@ -15,7 +15,7 @@ use Hipot\BitrixUtils\HiBlock;
  */
 abstract class HiBaseModel extends DataManager
 {
-	use EO_UtilsTrait;
+	use EO_Utils;
 
 	// region init block
 	public static function getTableName(): string

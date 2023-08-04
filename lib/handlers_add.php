@@ -38,8 +38,8 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 });
 
 // проставляем id инфоблоков в административном меню
-$eventManager->addEventHandler("main", "OnBuildGlobalMenu", static function (&$aGlobalMenu, &$aModuleMenu) {
-	if (!IS_BETA_TESTER || !defined("ADMIN_SECTION")) {
+$eventManager->addEventHandler("main", "OnBuildGlobalMenu", static function (&$aGlobalMenu, &$aModuleMenu) use ($request) {
+	if (!defined('IS_BETA_TESTER') || !IS_BETA_TESTER || !$request->isAdminSection()) {
 		return;
 	}
 	foreach ($aModuleMenu as $k => $arMenu) {
