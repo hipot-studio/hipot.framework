@@ -136,10 +136,10 @@ class IblockList extends \CBitrixComponent
 					);
 
 					$arResult["NAV_RESULT"] = [
-						'PAGE_NOMER'					=> $rsItems->NavPageNomer,		// номер текущей страницы постранички
-						'PAGES_COUNT'					=> $rsItems->NavPageCount,		// всего страниц постранички
-						'RECORDS_COUNT'					=> $rsItems->NavRecordCount,	// размер выборки, всего строк
-						'CURRENT_PAGE_RECORDS_COUNT'	=> count($arResult["ITEMS"])	// размер выборки текущей страницы
+						'PAGE_NOMER'					=> (int)$rsItems->NavPageNomer,		// номер текущей страницы постранички
+						'PAGES_COUNT'					=> (int)$rsItems->NavPageCount,		// всего страниц постранички
+						'RECORDS_COUNT'					=> (int)$rsItems->NavRecordCount,	// размер выборки, всего строк
+						'CURRENT_PAGE_RECORDS_COUNT'	=> count($arResult["ITEMS"])	    // размер выборки текущей страницы
 					];
 				}
 
