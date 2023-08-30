@@ -69,6 +69,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Main\Loader,
 	Bitrix\Main\Application,
 	Bitrix\Main\Data\MemcacheConnection,
+	Bitrix\Iblock\IblockTable,
 	Hipot\Services\MemcacheWrapper,
 	Hipot\Utils\UUtils;
 
@@ -79,20 +80,29 @@ if (!class_exists('Memcache') || !class_exists(MemcacheWrapper::class)) {
 
 Loader::includeModule('iblock');
 
+// init global $IBLOCK_CACHE_PROPERTY in iblock/classes/general/iblockproperty.php by autoload
 $pr = new CIBlockProperty();
 unset($pr);
+
+// relay cache to iblock property types, avoid iblock2.0 not found tables error
+$arIblockVersions = [];
+$rs = IblockTable::query()->setSelect(['ID', 'VERSION'])->setOrder(['ID' => 'ASC'])->setCacheTtl(3600 * 24 * 3)->exec();
+while ($ar = $rs->fetch()) {
+	$arIblockVersions[ $ar['ID'] ] = $ar['VERSION'];
+}
 
 try {
 	/** @var MemcacheConnection $mc */
 	$mc = Application::getConnection('memcache');
 
 	$GLOBALS['IBLOCK_CACHE_PROPERTY'] = new MemcacheWrapper(
-		'IBLOCK_CACHE_PROPERTY_',
+		'IBLOCK_CACHE_PROPERTY_' . md5(serialize($arIblockVersions)),
 		$mc->getResource()
 	);
 } catch (Error $e) {
 	UUtils::logException($e);
 }
+unset($arIblockVersions);
 
 // _tests:
 /*
