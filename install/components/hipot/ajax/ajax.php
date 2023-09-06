@@ -47,7 +47,7 @@ class HipotAjaxController extends Controller
 	}
 
 	/**
-	 * @return Parameter[]
+	 * @return list<\Bitrix\Main\Engine\AutoWire\Parameter>
 	 */
 	public function getAutoWiredParameters(): array
 	{

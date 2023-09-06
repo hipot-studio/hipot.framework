@@ -133,9 +133,11 @@ class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Er
 	public function executeComponent()
 	{
 		// file with all client handlers
-		if ($this->arParams['ADD_BLOCK_LOADER_JS'] == 'Y') {
+		static $blockJsLoaderAdded = false;
+		if ($this->arParams['ADD_BLOCK_LOADER_JS'] == 'Y' && !$blockJsLoaderAdded) {
 			\CJSCore::Init(['ajax']);
 			Asset::getInstance()->addJs($this->getPath() . '/js/block_loader.js');
+			$blockJsLoaderAdded = true;
 		}
 
 		// only to show html-templates
