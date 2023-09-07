@@ -1,4 +1,4 @@
- #Abstract Iblock Elements Layer
+k #Abstract Iblock Elements Layer
 
  ## Подсказки на выборки CIBlockElement::GetList() на базе компонента hipot:iblock.list
 
@@ -154,3 +154,5 @@
 
  7/ В случае свойств привязок к инфоблокам, обязательно должно быть указано, к какому инфоблоку 
 привязано свойство элемента, иначе как построить схему привязок?
+
+[CHANGELOG](ABSTRACT_IBLOCK_ELEMENT_LAYER_CHANGELOG.MD)

@@ -1,7 +1,8 @@
 # Мини-фреймворк hipot.framework для создания проектов на bitrix
 (с) hipot, 2017 - 2023\
-mailto: info AT hipot-studio DOT com\
-![hipot logo](docs/img/hipot_logo.jpg)
+mailto: info AT hipot-studio DOT com
+
+![hipot logo](docs/img/hipot-studio-logo-horizontal.png)
 
 ### Требования:
 bitrix 22+, PHP 8.0+
@@ -19,7 +20,7 @@ bitrix 22+, PHP 8.0+
     /** @var $cachedUser \CUser */
     \Bitrix\Main\Diag\Debug::dump($cachedUser->GetID());
     ```
-  - с магазином <code>Hipot\BitrixUtils\SaleUtils</code>
+  - с магазином <code>Hipot\BitrixUtils\SaleUtils</code> (требует переработи)
   - различные утилиты-хелперы <code>Hipot\Utils\UnsortedUtils</code>
   - различные сервисы в пространстве имен <code>Hipot\Services</code>
   - различные базовые типы в пространстве имен <code>Hipot\Types</code>.
