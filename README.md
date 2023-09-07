@@ -7,14 +7,19 @@ mailto: info AT hipot-studio DOT com\
 bitrix 22+, PHP 8.0+
 
 # Доступные инструменты и возможности:
-- библиотека классов /lib/classes для копирования в /local/php_interface/lib/classes
-- автозагрузчик к классам lib/simple_loader.php для копирования в /local/php_interface/lib/simple_loader.php
-- пример файла /local/php_interface/init.php с подключением деталей фреймворка к битриксу
+- библиотека классов <code>/lib/classes</code> для копирования в <code>/local/php_interface/lib/classes</code>
+- автозагрузчик к классам <code>lib/simple_loader.php</code> для копирования в <code>/local/php_interface/lib/simple_loader.php</code><br>
+В современных реалиях лучше для этого использовать [composer](install/local/composer.json)
+- немного "плавающих функций" <code>/lib/functions.php</code>
+- универсальные обработчики событий <code>/lib/handlers_add.php</code> с подключением констант-рубильников из файла <code>/lib/constants.php</code>  
+- скрипт [xhprof.php](docs/xhprof.md) для быстрого профилирования "боевых" проектов
+- страница <code>pages/error.php</code> с перехватом фатальных php-ошибок и отправке их на почту разработчикам (размещается в DOCUMENT_ROOT проекта)
+- пример файла <code>/local/php_interface/init.php</code> с подключением деталей фреймворка к битриксу
 можно найти в файле include.php
-<ul style="margin-left:100px;"><li> объектная модель-обертка Hipot\IbAbstractLayer\IblockElemLinkedChains
-<li>класс для работы с инфоблоками Hipot\BitrixUtils\IblockUtils
-<li>api для трансформации изображений Hipot\Utils\Img</li>
-<li>с кешированием Hipot\BitrixUtils\PhpCacher
+<ul style="margin-left:50px; list-style-type:square"><li> объектная модель-обертка <code>Hipot\IbAbstractLayer\IblockElemLinkedChains</code> (Abstract Iblock Elements Layer)
+<li>класс для работы с инфоблоками <code>Hipot\BitrixUtils\IblockUtils</code>
+<li>api для трансформации изображений <code>Hipot\Utils\Img</code></li>
+<li>класс для работы с кешированием <code>Hipot\BitrixUtils\PhpCacher</code>
 
 ```php
 /** @global $USER \CUser */
@@ -25,22 +30,26 @@ $cachedUser = PhpCacher::cache('cached_users' . PhpCacher::getCacheSubDirById($U
 ```
 </li>
 
-<li>с магазином Hipot\BitrixUtils\SaleUtils
-<li>различные утилиты Hipot\Utils\UnsortedUtils</ul>
+<li>с магазином <code>Hipot\BitrixUtils\SaleUtils</code></li>
+<li>различные утилиты-хелперы <code>Hipot\Utils\UnsortedUtils</code></li>
+<li>различные сервисы в пространстве имен <code>Hipot\Services</code></li>
+<li>различные базовые типы в пространстве имен <code>Hipot\Types</code>.</li>
+</ul>
   
-- компоненты в папке install/components для копирования в /local/components
+- компоненты в папке <code>install/components</code> для копирования в <code>/local/components</code>
+
   
 ### Установка:
-- Пока для ручного копирования деталей, 
-в дальнейшем будет модуль hipot.framework:
+Пока для ручного осознанного копирования деталей, в дальнейшем будет модуль <code>hipot.framework</code> с установщиком.
 - скопировать папку модуля в папку /local/modules/ (для новых проектов) или /bitrix/modules/ для рабочих
 - установить в админке модуль, чтобы он зарегистрировал себя
-- можно добавить нужные классы в автозагрузчик (PSR-0, см. hipot_code_style_34.pdf)
+- можно добавить другие свои нужные классы в автозагрузчик (PSR-4, см. "Стиль написания кода и Структурирование файлов")
 
-### ВАЖНО! После включения Abstract Iblock Elements Layer нужно проиндексировать файл /bitrix/modules/generated_iblock_sxem.php
-Это делается в IDE для подсказок, по аналогии как в битриксе с аннотациями файл bitrix/modules/orm_annotations.php   
+### Объектная модель-обертка над инфоблоками: Abstract Iblock Elements Layer
+ВАЖНО! После включения Abstract Iblock Elements Layer нужно проиндексировать файл <code>bitrix/modules/generated_iblock_sxem.php</code> в используемой IDE.
+Это делается для подсказок (автокомплит кода), по аналогии как в битриксе с аннотациями файл <code>bitrix/modules/orm_annotations.php</code>   
 
-см docs/ABSTRACT_IBLOCK_ELEMENT_LAYER.MD
+см [ABSTRACT_IBLOCK_ELEMENT_LAYER](docs/ABSTRACT_IBLOCK_ELEMENT_LAYER.MD)
 
 ```php
 use Bitrix\Main\Loader;
@@ -48,6 +57,7 @@ use \Hipot\IbAbstractLayer\IblockElemLinkedChains as hiIblockElemLinkedChains;
 
 Loader::includeModule('hipot.framework');
 
+// example to select some linked elements by linked-chained-class
 $resultChains = hiIblockElemLinkedChains::getList(
 	['sort' => 'asc'],
 	['iblock_id' => 3, 'ID' => 232],
@@ -59,7 +69,7 @@ $resultChains = hiIblockElemLinkedChains::getList(
 
 foreach ($resultChains as $ibItem) {
 	/** @var $ibItem __IblockElementItem_HIPOT3_LAN_3 */
-    echo $ibItem->PROPERTIES->CML2_LINK->CHAIN->PROPERTIES->MANUFACTURER->NAME;
+	echo $ibItem->PROPERTIES->CML2_LINK->CHAIN->PROPERTIES->MANUFACTURER->NAME;
 }
 
 var_dump($resultChains);
@@ -67,20 +77,25 @@ var_dump($resultChains);
 /* hiIblockElemLinkedChains помимо рекурсивных выборок и объектной модели умеет все, 
  что умеет класс Hipot\BitrixUtils\IblockUtils */
 ```
-![layer example](docs/img/2020-10-15_19-16-26.png)
 
 рис. смотрим какие классы есть после индексации модели инфоблоков в файл для IDE подсказок /bitrix/modules/generated_iblock_sxem.php
 
-![layer example](docs/img/2020-10-15_19-16-57.png)
+![layer example](docs/img/2020-10-15_19-16-26.png)
 
 рис. смотрим какие свойства есть в 3м инфоблоке и какие у них коды для выборки
 
-![layer example](docs/img/2020-10-15_19-17-28.png)
+![layer example](docs/img/2020-10-15_19-16-57.png)
 
 рис. имеем code completion для всех типов даже свойств связанных элементов инфоблоков
 
+![layer example](docs/img/2020-10-15_19-17-28.png)
+
+
+### версия 3.1
+- большая часть кода переписана под современные реалии битрикса (d7) и php
+
 ### версия 3.0
-- собрано все по крупицам
+- собрано все по крупицам с разных мест
 
 ### два ключевых аспекта, концепции фреймворка:
 
@@ -89,9 +104,9 @@ var_dump($resultChains);
 
 ### Правила по коду:
 
-- Стиль написания кода и Структурирование файлов:
-docs/hipot_code_style_33.pdf
+- [Стиль написания кода и Структурирование файлов](docs/hipot_code_style_40.pdf)
+- Особенно рекомендую заглянуть в раздел с использованными материалами
 
 ### Дела давно минувших дней и наследие wexpert
-В файле docs/03.09.2014_SLIDES_10.pptx представлена моя планерка при выпуске версии 1.0
+В файле [презентация первой версии, 03.09.2014](docs/03.09.2014_SLIDES_10.pptx) представлена моя планерка при выпуске версии 1.0.
 Решил ее тоже сохранить, возможно кому-то поможет.

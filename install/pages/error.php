@@ -53,7 +53,9 @@ if (PHP_SAPI == 'cli') {
 <!--noindex-->
 <style>
 	.fatal-error {font-size:130%; font-family:Arial, sans-serif; padding:10px; background:#fff; color:#000; clear:both;}
-	.fatal-error * {font-family:Arial, sans-serif;}
+	.fatal-error * {font-family:Arial, sans-serif; color:#000;}
+	.fatal-error a {text-decoration:underline;}
+	.fatal-error a:hover {color:red;}
 	.fatal-error .error-raw {background:#c7c7c7; padding:8px; font-size:11px; margin:5px 0px;}
 	.fatal-error .error-raw * {font-family:Consolas, 'Courier New', Courier, monospace;}
 	.fatal-error .has-error {font-size:110%; padding:0px 0px 10px 0px; font-weight:bold; color:red;}
