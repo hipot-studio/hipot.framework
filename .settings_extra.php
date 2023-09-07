@@ -67,7 +67,7 @@ return [
 				'port' => '11211',          // '0'
 			]
 		],
-		'sid' => $_SERVER["DOCUMENT_ROOT"] . "#01"
+		'sid' => Loader::getDocumentRoot() . "#01"
 	],
 	'cache_flags' => [
 		'value' => [
