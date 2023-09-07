@@ -124,7 +124,14 @@ return [
 		'value' => [
 			'main.imageEngine' => [
 				'className' => \Bitrix\Main\File\Image\Imagick::class
-			]
+			],
+			'Orhanerday.OpenAI' => [
+				'constructor' => static function () {
+					// see page https://platform.openai.com/account/api-keys
+					$open_ai_key = getenv('OPENAI_API_KEY');
+					return new \Orhanerday\OpenAi\OpenAi($open_ai_key);
+				},
+			],
 		],
 		'readonly' => true
 	]
