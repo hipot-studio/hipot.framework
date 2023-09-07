@@ -8,35 +8,30 @@ bitrix 22+, PHP 8.0+
 
 # Доступные инструменты и возможности:
 - библиотека классов <code>/lib/classes</code> для копирования в <code>/local/php_interface/lib/classes</code>
+  - объектная модель-обертка <code>Hipot\IbAbstractLayer\IblockElemLinkedChains</code> (Abstract Iblock Elements Layer, см. ниже)
+  - класс для работы с инфоблоками <code>Hipot\BitrixUtils\IblockUtils</code>
+  - api для трансформации изображений <code>Hipot\Utils\Img</code>
+  - класс для работы с кешированием <code>Hipot\BitrixUtils\PhpCacher</code>
+    ```php
+    /** @global $USER \CUser */
+    use Hipot\BitrixUtils\PhpCacher;
+    $cachedUser = PhpCacher::cache('cached_users' . PhpCacher::getCacheSubDirById($USER->GetID()), 3600, static fn() => $USER);
+    /** @var $cachedUser \CUser */
+    \Bitrix\Main\Diag\Debug::dump($cachedUser->GetID());
+    ```
+  - с магазином <code>Hipot\BitrixUtils\SaleUtils</code>
+  - различные утилиты-хелперы <code>Hipot\Utils\UnsortedUtils</code>
+  - различные сервисы в пространстве имен <code>Hipot\Services</code>
+  - различные базовые типы в пространстве имен <code>Hipot\Types</code>.
 - автозагрузчик к классам <code>lib/simple_loader.php</code> для копирования в <code>/local/php_interface/lib/simple_loader.php</code><br>
 В современных реалиях лучше для этого использовать [composer](install/local/composer.json)
 - немного "плавающих функций" <code>/lib/functions.php</code>
 - универсальные обработчики событий <code>/lib/handlers_add.php</code> с подключением констант-рубильников из файла <code>/lib/constants.php</code>  
 - скрипт [xhprof.php](docs/xhprof.md) для быстрого профилирования "боевых" проектов
 - страница <code>pages/error.php</code> с перехватом фатальных php-ошибок и отправке их на почту разработчикам (размещается в DOCUMENT_ROOT проекта)
+- компоненты в папке <code>install/components</code> для копирования в <code>/local/components</code>
 - пример файла <code>/local/php_interface/init.php</code> с подключением деталей фреймворка к битриксу
 можно найти в файле include.php
-<ul style="margin-left:50px; list-style-type:square"><li> объектная модель-обертка <code>Hipot\IbAbstractLayer\IblockElemLinkedChains</code> (Abstract Iblock Elements Layer)
-<li>класс для работы с инфоблоками <code>Hipot\BitrixUtils\IblockUtils</code>
-<li>api для трансформации изображений <code>Hipot\Utils\Img</code></li>
-<li>класс для работы с кешированием <code>Hipot\BitrixUtils\PhpCacher</code>
-
-```php
-/** @global $USER \CUser */
-use Hipot\BitrixUtils\PhpCacher;
-$cachedUser = PhpCacher::cache('cached_users' . PhpCacher::getCacheSubDirById($USER->GetID()), 3600, static fn() => $USER);
-/** @var $cachedUser \CUser */
-\Bitrix\Main\Diag\Debug::dump($cachedUser->GetID());
-```
-</li>
-
-<li>с магазином <code>Hipot\BitrixUtils\SaleUtils</code></li>
-<li>различные утилиты-хелперы <code>Hipot\Utils\UnsortedUtils</code></li>
-<li>различные сервисы в пространстве имен <code>Hipot\Services</code></li>
-<li>различные базовые типы в пространстве имен <code>Hipot\Types</code>.</li>
-</ul>
-  
-- компоненты в папке <code>install/components</code> для копирования в <code>/local/components</code>
 
   
 ### Установка:
@@ -78,15 +73,15 @@ var_dump($resultChains);
  что умеет класс Hipot\BitrixUtils\IblockUtils */
 ```
 
-рис. смотрим какие классы есть после индексации модели инфоблоков в файл для IDE подсказок /bitrix/modules/generated_iblock_sxem.php
+рис. смотрим какие классы есть после индексации модели инфоблоков в файл для IDE подсказок <code>/bitrix/modules/generated_iblock_sxem.php</code>:
 
 ![layer example](docs/img/2020-10-15_19-16-26.png)
 
-рис. смотрим какие свойства есть в 3м инфоблоке и какие у них коды для выборки
+рис. смотрим какие свойства есть в 3м инфоблоке и какие у них коды для выборки:
 
 ![layer example](docs/img/2020-10-15_19-16-57.png)
 
-рис. имеем code completion для всех типов даже свойств связанных элементов инфоблоков
+рис. имеем code completion для всех типов свойств, в том числе для свойств связанных элементов инфоблоков:
 
 ![layer example](docs/img/2020-10-15_19-17-28.png)
 
