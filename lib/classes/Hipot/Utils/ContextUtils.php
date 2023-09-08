@@ -7,6 +7,7 @@
 namespace Hipot\Utils;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Web\HttpClient;
 
 trait ContextUtils
@@ -229,5 +230,26 @@ trait ContextUtils
 		$connection = \Bitrix\Main\Application::getConnection();
 		$connection->enableQueryExecuting();
 		return $connection->getDisabledQueryExecutingDump();
+	}
+
+	public static function getCurrentUser(): ?CurrentUser
+	{
+		/**
+		 * CurrentUser::get()->isAdmin() вызывает ошибку Uncaught Error: Call to a member function isAdmin() on null, когда нет $USER
+		 * (везде в порядке выполнения страницы https://dev.1c-bitrix.ru/api_help/main/general/pageplan.php до п.1.9) и агентах.
+		 *
+		 * геттера к внутреннему приватному полю нет, чтобы можно было проверять так:
+		 *
+		 * CurrentUser::getCUser() !== null && CurrentUser::get()->isAdmin()
+		 *
+		 * а по хорошему сделать проверку на инварианты: не создавать объект CurrentUser в методе get(), если global $USER === null
+		 * тогда можно было бы использовать nullsafe-operator:
+		 *
+		 * CurrentUser::get()?->isAdmin()
+		 */
+		$bInternalUserExists = ( (function () {
+				return $this->cuser;
+			})->bindTo(CurrentUser::get(), CurrentUser::get()) )() !== null;
+		return $bInternalUserExists ? CurrentUser::get() : null;
 	}
 }

@@ -17,6 +17,7 @@ $sendEmailToSupport = static function () use ($exception, $developerEmail, $requ
 	$html .= ExceptionHandlerFormatter::format($exception, true);
 
 	$html .= "\n\nДополнительные переменные:\n" . "\n";
+	/** @noinspection GlobalVariableUsageInspection */
 	$html .= '<pre>'. wordwrap(print_r([
 			'request'   => is_null($request) ? $_REQUEST    : $request->toArray(),
 			'cookie'    => is_null($request) ? $_COOKIE     : $request->getCookieList()->toArray(),
@@ -29,6 +30,7 @@ $sendEmailToSupport = static function () use ($exception, $developerEmail, $requ
 	if (PHP_SAPI == 'cli') {
 		$subject .= $argv[0];
 	} else {
+		/** @noinspection GlobalVariableUsageInspection */
 		$subject .= (is_null($request) ? $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI']
 			: $request->getServer()->getServerName() . $request->getRequestUri());
 	}
@@ -43,17 +45,57 @@ $sendEmailToSupport = static function () use ($exception, $developerEmail, $requ
 		],
 	]);
 };
+$isAdmin = static function (): bool {
+	/**
+	 * CurrentUser::get()->isAdmin() вызывает ошибку Uncaught Error: Call to a member function isAdmin() on null, когда нет $USER
+	 * (везде в порядке выполнения страницы https://dev.1c-bitrix.ru/api_help/main/general/pageplan.php до п.1.9) и агентах.
+	 *
+	 * геттера к внутреннему приватному полю нет, чтобы можно было проверять так:
+	 *
+	 * CurrentUser::getCUser() !== null && CurrentUser::get()->isAdmin()
+	 *
+	 * а по хорошему сделать проверку на инварианты: не создавать объект CurrentUser в методе get(), если global $USER === null
+	 * тогда можно было бы использовать nullsafe-operator:
+	 *
+	 * CurrentUser::get()?->isAdmin()
+	 */
+	$bInternalUserExists = ( (function () {
+			return $this->cuser;
+		})->bindTo(CurrentUser::get(), CurrentUser::get()) )() !== null;
+	return $bInternalUserExists && CurrentUser::get()->isAdmin();
+};
 
-if (PHP_SAPI == 'cli') {
+$isAjaxRequest = (defined('IS_AJAX') && IS_AJAX === true) || $request->isAjaxRequest();
+$isCliTun = (PHP_SAPI == 'cli');
+$isNotBetaTester = (!defined('IS_BETA_TESTER') || (defined('IS_BETA_TESTER') && IS_BETA_TESTER === false));
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+// try to send 503 error
+if (!$isCliTun && !headers_sent()) {
+	header('HTTP/1.1 503 Service Unavailable');
+	header('Retry-After: 600');
+}
+
+if ($isCliTun) {
 	$sendEmailToSupport();
 	echo ExceptionHandlerFormatter::format($exception, false);
+	return;
+}
+
+if ($isAjaxRequest) {
+	if ($isNotBetaTester) {
+		$sendEmailToSupport();
+	}
+	if ($isAdmin()) {
+		echo ExceptionHandlerFormatter::format($exception, false);
+	}
 	return;
 }
 ?>
 <!--noindex-->
 <style>
-	.fatal-error {font-size:130%; font-family:Arial, sans-serif; padding:10px; background:#fff; color:#000; clear:both;}
-	.fatal-error * {font-family:Arial, sans-serif; color:#000;}
+	.fatal-error {font-size:130%; font-family:Arial, "Helvetica Neue", Helvetica, sans-serif; padding:10px; background:#fff; color:#000; clear:both;}
+	.fatal-error * {font-family:Arial, "Helvetica Neue", Helvetica, sans-serif; color:#000;}
 	.fatal-error a {text-decoration:underline;}
 	.fatal-error a:hover {color:red;}
 	.fatal-error .error-raw {background:#c7c7c7; padding:8px; font-size:11px; margin:5px 0px;}
@@ -203,16 +245,15 @@ if (PHP_SAPI == 'cli') {
 	<small>Вы можете <a href="mailto:<?=$developerEmail?>?subject=Ошибка+PHP+<?=htmlspecialcharsbx($request->getServer()->getServerName() . $request->getRequestUri())?>">написать нам</a>, указав подробности,
 		если вы не впервые видите данную ошибку</small><br />
 
-	<?if (CurrentUser::get() !== null && CurrentUser::get()?->isAdmin()) {?>
+	<?
+	if ($isNotBetaTester) {
+		$sendEmailToSupport();
+	}
+	if ($isAdmin()) {?>
 		<div class="error-raw">
 			<?echo ExceptionHandlerFormatter::format($exception, true);?>
 		</div>
-	<?}
-
-	if (! defined('IS_BETA_TESTER')) {
-		$sendEmailToSupport();
-	}
-	?>
+	<?}?>
 
 	<br /><br />Пожалуйста, обновите страницу через минуту. Скоро все заработает.
 </div>
