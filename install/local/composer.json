@@ -18,7 +18,10 @@
   },
   "autoload": {
     "psr-4": {
-      "": "./../local/php_interface/lib/classes/"
+      "": [
+        "./../local/php_interface/lib/classes/",
+        "./../local/php_interface/include/lib/classes/"
+      ]
     },
     "files": [
       "./../local/php_interface/lib/functions.php"
