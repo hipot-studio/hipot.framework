@@ -12,7 +12,53 @@ use Bitrix\Main\Diag\ExceptionHandlerFormatter,
 $developerEmail = 'info@hipot-studio.com';
 $request        = Application::getInstance()?->getContext()?->getRequest();
 
-$sendEmailToSupport = static function () use ($exception, $developerEmail, $request, $argv) {
+// to copy and one-time-run in admin PHP Command line instrument...
+$installEmailType       = static function ($typeId = 'DEBUG_MESSAGE'): bool {
+	$arSites = \Bitrix\Main\SiteTable::getList([
+		'filter' => [],
+		'select' => ["LID", "NAME", "LANGUAGE_ID"],
+	])->fetchAll();
+
+	if (! is_countable($arSites)) {
+		return false;
+	}
+
+	$rsT = \CEventType::GetList(['TYPE_ID' => $typeId]);
+	if ($rsT->SelectedRowsCount() >= 1) {
+		return true;
+	}
+
+	$typeIdInputs = [];
+	foreach (array_column($arSites, 'LANGUAGE_ID') as $langId) {
+		$et   = new \CEventType();
+		/** @noinspection StaticInvocationViaThisInspection */
+		$typeIdInputs[] = (int)$et->Add([
+			"LID"         => $langId,
+			"EVENT_NAME"  => $typeId,
+			"NAME"        => 'Debug message to developer',
+			"DESCRIPTION" => '#EMAIL# - developers email' . PHP_EOL
+				. '#SUBJECT# - email subject' . PHP_EOL
+				. '#HTML# - email body'
+		]);
+	}
+	if (count(array_filter($typeIdInputs)) > 0) {
+		$arNewM = [
+			'ACTIVE'     => 'Y',
+			'EVENT_NAME' => $typeId,
+			'LID'        => array_column($arSites, 'LID'),
+			'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#',
+			'EMAIL_TO'   => '#EMAIL#',
+			'SUBJECT'    => '#SUBJECT#',
+			'BODY_TYPE'  => 'html',
+			'MESSAGE'    => '#HTML#',
+		];
+		$mess = new \CEventMessage();
+		$mId = $mess->Add($arNewM);
+		return (int)$mId > 0;
+	}
+	return false;
+};
+$sendEmailToSupport     = static function () use ($exception, $developerEmail, $request, $argv, $installEmailType) {
 	$html = 'Данные об ошибке:' . "\n";
 	$html .= ExceptionHandlerFormatter::format($exception, true);
 
@@ -35,6 +81,7 @@ $sendEmailToSupport = static function () use ($exception, $developerEmail, $requ
 			: $request->getServer()->getServerName() . $request->getRequestUri());
 	}
 
+	$installEmailType();
 	Event::send([
 		"EVENT_NAME" => "DEBUG_MESSAGE",
 		"LID" => defined('SITE_ID') ? SITE_ID : Application::getInstance()?->getContext()?->getLanguage(),
@@ -45,7 +92,7 @@ $sendEmailToSupport = static function () use ($exception, $developerEmail, $requ
 		],
 	]);
 };
-$isAdmin = static function (): bool {
+$isAdmin                = static function (): bool {
 	/**
 	 * CurrentUser::get()->isAdmin() вызывает ошибку Uncaught Error: Call to a member function isAdmin() on null, когда нет $USER
 	 * (везде в порядке выполнения страницы https://dev.1c-bitrix.ru/api_help/main/general/pageplan.php до п.1.9) и агентах.
