@@ -58,10 +58,9 @@ if (! function_exists('my_print_r')) {
 		}
 
 		if ($backtrace) {
-			$arBacktrace = debug_backtrace();
+			$arBacktrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
 			echo '<h4>' . $arBacktrace[0]["file"] . ', ' . $arBacktrace[0]["line"] . '</h4>';
 		}
-
 	}
 }
 
