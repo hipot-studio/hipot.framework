@@ -6,9 +6,6 @@
     "ext-mbstring": "*",
     "wikimedia/composer-merge-plugin": "dev-master",
     "intervention/image": "^2.5",
-    "psr/container": "1.0.*",
-    "psr/http-client": "1.0.*",
-    "psr/http-message": "1.0.*",
     "larapack/dd": "^1.1"
   },
   "config": {

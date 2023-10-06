@@ -66,24 +66,24 @@ if (! function_exists('my_print_r')) {
 
 if (! function_exists('__hiCs')) {
 	/**
-	 * Удобная обертка для получения в разных местах параметров в произвольных настройкаx сайта
+	 * Удобная обертка для получения в разных местах параметров в произвольных настройках сайта
 	 *
 	 * Важно! Сперва необходимо установить параметры через
 	 * Hipot\BitrixUtils\HiBlock::installCustomSettingsHiBlock();
 	 *
-	 * @param string|integer $paramCode
-	 * @param string|integer $defaultValue = '' значение по-умолчанию, если нет значения в базе
+	 * @param string $paramCode
+	 * @param string $defaultValue = '' значение по-умолчанию, если нет значения в базе
 	 *
 	 * @return mixed
 	 */
-	function __hiCs($paramCode, $defaultValue = '')
+	function __hiCs(string $paramCode, string $defaultValue = '')
 	{
 		static $params;
 		try {
 			if (! isset($params)) {
 				$params = Hipot\BitrixUtils\HiBlockApps::getCustomSettingsList();
 			}
-			if (trim($params[$paramCode]) == '' && trim($defaultValue) != '') {
+			if (empty($params[$paramCode]) && trim($defaultValue) != '') {
 				return $defaultValue;
 			}
 			return $params[$paramCode];
@@ -105,11 +105,11 @@ if (! function_exists('__getHl')) {
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	function __getHl($hiBlockName, bool $staticCache = true)
+	function __getHl(string|int $hiBlockName, bool $staticCache = true)
 	{
 		static $addedBlocks;
 
-		$hiBlockName = trim($hiBlockName);
+		$hiBlockName = trim((string)$hiBlockName);
 		if ($hiBlockName == '') {
 			return false;
 		}
@@ -154,12 +154,12 @@ if (! function_exists('array_get')) {
 	 * Возвращает элемент подмассива используя точечную нотацию item.sub_item
 	 *
 	 * @param array|mixed $array Массив
-	 * @param string|int $key Ключ
+	 * @param ?string $key Путь ключей
 	 * @param mixed $default Значение "по умалчанию"
 	 *
 	 * @return mixed
 	 */
-	function array_get($array, $key, $default = null)
+	function array_get(array $array, ?string $key, $default = null)
 	{
 		if (is_null($key)) {
 			return $array;
