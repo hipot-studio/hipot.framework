@@ -1,5 +1,47 @@
-vendor
-composer.lock
 .idea
+/.gitignore
+/web.config
+/*web.config
+/*.log
+/*.sql
+# исключаем из репозитория текстовые файлы, но оставляем robots.txt
+/*.txt
+/sitemap*.xml
+/*.dt
+/*.tar.gz
+/*.gz
+/*.tar
+/*.bak
+/*.old
+/*~
+*/_*
+/_*
+/404_cache.html
+/composer.*
+composer.lock
+vendor
+*.lock
+*.min.js
+*.min.css
+
+# исключаем ВСЮ папку bitrix, но ниже настроим включение нужных папок
+# или используйте папку /local, чтобы полностью исключить папку bitrix
+/bitrix/*
+# включаем папку php_interface и исключаем файл dbconn.php
+!/bitrix/php_interface/
+!/bitrix/modules/sale/admin/print.php
+!/bitrix/admin/.left.menu.php
+!/bitrix/admin/.access.php
+!/bitrix/modules/
+/bitrix/php_interface/*.bak
+# исключаем служебные и ненужные папки проекта
+/acrit.exportpro
+/catalog_test
+/images
+/m
+/sql_export
+/upload
+
+# misc
+_unsorted
 import_to_delete
-cache
