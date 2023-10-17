@@ -1,0 +1,26 @@
+# end slash
+RewriteCond %{REQUEST_URI} !(/$|\.|^$)
+RewriteRule (.*) %{REQUEST_URI}/ [R=301,L]
+
+# add https
+RewriteCond %{HTTPS} off
+RewriteCond %{THE_REQUEST} !/robots.txt
+RewriteCond %{THE_REQUEST} !/sitemap.php
+RewriteCond %{THE_REQUEST} !/sitemap.xml
+#RewriteRule (.*) https://%{SERVER_NAME}/$1 [R=301,L]
+RewriteRule (.*) https://%{HTTP_HOST}/$1 [R=301,L]
+
+RewriteCond %{HTTP_HOST} !^socialmatrix\.net$ [NC]
+RewriteRule ^(.*)$ https://socialmatrix.net%{REQUEST_URI} [R=301,L]
+
+RewriteCond %{HTTP_HOST} !^www\. [NC]
+RewriteRule ^(.*)$ https://www.socialmatrix.net%{REQUEST_URI} [R=301,L]
+
+# no index double
+RewriteCond %{THE_REQUEST} /index.php
+RewriteRule (.*)index.php$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+# block redirect fishing
+RewriteCond %{QUERY_STRING} goto= [NC]
+RewriteRule ^.*$ - [F]
+

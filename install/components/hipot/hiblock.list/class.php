@@ -1,0 +1,229 @@
+<?php
+/**
+ * hipot studio source file
+ * User: <hipot AT ya DOT ru>
+ * Date: 13.04.2021 17:03
+ * @version pre 1.0
+ */
+namespace Hipot\Components;
+
+defined('B_PROLOG_INCLUDED') || die();
+
+use Bitrix\Highloadblock\HighloadBlockTable,
+	Bitrix\Main\Loader;
+
+use function ShowError;
+
+/**
+ * Уникальный компонент списка из Hl-блока
+ */
+class HiBlockList extends \CBitrixComponent
+{
+	public const CACHE_TTL = 3600 * 24;
+
+	/**
+	 * @var string|null
+	 */
+	private ?string $entity_class;
+
+	/**
+	 * <pre>
+	 * HLBLOCK_ID int   or:
+	 * HLBLOCK_CODE string
+	 *
+	 * ORDER DEF: ["ID" => "DESC"]
+	 * SELECT DEF: [ID, *]
+	 * FILTER
+	 * PAGESIZE DEF:10
+	 * NTOPCOUNT
+	 * GROUP_BY
+	 * NAV_SHOW_ALWAYS = Y/N DEF: N
+	 * NAV_TITLE
+	 * NAV_TEMPLATE
+	 * SET_CACHE_KEYS = []
+	 * SET_404 = Y/N DEF: N
+	 * ALWAYS_INCLUDE_TEMPLATE = Y/N DEF: N
+	 * </pre>
+	 *
+	 * @param $arParams
+	 * @return array|void
+	 */
+	public function onPrepareComponentParams($arParams)
+	{
+		\CPageOption::SetOptionString("main", "nav_page_in_session", "N");
+
+		$arParams['PAGEN_1']			    = (int)$_REQUEST['PAGEN_1'];
+		$arParams['SHOWALL_1']			    = (int)$_REQUEST['SHOWALL_1'];
+		$arParams['NAV_TEMPLATE']		    = (trim($arParams['NAV_TEMPLATE']) != '') ? $arParams['NAV_TEMPLATE'] : '';
+		$arParams['NAV_SHOW_ALWAYS']	    = (trim($arParams['NAV_SHOW_ALWAYS']) == 'Y') ? 'Y' : 'N';
+
+		return $arParams;
+	}
+
+	public function executeComponent()
+	{
+		global $USER_FIELD_MANAGER;
+
+		// simplifier )
+		$arParams     = &$this->arParams;
+		$arResult     = &$this->arResult;
+		$entity_class = &$this->entity_class;
+
+		$requiredModules = ['highloadblock', 'iblock'];
+		foreach ($requiredModules as $requiredModule) {
+			if (! Loader::includeModule($requiredModule)) {
+				ShowError($requiredModule . " not inslaled and required!");
+				return false;
+			}
+		}
+		if ($this->startResultCache(false)) {
+			// hlblock info
+			$hlblock_id     = $arParams['HLBLOCK_ID'];
+			$hlblock_code   = $arParams['HLBLOCK_CODE'];
+
+			if (is_numeric($hlblock_id)) {
+				$hlblock    = HighloadBlockTable::getByPrimary($hlblock_id, ['cache' => ["ttl" => self::CACHE_TTL]])->fetch();
+			} else if (trim($hlblock_code) != '') {
+				$hlblock	= HighloadBlockTable::getList([
+					'filter'    => ['NAME' => $hlblock_code],
+					'cache'     => ["ttl" => self::CACHE_TTL]
+				])->fetch();
+			} else {
+				ShowError('cant init HL-block');
+				$this->abortResultCache();
+				return false;
+			}
+
+			$obEntity = HighloadBlockTable::compileEntity( $hlblock );
+			$entity_class = $obEntity->getDataClass();
+
+			if (! class_exists($entity_class)) {
+				if ($arParams["SET_404"] == "Y") {
+					include $_SERVER["DOCUMENT_ROOT"] . "/404_inc.php";
+				}
+				ShowError('404 HighloadBlock not found');
+				return false;
+			}
+
+			// region parameters
+			// sort
+			if ($arParams["ORDER"]) {
+				$arOrder = $arParams["ORDER"];
+			} else {
+				$arOrder = ["ID" => "DESC"];
+			}
+
+			// limit
+			$limit = [
+				'iNumPage' => is_set($arParams['PAGEN_1']) ? $arParams['PAGEN_1'] : 1,
+				'bShowAll' => $arParams['NAV_SHOW_ALL'] == 'Y'
+			];
+			if ((int)$arParams["NTOPCOUNT"] > 0) {
+				$limit['nPageTop'] = (int)$arParams["NTOPCOUNT"];
+			}
+			if ((int)$arParams["PAGESIZE"] > 0) {
+				$limit['nPageSize'] = (int)$arParams["PAGESIZE"];
+			}
+
+			$arSelect = ["*"];
+			if (!empty($arParams["SELECT"])) {
+				$arSelect = $arParams["SELECT"];
+				$arSelect[] = "ID";
+			}
+
+			$arFilter = [];
+			if (!empty($arParams["FILTER"])) {
+				$arFilter = $arParams["FILTER"];
+			}
+
+			$arGroupBy = [];
+			if (!empty($arParams["GROUP_BY"])) {
+				$arGroupBy = $arParams["GROUP_BY"];
+			}
+			// endregion
+
+			$result = $entity_class::getList([
+				"order"     => $arOrder,
+				"select"    => $arSelect,
+				"filter"    => $arFilter,
+				"group"     => $arGroupBy,
+				"limit"     => $limit["nPageTop"] > 0 ? $limit["nPageTop"] : 0,
+			]);
+
+			// region pager
+			if ($limit["nPageTop"] <= 0) {
+				$result = new \CDBResult($result);
+				$result->NavStart($limit, false, true);
+
+				$arResult["NAV_STRING"] = $result->GetPageNavStringEx(
+					$navComponentObject,
+					$arParams["NAV_TITLE"],
+					$arParams["NAV_TEMPLATE"]
+				);
+				$arResult["NAV_CACHED_DATA"] = $navComponentObject->GetTemplateCachedData();
+				$arResult["NAV_RESULT"] = $result;
+			}
+			// endregion
+
+			// build results
+			$arResult["ITEMS"] = [];
+
+			// uf info
+			$fields = $USER_FIELD_MANAGER->GetUserFields('HLBLOCK_' . $hlblock['ID'], 0, LANGUAGE_ID);
+
+			while ($row = $result->Fetch()) {
+				foreach ($row as $k => $v) {
+					if ($k == "ID") {
+						continue;
+					}
+					$arUserField = $fields[$k];
+
+					/* @see https://dev.1c-bitrix.ru/api_help/iblock/classes/user_properties/GetAdminListViewHTML.php */
+					$html = call_user_func(
+						[$arUserField["USER_TYPE"]["CLASS_NAME"], "GetAdminListViewHTML"],
+						$arUserField,
+						[
+							"NAME"      => "FIELDS[" . $row['ID'] . "][" . $arUserField["FIELD_NAME"] . "]",
+							"VALUE"     => htmlspecialcharsbx($v)
+						]
+					);
+					if ($html == '') {
+						$html = '&nbsp;';
+					}
+
+					$row[$k] = $html;
+					$row["~" . $k] = $v;
+				}
+
+				$row['fields'] = $USER_FIELD_MANAGER->getUserFieldsWithReadyData(
+					'HLBLOCK_'.$hlblock['ID'],
+					$row,
+					LANGUAGE_ID
+				);
+
+				$arResult["ITEMS"][] = $row;
+			}
+
+			if (count($arResult["ITEMS"]) > 0) {
+				// добавили сохранение ключей по параметру
+				$arSetCacheKeys = [];
+				if (is_array($arParams['SET_CACHE_KEYS'])) {
+					$arSetCacheKeys = $arParams['SET_CACHE_KEYS'];
+				}
+				$this->setResultCacheKeys($arSetCacheKeys);
+			} else {
+				if ($arParams["SET_404"] == "Y") {
+					include $_SERVER["DOCUMENT_ROOT"] . "/404_inc.php";
+				}
+				$this->abortResultCache();
+			}
+
+			if (count($arResult["ITEMS"]) > 0 || $arParams["ALWAYS_INCLUDE_TEMPLATE"] == "Y") {
+				$this->includeComponentTemplate();
+			}
+		}
+
+		// IF NEED SOME USE WITH "SET_CACHE_KEYS"-params
+		return $arResult;
+	}
+}

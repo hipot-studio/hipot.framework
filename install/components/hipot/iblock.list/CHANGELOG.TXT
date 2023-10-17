@@ -1,0 +1,60 @@
+-----------------------------------------------------------
+Уникальный компонент всяческих листов элементов инфоблока
+-----------------------------------------------------------
+История изменений
+CHANGELOG
+-----------------------------------------------------------
+
+версия 2.4.5
+-при включенной постраничке, добавлено сохранение данных постарнички:
+$arResult["NAV_RESULT"] = array(
+	'PAGE_NOMER'					=> $rsItems->NavPageNomer,		// номер текущей страницы постранички
+	'PAGES_COUNT'					=> $rsItems->NavPageCount,		// всего страниц постранички
+	'RECORDS_COUNT'					=> $rsItems->NavRecordCount,	// размер выборки, всего строк
+	'CURRENT_PAGE_RECORDS_COUNT'	=> count($arResult["ITEMS"])	// размер выборки текущей страницы
+);
+
+версия 2.4.1
+-добавил по-умолчанию довыборку TIMESTAMP_X - т.к. для заголовка LAST_MODIFIED обязательно
+-убрал довыборку связанного элемента, т.к. создает нагрузку (запросы в цикле) и почти никогда не используется
+
+	if ($ar_props['PROPERTY_TYPE'] == "E") {
+		$arLinkedFilter = array(
+			"IBLOCK_ID"		=> $ar_props['LINK_IBLOCK_ID'],
+			"ID"			=> $ar_props["VALUE"]
+		);
+		// QUERY 3
+		$res = CIBlockElement::GetList(array(), $arLinkedFilter, false, false, array("ID", "NAME", "DETAIL_PAGE_URL"));
+		$ar_res = $res->GetNext();
+		$ar_props['ELEM'] = $ar_res;
+	}
+
+эту довыборку в случае необходимости нужно
+написать хотя-бы таким образом, чтобы не вытягивался один элемент несколько раз:
+
+	if ($ar_props['PROPERTY_TYPE'] == "E") {
+		if (! function_exists(__getLinkedElementIblockList)) {
+			//
+			// кешируем, чтобы не выбирать один элемент несколько раз
+			//
+			function __getLinkedElementIblockList ($IBLOCK_ID, $ID) {
+				static $_cache;
+				if (! isset($_cache[$ID])) {
+					$arLinkedFilter = array(
+						"IBLOCK_ID"		=> $IBLOCK_ID,
+						"ID"			=> $ID
+					);
+					// QUERY 3
+					$res = CIBlockElement::GetList(array(), $arLinkedFilter, false, false, array("ID", "NAME", "DETAIL_PAGE_URL"));
+					$ar_res = $res->GetNext();
+					$_cache[$ID] = $ar_res;
+				}
+				return $_cache[$ID];
+			}
+		}
+		$ar_props['ELEM'] = __getLinkedElementIblockList($ar_props['LINK_IBLOCK_ID'], $ar_props["VALUE"]);
+	}
+
+
+версия 2.4.0
+-инициация, описываем изменения
