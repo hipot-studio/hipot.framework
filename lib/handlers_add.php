@@ -72,10 +72,18 @@ $eventManager->addEventHandler('main', 'OnAdminTabControlBegin', static function
 	}
 });
 
-// draw user picture after login
+// draw user picture after login and top pagenav
 $eventManager->addEventHandler(	"main", "OnAdminListDisplay",
 	/** @param CAdminUiList $this_al */
 	static function (&$this_al) {
+		if ($this_al->table_id == "tbl_user" || strpos($this_al->table_id, 'iblock') !== false) {
+			echo $this_al->sNavText;
+			?>
+			<style>
+				.adm-workarea > .main-ui-pagination {padding:10px 0px;}
+			</style>
+			<?
+		}
 		if ($this_al->table_id == "tbl_user") {
 			foreach ($this_al->aRows as &$row) {
 				$userId = (int)$row->arRes['ID'];
