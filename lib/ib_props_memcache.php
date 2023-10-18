@@ -1,5 +1,10 @@
 <?php
 /**
+ * @deprecated from iblock 23.200.0
+ * https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=iblock
+ */
+
+/**
  * @see http://dev.1c-bitrix.ru/community/webdev/user/17890/blog/8910/?commentId=49110#com49110
  *
  * в Битриксе есть метод CIBlockProperty::GetPropertyArray. Это служебный метод, который принимает в качестве параметров

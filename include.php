@@ -14,7 +14,7 @@ require __DIR__ . '/lib/functions.php';
 
 // endregion
 
-// iblock props in memcache
+// iblock props in memcache (deprecated from iblock 23.200.0)
 if (file_exists(__DIR__ . '/lib/ib_props_memcache.php')) {
 	require __DIR__ . '/lib/ib_props_memcache.php';
 }
