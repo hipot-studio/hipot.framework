@@ -6,6 +6,9 @@
  * @author hipot Framework
  */
 
+use Bitrix\Main\Diag\Debug;
+use Hipot\BitrixUtils\HiBlock;
+use Hipot\BitrixUtils\HiBlockApps;
 use Hipot\Utils\UUtils;
 
 if (! function_exists('my_print_r')) {
@@ -41,8 +44,8 @@ if (! function_exists('my_print_r')) {
 
 		if (function_exists('d')) {
 			d($what);
-		} else if (method_exists(\Bitrix\Main\Diag\Debug::class, 'dump')) {
-			\Bitrix\Main\Diag\Debug::dump($what);
+		} else if (method_exists(Debug::class, 'dump')) {
+			Debug::dump($what);
 		} else {
 			if (! $bSapi) {
 				echo $in_browser ? "<pre>" : "<!--";
@@ -64,6 +67,28 @@ if (! function_exists('my_print_r')) {
 	}
 }
 
+if (! function_exists('debug_string_backtrace')) {
+	/**
+	 * Simple stack with call params
+	 * @return string
+	 */
+	function debug_string_backtrace(): string
+	{
+		$result = '';
+		$arBacktrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS & DEBUG_BACKTRACE_PROVIDE_OBJECT);
+		$cnt = count($arBacktrace);
+		foreach ($arBacktrace as $i => $stack) {
+			if (++$i >= $cnt) {
+				break;
+			}
+			$result .= sprintf('#%s %s(%s) ', $cnt - $i, $stack['file'], $stack['line']);
+			$result .= sprintf('%s %s %s ', $stack['class'], $stack['type'], $stack['function']);
+			$result .= sprintf('%s', str_replace('array ', '', var_export($stack['args'], true))) . PHP_EOL;
+		}
+		return $result;
+	}
+}
+
 if (! function_exists('__hiCs')) {
 	/**
 	 * Удобная обертка для получения в разных местах параметров в произвольных настройках сайта
@@ -81,7 +106,7 @@ if (! function_exists('__hiCs')) {
 		static $params;
 		try {
 			if (! isset($params)) {
-				$params = Hipot\BitrixUtils\HiBlockApps::getCustomSettingsList();
+				$params = HiBlockApps::getCustomSettingsList();
 			}
 			if (empty($params[$paramCode]) && trim($defaultValue) != '') {
 				return $defaultValue;
@@ -116,9 +141,9 @@ if (! function_exists('__getHl')) {
 
 		if (!isset($addedBlocks[$hiBlockName]) || !$staticCache) {
 			if (is_numeric($hiBlockName)) {
-				$addedBlocks[$hiBlockName] = Hipot\BitrixUtils\HiBlock::getDataManagerByHiId($hiBlockName);
+				$addedBlocks[$hiBlockName] = HiBlock::getDataManagerByHiId($hiBlockName);
 			} else {
-				$addedBlocks[$hiBlockName] = Hipot\BitrixUtils\HiBlock::getDataManagerByHiCode($hiBlockName);
+				$addedBlocks[$hiBlockName] = HiBlock::getDataManagerByHiCode($hiBlockName);
 			}
 		}
 

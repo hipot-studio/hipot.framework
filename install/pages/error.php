@@ -1,8 +1,15 @@
 <?php
-/* @see \Bitrix\Main\Diag\HttpExceptionHandlerOutput::renderExceptionMessage() */
+/**
+ * error page with managed errors.
+ * You can define your own function debug_string_backtrace() to generate stack-error-message
+ *
+ * @version 2.0
+ * @author hipot-studio.com
+ * @see \Bitrix\Main\Diag\HttpExceptionHandlerOutput::renderExceptionMessage()
+ */
 defined('B_PROLOG_INCLUDED') || die();
 
-/**  @var \Error|\Exception $exception */
+/**  @var \Throwable $exception */
 
 use Bitrix\Main\Diag\ExceptionHandlerFormatter,
 	Bitrix\Main\Application,
@@ -19,7 +26,7 @@ $installEmailType       = static function ($typeId = 'DEBUG_MESSAGE'): bool {
 		'select' => ["LID", "NAME", "LANGUAGE_ID"],
 	])->fetchAll();
 
-	if (! is_countable($arSites)) {
+	if (!is_countable($arSites) || !class_exists(\CEventType::class)) {
 		return false;
 	}
 
@@ -61,6 +68,9 @@ $installEmailType       = static function ($typeId = 'DEBUG_MESSAGE'): bool {
 $sendEmailToSupport     = static function () use ($exception, $developerEmail, $request, $argv, $installEmailType) {
 	$html = 'Данные об ошибке:' . "\n";
 	$html .= ExceptionHandlerFormatter::format($exception, true);
+	if (function_exists('debug_string_backtrace')) {
+		$html .= nl2br(debug_string_backtrace());
+	}
 
 	$html .= "\n\nДополнительные переменные:\n" . "\n";
 	/** @noinspection GlobalVariableUsageInspection */
@@ -111,10 +121,23 @@ $isAdmin                = static function (): bool {
 		})->bindTo(CurrentUser::get(), CurrentUser::get()) )() !== null;
 	return $bInternalUserExists && CurrentUser::get()->isAdmin();
 };
+$getExceptionStack      = static function (bool $htmlMode = false) use ($exception): string {
+	$result = ExceptionHandlerFormatter::format($exception, $htmlMode);
+	if (function_exists('debug_string_backtrace')) {
+		$bt = debug_string_backtrace();
+		if ($htmlMode) {
+			$result .= nl2br($bt);
+		} else {
+			$result .= $bt;
+		}
+	}
+	return $result;
+};
 
 $isAjaxRequest = (defined('IS_AJAX') && IS_AJAX === true) || $request->isAjaxRequest();
 $isCliTun = (PHP_SAPI == 'cli');
 $isNotBetaTester = (!defined('IS_BETA_TESTER') || (defined('IS_BETA_TESTER') && IS_BETA_TESTER === false));
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // try to send 503 error
@@ -125,7 +148,7 @@ if (!$isCliTun && !headers_sent()) {
 
 if ($isCliTun) {
 	$sendEmailToSupport();
-	echo ExceptionHandlerFormatter::format($exception, false);
+	echo $getExceptionStack(false);
 	return;
 }
 
@@ -134,7 +157,7 @@ if ($isAjaxRequest) {
 		$sendEmailToSupport();
 	}
 	if ($isAdmin()) {
-		echo ExceptionHandlerFormatter::format($exception, false);
+		echo $getExceptionStack(false);
 	}
 	return;
 }
@@ -145,12 +168,12 @@ if ($isAjaxRequest) {
 	.fatal-error * {font-family:Arial, "Helvetica Neue", Helvetica, sans-serif; color:#000;}
 	.fatal-error a {text-decoration:underline;}
 	.fatal-error a:hover {color:red;}
-	.fatal-error .error-raw {background:#c7c7c7; padding:8px; font-size:11px; margin:5px 0px;}
+	.fatal-error .error-raw {background:#c7c7c7; padding:8px; font-size:11px; margin:5px 0;}
 	.fatal-error .error-raw * {font-family:Consolas, 'Courier New', Courier, monospace;}
-	.fatal-error .has-error {font-size:110%; padding:0px 0px 10px 0px; font-weight:bold; color:red;}
+	.fatal-error .has-error {font-size:110%; padding:0 0 10px 0; font-weight:bold; color:red;}
 	.fatal-error .we-know {font-weight:bold;}
-	.fatal-error img {float:left; margin:0px 6px 6px 0px;}
-	.clearer {clear:both; font-size:0px; line-height:0px; height:0px;}
+	.fatal-error img {float:left; margin:0 6px 6px 0;}
+	.clearer {clear:both; font-size:0; line-height:0; height:0;}
 </style>
 <div class="clearer"></div>
 <div class="fatal-error">
@@ -298,7 +321,9 @@ if ($isAjaxRequest) {
 	}
 	if ($isAdmin()) {?>
 		<div class="error-raw">
-			<?echo ExceptionHandlerFormatter::format($exception, true);?>
+			<?
+			echo $getExceptionStack(true);
+			?>
 		</div>
 	<?}?>
 
