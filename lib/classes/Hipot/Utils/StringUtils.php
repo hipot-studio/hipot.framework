@@ -4,6 +4,7 @@
  * Created 11.05.2023 17:03
  * @version pre 1.0
  */
+
 namespace Hipot\Utils;
 
 use Bitrix\Main\Grid\Declension;
@@ -13,11 +14,8 @@ trait StringUtils
 {
 	/**
 	 * Возвращает слово с правильным суффиксом
-	 *
-	 * @param (int) $n - количество
-	 * @param (array|string) $str - строка 'один|два|несколько' или 'слово|слова|слов'
-	 *      или массив с такой же историей
-	 * @return string
+	 * @param int|numeric $n количество
+	 * @param array|string $forms строка 'один|два|несколько' или 'слово|слова|слов' или массив с такой же историей
 	 * @see https://localization-guide.readthedocs.io/en/latest/l10n/pluralforms.html
 	 */
 	public static function Suffix($n, $forms): string
@@ -25,24 +23,35 @@ trait StringUtils
 		if (is_string($forms)) {
 			$forms = explode('|', $forms);
 		}
-		return ( new Declension($forms[0], $forms[1], $forms[2]) )->get($n);
+		return (new Declension($forms[0], $forms[1], $forms[2]))->get( (int)$n );
 	}
 
 	/**
-	 * Транслит в одну строку
-	 * @param        $text
-	 * @param string $lang
-	 *
-	 * @return string
+	 * Транслит в один вызов
+	 * @param mixed|string $text
 	 */
-	public static function TranslitText($text, string $lang = 'ru', int $maxLen = 100): string
+	public static function TranslitText($text, string $lang = 'ru', int $maxLen = 200): string
 	{
-		return CUtil::translit(trim($text), $lang, [
-			'max_len' => $maxLen,
-			'change_case' => "L",
-			'replace_space' => '-',
-			'replace_other' => '-',
+		return CUtil::translit(trim((string)$text), $lang, [
+			'max_len'               => $maxLen,
+			'change_case'           => "L",
+			'replace_space'         => '-',
+			'replace_other'         => '-',
 			'delete_repeat_replace' => true
 		]);
+	}
+
+	/**
+	 * Null-safe strip_tags to use in component templates
+	 * @param mixed|string $value
+	 * @param array $allowedTags
+	 * @return string
+	 */
+	public static function getClearHtmlValue($value, array $allowedTags = ['p', 'b', 'em', 'i', 'br', 'a', 'ul', 'ol', 'li', 'span', 'img']): string
+	{
+		if ($value === null) {
+			return '';
+		}
+		return strip_tags((string)$value, $allowedTags);
 	}
 }

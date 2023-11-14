@@ -5,6 +5,7 @@
  * Date: 2022
  * @version 2.0
  */
+/** @noinspection AutoloadingIssuesInspection */
 namespace Hipot\Components;
 
 defined('B_PROLOG_INCLUDED') || die();
@@ -20,8 +21,7 @@ use Hipot\BitrixUtils\IblockUtils,
  */
 class IblockList extends \CBitrixComponent
 {
-	const /** @noinspection ClassConstantCanBeUsedInspection */
-		LINKED_CHAINS_CLASS = '\\Hipot\\IbAbstractLayer\\IblockElemLinkedChains';
+	private const LINKED_CHAINS_CLASS = '\\Hipot\\IbAbstractLayer\\IblockElemLinkedChains';
 
 	/**
 	 * @var \Hipot\IbAbstractLayer\IblockElemLinkedChains
@@ -122,7 +122,7 @@ class IblockList extends \CBitrixComponent
 			 * оставить комментарий по параметру, где этот параметр используется
 			 */
 
-			if (count($arResult["ITEMS"]) > 0) {
+			if (is_countable($arResult["ITEMS"]) && count($arResult["ITEMS"]) > 0) {
 				if ($arParams["PAGESIZE"]) {
 					if ($arParams['NAV_PAGEWINDOW'] > 0) {
 						$rsItems->nPageWindow = $arParams['NAV_PAGEWINDOW'];
