@@ -78,8 +78,8 @@ if (! function_exists('debug_string_backtrace')) {
 		$arBacktrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS & DEBUG_BACKTRACE_PROVIDE_OBJECT);
 		$cnt = count($arBacktrace);
 		foreach ($arBacktrace as $i => $stack) {
-			if (++$i >= $cnt) {
-				break;
+			if ($i == 0) {
+				continue;
 			}
 			$result .= sprintf('#%s %s(%s) ', $cnt - $i, $stack['file'], $stack['line']);
 			$result .= sprintf('%s %s %s ', $stack['class'], $stack['type'], $stack['function']);

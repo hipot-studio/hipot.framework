@@ -69,7 +69,7 @@ $sendEmailToSupport     = static function () use ($exception, $developerEmail, $
 	$html = 'Данные об ошибке:' . "\n";
 	$html .= ExceptionHandlerFormatter::format($exception, true);
 	if (function_exists('debug_string_backtrace')) {
-		$html .= nl2br(debug_string_backtrace());
+		$html .= '<pre>'. debug_string_backtrace() . "</pre>\n";
 	}
 
 	$html .= "\n\nДополнительные переменные:\n" . "\n";
