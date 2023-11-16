@@ -9,6 +9,29 @@ namespace Hipot\Utils;
 
 trait UserFieldUtils
 {
+	public static $arDefaultUserFieldTypes = [
+		'string', // строка;
+		'string_formatted', // Шаблон
+		'integer', // целое число;
+		'double', // число;
+		'date', // дата;
+		'datetime', // дата со временем;
+		'boolean', // Да / Нет;
+		'file', // файл;
+		'enumeration', //список;
+		'url', // ссылка;
+		'address', // адрес;
+		'video', // Видео
+		'iblock_section', // раздел инфоблока;
+		'iblock_element', // элемент инфоблока;
+		'hlblock', // привязка к HL-блоку
+		'employee', // сотрудник;
+		'crm', // элемент CRM;
+		'crm_status', // привязка к справочнику CRM.
+		'crm', // Привязка к элементам CRM
+		'crm_status' // Привязка к справочникам CRM
+	];
+
 	/**
 	 * @param array $filter = []
 	 * @param array $getList = []
