@@ -21,6 +21,9 @@ class UUtils
 	// calendar utils
 	use DateTimeUtils;
 
+	// UF_-field utils
+	use UserFieldUtils;
+
 	/**
 	 * Добавить в модуль веб-формы в форму данные
 	 *
