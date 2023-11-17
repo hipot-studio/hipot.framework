@@ -7,6 +7,11 @@
 
 namespace Hipot\Utils;
 
+/**
+ * Trait UserFieldUtils
+ *
+ * This trait provides utility functions for manipulating user fields in Bitrix.
+ */
 trait UserFieldUtils
 {
 	public static $arDefaultUserFieldTypes = [

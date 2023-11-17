@@ -8,6 +8,9 @@ namespace Hipot\Services;
 
 use XMLReader;
 
+/**
+ * A utility class for reading XML files and parsing their contents.
+ */
 class SimpleXMLReader
 {
 	/**

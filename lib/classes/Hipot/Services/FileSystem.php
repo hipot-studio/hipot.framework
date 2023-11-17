@@ -11,6 +11,13 @@ use FilesystemIterator;
 
 class FileSystem
 {
+	/**
+	 * Retrieves a recursive directory iterator for the given directory path.
+	 *
+	 * @param string $dirPath The directory path to retrieve the iterator for.
+	 *
+	 * @return \Generator The recursive directory iterator.
+	 */
 	public static function getRecursiveDirIterator(string $dirPath): \Generator
 	{
 		$directory = new RecursiveDirectoryIterator($dirPath,
