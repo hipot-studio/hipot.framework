@@ -92,7 +92,7 @@ $sendEmailToSupport     = static function () use ($exception, $developerEmail, $
 	}
 
 	$installEmailType();
-	Event::send([
+	Event::sendImmediate([
 		"EVENT_NAME" => "DEBUG_MESSAGE",
 		"LID" => defined('SITE_ID') ? SITE_ID : Application::getInstance()?->getContext()?->getLanguage(),
 		"C_FIELDS" => [
@@ -126,7 +126,7 @@ $getExceptionStack      = static function (bool $htmlMode = false) use ($excepti
 	if (function_exists('debug_string_backtrace')) {
 		$bt = debug_string_backtrace();
 		if ($htmlMode) {
-			$result .= nl2br($bt);
+			$result .= '<pre>' . $bt . '</pre>';
 		} else {
 			$result .= $bt;
 		}

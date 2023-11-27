@@ -1,4 +1,4 @@
-<?
+<? /** @noinspection GlobalVariableUsageInspection */
 /**
  * Файл с различными глобальными рубильниками-константами
  */
@@ -12,12 +12,6 @@
 
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 
-/**
- * На сайте бета-тестировщик
- * @var bool
- */
-define('IS_BETA_TESTER', $USER->IsAdmin() || $USER->GetLogin() == 'info@hipot-studio.com' || $USER->GetEmail() == 'hipot@ya.ru' || $USER->GetLogin() == 'editor@hipot-studio.com');
-
 if (
 	(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') ||
 	(isset($_SERVER['HTTP_BX_AJAX']) && $_SERVER['HTTP_BX_AJAX']) ||
@@ -27,9 +21,22 @@ if (
 } else {
 	$bIsAjax = false;
 }
-
 /**
  * На сайт пришел аякс-запрос
- * @var bool
  */
 define("IS_AJAX", $bIsAjax);
+
+/**
+ * На сайте бета-тестировщик
+ */
+define('IS_BETA_TESTER', $USER->IsAdmin() || $USER->GetEmail() == 'hipot@ya.ru' || str_contains($USER->GetLogin(), '@hipot-studio.com'));
+
+/**
+ * Группа контент-редактора
+ */
+const CONTENT_MANAGER_GID = 0;      // TODO set correct group
+
+/**
+ * На сайте редактор
+ */
+define('IS_CONTENT_MANAGER', IS_BETA_TESTER || CSite::InGroup([CONTENT_MANAGER_GID]));

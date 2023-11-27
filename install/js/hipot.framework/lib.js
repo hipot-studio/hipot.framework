@@ -324,6 +324,12 @@ function hashAsObject() {
 	return opts;
 }
 
+function rightClick() {
+	$('body').on('contextmenu', 'img', function (e) {
+		e.preventDefault();
+	});
+}
+
 /**
  * Плагин для работы с выпадающими списками SELECT
  *

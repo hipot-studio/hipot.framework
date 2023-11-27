@@ -216,7 +216,7 @@ if (! function_exists('bx_js_encode')) {
 	 * @return mixed
 	 * @throws \Bitrix\Main\ArgumentException
 	 *
-	 * HAS BUGS ON bitrix24
+	 * @todo HAS BUGS ON bitrix24
 	 * /
 	function bx_js_encode($arData, $bWS, $bSkipTilda, $bExtType)
 	{
@@ -227,10 +227,13 @@ if (! function_exists('bx_js_encode')) {
 
 if (! function_exists('str_contains')) {
 	/**
-	 * TODO php7.4 rudiment
+	 * Php 7.4 rudiment
+	 *
 	 * @param $haystack
 	 * @param $needle
 	 * @return bool
+	 *
+	 * @todo use symfony/polyfill
 	 */
 	function str_contains($haystack, $needle): bool
 	{
