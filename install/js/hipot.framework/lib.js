@@ -4,7 +4,7 @@
  * isPhone - добавлены коды знаков "-", "+" основной и цифровой клавиатур
  *
  * hipot js lib
- * @version 2.0 2018
+ * @version 2.6 2023
  */
 (function ($) {
 	/**
@@ -82,6 +82,56 @@
 		});
 	};
 
+
+	/**
+	 * Плагин для работы с выпадающими списками SELECT
+	 *
+	 * Примеры:
+	 * // очистка селекта (вариантов option)
+	 * $("select").clearSelect();
+	 *
+	 * // заполнение селекта (вариантами option)
+	 * $("select").fillSelect([
+	 * 	{name : '123_name', value : 123},
+	 * 	{name : '456_name', value : 456}
+	 * ]);
+	 *
+	 * @version 1.0
+	 */
+	jQuery.extend(jQuery.fn, {
+		/** @memberOf jQuery */
+		clearSelect: function(defaultOption) {
+			return this.each(function(){
+				if (this.tagName == 'SELECT') {
+					this.options.length = 0;
+					if (! defaultOption) {
+						return;
+					}
+					if ($.support.cssFloat) {
+						this.add(defaultOption, null);
+					} else {
+						this.add(defaultOption);
+					}
+				}
+			});
+		},
+		/** @memberOf jQuery */
+		fillSelect: function(dataArray, defaultOption) {
+			return this.clearSelect(defaultOption).each(function(){
+				if (this.tagName == 'SELECT') {
+					var currentSelect = this;
+					$.each(dataArray, function(index, data) {
+						var option = new Option(data.name, data.value);
+						if($.support.cssFloat) {
+							currentSelect.add(option, null);
+						} else {
+							currentSelect.add(option);
+						}
+					});
+				}
+			});
+		}
+	});
 })(jQuery);
 
 
@@ -297,6 +347,11 @@ function imgPreloader(src, then, thenAll)
 	}
 }
 
+/**
+ * @deprecated
+ * @param str
+ * @returns {*}
+ */
 function trim(str) {
 	return ltrim(rtrim(str));
 }
@@ -324,6 +379,13 @@ function hashAsObject() {
 	return opts;
 }
 
+/**
+ * Attaches a right-click event handler to all the images within the <body> of the current document,
+ * preventing the default context menu from being displayed.
+ *
+ * @function rightClick
+ * @returns {undefined}
+ */
 function rightClick() {
 	$('body').on('contextmenu', 'img', function (e) {
 		e.preventDefault();
@@ -331,51 +393,17 @@ function rightClick() {
 }
 
 /**
- * Плагин для работы с выпадающими списками SELECT
+ * Requires JavaScript libraries and executes a logic function
  *
- * Примеры:
- * // очистка селекта (вариантов option)
- * $("select").clearSelect();
+ * @param {Array<string>} libs - An array of library URLs to be loaded
+ * @param {Function} logik - The function to be executed after loading the libraries
  *
- * // заполнение селекта (вариантами option)
- * $("select").fillSelect([
- * 	{name : '123_name', value : 123},
- * 	{name : '456_name', value : 456}
- * ]);
- *
- * @version 1.0
+ * @return {undefined}
  */
-jQuery.extend(jQuery.fn, {
-	/** @memberOf jQuery */
-	clearSelect: function(defaultOption) {
-		return this.each(function(){
-			if (this.tagName == 'SELECT') {
-				this.options.length = 0;
-				if (! defaultOption) {
-					return;
-				}
-				if ($.support.cssFloat) {
-					this.add(defaultOption, null);
-				} else {
-					this.add(defaultOption);
-				}
-			}
-		});
-	},
-	/** @memberOf jQuery */
-	fillSelect: function(dataArray, defaultOption) {
-		return this.clearSelect(defaultOption).each(function(){
-			if (this.tagName == 'SELECT') {
-				var currentSelect = this;
-				$.each(dataArray, function(index, data) {
-					var option = new Option(data.name, data.value);
-					if($.support.cssFloat) {
-						currentSelect.add(option, null);
-					} else {
-						currentSelect.add(option);
-					}
-				});
-			}
-		});
-	}
-});
+function requireJJs(libs, logik)
+{
+	BX.loadScript(libs, function () {
+		logik();
+	});
+	// console.info(libs);
+}
