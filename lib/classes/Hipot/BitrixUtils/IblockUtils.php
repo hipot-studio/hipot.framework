@@ -456,25 +456,25 @@ class IblockUtils extends _CIBElement
 	/**
 	 * Получить инфоблок элемента
 	 *
-	 * @param int $ID код элемента
+	 * @param int $elementId код элемента
 	 *
 	 * @return bool|integer
 	 */
-	public static function getElementIblockId(int $ID)
+	public static function getElementIblockId(int $elementId): int
 	{
 		global $DB;
 
-		if ($ID <= 0) {
-			return false;
+		if ($elementId <= 0) {
+			return 0;
 		}
 
 		/** @noinspection SqlNoDataSourceInspection */
 		/** @noinspection SqlResolve */
-		$rs = $DB->Query("select IBLOCK_ID from b_iblock_element where ID=" . $ID);
+		$rs = $DB->Query("SELECT IBLOCK_ID FROM b_iblock_element WHERE ID=" . $elementId);
 		if ($ar = $rs->Fetch()) {
-			return $ar["IBLOCK_ID"];
+			return (int)$ar["IBLOCK_ID"];
 		}
-		return false;
+		return 0;
 	}
 
 	/**
