@@ -95,6 +95,7 @@ $sendEmailToSupport     = static function () use ($exception, $developerEmail, $
 	Event::sendImmediate([
 		"EVENT_NAME" => "DEBUG_MESSAGE",
 		"LID" => defined('SITE_ID') ? SITE_ID : Application::getInstance()?->getContext()?->getLanguage(),
+		"DUPLICATE" => "N",
 		"C_FIELDS" => [
 			"EMAIL"         => $developerEmail,
 			"SUBJECT"       => $subject,

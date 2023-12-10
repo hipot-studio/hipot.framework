@@ -13,7 +13,7 @@ use RuntimeException;
 /**
  * Реализованный различный функционал и интерфейсы (визуалки) на hi-блоках
  */
-class HiBlockApps extends HiBlock
+final class HiBlockApps extends HiBlock
 {
 	/**
 	 * тег сохранения настроек через PhpCacher

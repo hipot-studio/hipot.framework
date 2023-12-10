@@ -9,7 +9,7 @@ use Bitrix\Main\Engine\CurrentUser;
  * Класс для работы с кешированием (как обертка над логикой в виде анонимной функции, возвращающей данные)
  * @version 3.0
  */
-class PhpCacher
+final class PhpCacher
 {
 	/**
 	 * @var \Bitrix\Main\Data\Cache

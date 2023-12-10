@@ -10,11 +10,14 @@ use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Discount;
 use Bitrix\Sale\Fuser;
+use Bitrix\Sale\Internals\DiscountTable;
 use Bitrix\Sale\Order;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Entity\ReferenceField;
 
 Loader::includeModule('sale');
 
-class Sale
+final class Sale
 {
 	/**
 	 * Retrieves the basket for the current front-end user.
@@ -160,5 +163,33 @@ class Sale
 		}
 
 		return $errors;
+	}
+
+	/**
+	 * Получить время изменения акций модуля sale
+	 */
+	public static function getSaleDiscountModTimestamp(): int
+	{
+		$getListParams = [
+			'select' => ['TIMESTAMP_X'],
+			'filter' => [],
+			'order' => ['TIMESTAMP_X' => 'DESC']
+		];
+		if (Option::get('sale', 'use_sale_discount_only', false) === 'Y' && Loader::includeModule('catalog')) {
+			$getListParams['runtime'] = [
+				new ReferenceField(
+					"CATALOG_DISCOUNT",
+					'Bitrix\Catalog\DiscountTable',
+					["=this.ID" => "ref.SALE_ID"]
+				)
+			];
+			$getListParams['select']['CATALOG_DISCOUNT_ID'] = 'CATALOG_DISCOUNT.ID';
+		}
+		$getListParams['limit'] = 1;
+
+		$discount   = DiscountTable::getList($getListParams)->fetch();
+		$discountTs = $discount['TIMESTAMP_X'];
+		/* @var $discountTs \Bitrix\Main\Type\DateTime */
+		return $discountTs->format('U');
 	}
 }

@@ -8,7 +8,7 @@ use Bitrix\Iblock;
 
 Loader::includeModule('catalog');
 
-class Catalog
+final class Catalog
 {
 	/**
 	 * Retrieves the barcode for a given product.
