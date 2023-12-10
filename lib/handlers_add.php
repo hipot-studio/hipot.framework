@@ -163,3 +163,6 @@ $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function
 $eventManager->addEventHandler('', 'CustomSettingsOnAfterUpdate',   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
 $eventManager->addEventHandler('', 'CustomSettingsOnAfterAdd',      [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
 $eventManager->addEventHandler('', 'CustomSettingsOnAfterDelete',   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
+
+// lazy loaded css, TOFUTURE: js and js-appConfig array
+$eventManager->addEventHandler('main', 'OnEpilog', [\Hipot\BitrixUtils\AssetsContainer::class, 'onEpilogSendAssets']);
