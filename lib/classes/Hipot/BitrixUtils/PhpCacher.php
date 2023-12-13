@@ -180,10 +180,15 @@ final class PhpCacher
 	private function canCurrentUserDropCache(): bool
 	{
 		// if cacher used in init.php
-		if (! is_object($this->user)) {
+		if (!is_object($this->user)) {
 			return true;
 		}
-		return $this->user->isAdmin();
+		try {
+			return $this->user->isAdmin();
+		} catch (\Throwable) {
+			// anonymous user
+			return false;
+		}
 	}
 
 	/**
