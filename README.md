@@ -20,8 +20,9 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
     /** @var $cachedUser \CUser */
     \Bitrix\Main\Diag\Debug::dump($cachedUser->GetID());
     ```
-  - с магазином <code>Hipot\BitrixUtils\Sale (aka SaleUtils)</code>
+  - с магазином <code>Hipot\BitrixUtils\Sale (aka SaleUtils)</code> и товаром каталога <code>Hipot\BitrixUtils\Catalog</code>
   - различные утилиты-хелперы <code>Hipot\Utils\UUtils (aka UnsortedUtils)</code>
+  - для отложенного подключения ресурсов <code>Hipot\Utils\AssetsContainer</code>
   - различные сервисы в пространстве имен <code>Hipot\Services</code>
   - различные базовые типы в пространстве имен <code>Hipot\Types</code>
   - ReadModel из наследников битрикс DataManagera: абстрактная заготовка для создания конкретной модели <code>Hipot\Model\HiBaseModel</code> и декоратор <code>Hipot\Model\DataManagerReadModel</code> для создания read-моделей наследников HiBaseModel
