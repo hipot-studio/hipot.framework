@@ -6,6 +6,12 @@
  */
 namespace Hipot\Model;
 
+/**
+ * Class DataManagerReadModel
+ *
+ * This class represents a data manager read model.
+ * It provides methods for accessing and manipulating the data stored in the read model.
+ */
 final class DataManagerReadModel
 {
 	private array $entityObject;

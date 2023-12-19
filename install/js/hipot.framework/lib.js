@@ -407,3 +407,22 @@ function requireJJs(libs, logik)
 	});
 	// console.info(libs);
 }
+
+/**
+ * Check if a function is defined.
+ *
+ * @param {string|function} func - The function or the name of the function to check.
+ * @returns {boolean} - Returns true if the function is defined, otherwise false.
+ */
+function funcDefined(func)
+{
+	try {
+		if (typeof func != 'function') {
+			return typeof window[func] === "function";
+		} else {
+			return true;
+		}
+	} catch (e) {
+		return false;
+	}
+}

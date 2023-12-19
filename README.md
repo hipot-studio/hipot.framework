@@ -11,7 +11,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
 - библиотека классов <code>/lib/classes</code> для копирования в <code>/local/php_interface/lib/classes</code>
   - объектная модель-обертка <code>Hipot\IbAbstractLayer\IblockElemLinkedChains</code> (Abstract Iblock Elements Layer, см. ниже)
   - класс для работы с инфоблоками <code>Hipot\BitrixUtils\IblockUtils</code>
-  - api для трансформации изображений <code>Hipot\Utils\Img</code>
+  - api для трансформации изображений и наложения водных знаков <code>Hipot\Utils\Img</code>
   - класс для работы с кешированием <code>Hipot\BitrixUtils\PhpCacher</code>
     ```php
     /** @global $USER \CUser */
@@ -20,10 +20,12 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
     /** @var $cachedUser \CUser */
     \Bitrix\Main\Diag\Debug::dump($cachedUser->GetID());
     ```
-  - с магазином <code>Hipot\BitrixUtils\SaleUtils</code> (требует переработи)
-  - различные утилиты-хелперы <code>Hipot\Utils\UnsortedUtils</code>
+  - с магазином <code>Hipot\BitrixUtils\Sale (aka SaleUtils)</code>
+  - различные утилиты-хелперы <code>Hipot\Utils\UUtils (aka UnsortedUtils)</code>
   - различные сервисы в пространстве имен <code>Hipot\Services</code>
-  - различные базовые типы в пространстве имен <code>Hipot\Types</code>.
+  - различные базовые типы в пространстве имен <code>Hipot\Types</code>
+  - ReadModel из наследников битрикс DataManagera: абстрактная заготовка для создания конкретной модели <code>Hipot\Model\HiBaseModel</code> и декоратор <code>Hipot\Model\DataManagerReadModel</code> для создания read-моделей наследников HiBaseModel
+
 - автозагрузчик к классам <code>lib/simple_loader.php</code> для копирования в <code>/local/php_interface/lib/simple_loader.php</code><br>
 В современных реалиях лучше для этого использовать [composer](install/local/composer.json)
 - немного "плавающих функций" <code>/lib/functions.php</code>
