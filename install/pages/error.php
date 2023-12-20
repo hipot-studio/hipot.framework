@@ -174,7 +174,7 @@ if ($isAjaxRequest) {
 	.fatal-error .error-raw * {font-family:Consolas, 'Courier New', Courier, monospace;}
 	.fatal-error .has-error {font-size:110%; padding:0 0 10px 0; font-weight:bold; color:#b24040;}
 	.fatal-error .we-know {font-weight:bold;}
-	.fatal-error img {float:left; margin:0 6px 6px 0; max-width:180px;}
+	.fatal-error img {float:left; margin:0 6px 6px 0; max-width:120px;}
 	.clearer {clear:both; font-size:0; line-height:0; height:0;}
 </style>
 <div class="clearer"></div>
