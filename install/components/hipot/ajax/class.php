@@ -18,7 +18,7 @@ use Bitrix\Main\Web\Cookie;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\IO\Directory;
-use Hipot\BitrixUtils\IblockUtils;
+use Hipot\BitrixUtils\Iblock as IblockUtils;
 use Bitrix\Main\ORM\Data\DataManager;
 
 Loc::loadMessages(__FILE__);

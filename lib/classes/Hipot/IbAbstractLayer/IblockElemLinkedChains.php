@@ -9,7 +9,7 @@
 namespace Hipot\IbAbstractLayer;
 
 use Hipot\IbAbstractLayer\Types\IblockElementItem,
-	Hipot\BitrixUtils\IblockUtils;
+	Hipot\BitrixUtils\Iblock;
 
 /**
  * Класс для работы с получением цепочек связанных элементов (через свойства привязка к элементам),
@@ -24,7 +24,7 @@ use Hipot\IbAbstractLayer\Types\IblockElementItem,
  *		$arProps['series']['CHAIN'] = $obChainBuilder->getChains_r($arProps['series']['VALUE']);
  * }
  */
-class IblockElemLinkedChains extends IblockUtils
+final class IblockElemLinkedChains extends Iblock
 {
 	/**
 	 * Корень получаемой цепочки

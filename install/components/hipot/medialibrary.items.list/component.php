@@ -4,7 +4,14 @@
  * @version 2.0
  */
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
-/* @var $this CBitrixComponent */
+// region var_comp
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CMain $APPLICATION */
+/** @global CUser $USER */
+/** @global CDatabase $DB */
+/** @var CBitrixComponent $this */
+// endregion
 
 use Bitrix\Main\Type\Collection;
 

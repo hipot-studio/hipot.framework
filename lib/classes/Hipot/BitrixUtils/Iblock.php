@@ -27,7 +27,7 @@ Loader::includeModule('iblock');
  *
  * @version 2.X
  */
-class IblockUtils extends _CIBElement
+class Iblock extends _CIBElement
 {
 	// region /*********************** iblock sections **************************/
 

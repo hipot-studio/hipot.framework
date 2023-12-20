@@ -9,8 +9,10 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
 
 # Доступные инструменты и возможности:
 - библиотека классов <code>/lib/classes</code> для копирования в <code>/local/php_interface/lib/classes</code>
-  - объектная модель-обертка <code>Hipot\IbAbstractLayer\IblockElemLinkedChains</code> (Abstract Iblock Elements Layer, см. ниже)
-  - класс для работы с инфоблоками <code>Hipot\BitrixUtils\IblockUtils</code>
+  - объектная модель-обертка над инфоблоками <code>Hipot\IbAbstractLayer\IblockElemLinkedChains</code>. Наследует весь функционал от <code>Hipot\BitrixUtils\Iblock</code> (Abstract Iblock Elements Layer, см. ниже)
+  - класс для работы с инфоблоками <code>Hipot\BitrixUtils\Iblock (aka IblockUtils)</code>
+  - класс для работы с hightload-блоками <code>Hipot\BitrixUtils\HiBlock</code> и приложение реестра настроек на его основе <code>Hipot\BitrixUtils\HiBlockApps</code>
+  - readModel из наследников битрикс DataManager'a: абстрактная заготовка <code>Hipot\Model\HiBaseModel</code> для наследования от нее конкретной hightload-сущности и декоратор <code>Hipot\Model\DataManagerReadModel</code> для создания read-моделей наследников HiBaseModel
   - api для трансформации изображений и наложения водных знаков <code>Hipot\Utils\Img</code>
   - класс для работы с кешированием <code>Hipot\BitrixUtils\PhpCacher</code>
     ```php
@@ -24,8 +26,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
   - различные утилиты-хелперы <code>Hipot\Utils\UUtils (aka UnsortedUtils)</code>
   - для отложенного подключения ресурсов <code>Hipot\Utils\AssetsContainer</code>
   - различные сервисы в пространстве имен <code>Hipot\Services</code>
-  - различные базовые типы в пространстве имен <code>Hipot\Types</code>
-  - ReadModel из наследников битрикс DataManagera: абстрактная заготовка для создания конкретной модели <code>Hipot\Model\HiBaseModel</code> и декоратор <code>Hipot\Model\DataManagerReadModel</code> для создания read-моделей наследников HiBaseModel
+  - различные базовые типы в пространстве имен <code>Hipot\Types</code>  
 
 - автозагрузчик к классам <code>lib/simple_loader.php</code> для копирования в <code>/local/php_interface/lib/simple_loader.php</code><br>
 В современных реалиях лучше для этого использовать [composer](install/local/composer.json)
@@ -34,6 +35,13 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
 - скрипт [xhprof.php](docs/xhprof.md) для быстрого профилирования "боевых" проектов
 - страница <code>pages/error.php</code> с перехватом фатальных php-ошибок и отправке их на почту разработчикам (размещается в DOCUMENT_ROOT проекта)
 - компоненты в папке <code>install/components</code> для копирования в <code>/local/components</code>
+  - <code>Hipot\Components\IblockList</code> - универсальный компонент для работы с элементами инфоблоков <code>hipot:iblock.list</code>. Этот же компонент умеет использовать и Abstract Iblock Elements Layer. В [теории двух компонент](https://github.com/bitrix-expert/bbc) - этот компонент можно использовать и для создания карточки (детальной страницы) элемента (товара, новости...)
+  - <code>Hipot\Components\IblockSection</code> - компонент для работы со списком секций <code>hipot:iblock.section</code>
+  - <code>Hipot\Components\HiBlockList</code> - список hightload блока <code>hipot:hiblock.list</code>
+  - <code>HipotAjaxController контроллер</code>, позволяющий получать readModel-сущности в js через DataManagerReadModel и <code>HipotAjaxComponent</code>, позволяющей загружать динамичные блоки, когда они попадают в viewport, а также для создания любой ajax-логики: <code>hipot.ajax</code>
+  - <code>Hipot\Components\Includer</code> элементарный компонент, позволяющий писать включения как шаблоны компонента битрикс (со своим стилем и скриптом, подключаемые вендором): <code>hipot:includer</code>
+  - <code>hipot:iblock.menu_ext</code> для создания динамичных _ext-меню по элементам или по секциям инфоблоков
+  - <code>hipot:medialibrary.items.list</code> для вывода списка элементов медиабиблиотеки (напр. определенного альбома) в публичную часть
 - пример файла <code>/local/php_interface/init.php</code> с подключением деталей фреймворка к битриксу
 можно найти в файле include.php
 

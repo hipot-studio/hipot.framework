@@ -165,170 +165,44 @@ if ($isAjaxRequest) {
 ?>
 <!--noindex-->
 <style>
-	.fatal-error {font-size:130%; font-family:Arial, "Helvetica Neue", Helvetica, sans-serif; padding:10px; background:#fff; color:#000; clear:both;}
+	.fatal-error {font-size:130%; font-family:Arial, "Helvetica Neue", Helvetica, sans-serif; padding:10px; background:#fff; color:#000; clear:both; display:flex}
+	.fatal-error > div {}
 	.fatal-error * {font-family:Arial, "Helvetica Neue", Helvetica, sans-serif; color:#000;}
 	.fatal-error a {text-decoration:underline;}
-	.fatal-error a:hover {color:red;}
-	.fatal-error .error-raw {background:#c7c7c7; padding:8px; font-size:11px; margin:5px 0;}
+	.fatal-error a:hover {color:#b24040;}
+	.fatal-error .error-raw {background:#e8e7e7; padding:8px; font-size:11px; margin:5px 0;}
 	.fatal-error .error-raw * {font-family:Consolas, 'Courier New', Courier, monospace;}
-	.fatal-error .has-error {font-size:110%; padding:0 0 10px 0; font-weight:bold; color:red;}
+	.fatal-error .has-error {font-size:110%; padding:0 0 10px 0; font-weight:bold; color:#b24040;}
 	.fatal-error .we-know {font-weight:bold;}
-	.fatal-error img {float:left; margin:0 6px 6px 0;}
+	.fatal-error img {float:left; margin:0 6px 6px 0; max-width:180px;}
 	.clearer {clear:both; font-size:0; line-height:0; height:0;}
 </style>
 <div class="clearer"></div>
 <div class="fatal-error">
-	<img src="data:image/jpg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABVAAD/4QMraHR0cDov
-					L25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENl
-					aGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4
-					OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtYzAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6
-					NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5
-					OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHht
-					bG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6
-					Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUu
-					Y29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBo
-					b3Rvc2hvcCBDUzYgKFdpbmRvd3MpIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjVCMTkyMDQ3
-					NzlDNDExRTJBMDI0QjFCOTczREVGNkI1IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjVCMTky
-					MDQ4NzlDNDExRTJBMDI0QjFCOTczREVGNkI1Ij4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmlu
-					c3RhbmNlSUQ9InhtcC5paWQ6NUIxOTIwNDU3OUM0MTFFMkEwMjRCMUI5NzNERUY2QjUiIHN0UmVm
-					OmRvY3VtZW50SUQ9InhtcC5kaWQ6NUIxOTIwNDY3OUM0MTFFMkEwMjRCMUI5NzNERUY2QjUiLz4g
-					PC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9
-					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
-					X4X1X4X1X4X1REu4gsXjwrlfOv/Z" alt="" />
-	<div class="has-error">Упс…<br />
-		Похоже возникла ошибка в нашем программном коде.</div>
-	<div class="we-know">Мы уже об этом знаем, и в ближайшее время все будет исправлено.</div>
-	Просим прощения за неудобства.<br /><br />
+	<div><img src="data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAAAoAAD/4QMvaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA5LjEtYzAwMSA3OS5hOGQ0NzUzNDksIDIwMjMvMDMvMjMtMTM6MDU6NDUgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCAyNC42IChXaW5kb3dzKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpDMzdBMEE3NjlFQjUxMUVFODQ4N0U3QTNFOTJFQjcyNyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpDMzdBMEE3NzlFQjUxMUVFODQ4N0U3QTNFOTJFQjcyNyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkMzN0EwQTc0OUVCNTExRUU4NDg3RTdBM0U5MkVCNzI3IiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkMzN0EwQTc1OUVCNTExRUU4NDg3RTdBM0U5MkVCNzI3Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+/+4AIUFkb2JlAGTAAAAAAQMAEAMDBgkAAAo/AAANwgAAFDr/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" alt="" /></div>
+	<div>
+		<div class="has-error">Упс…<br />
+			Похоже возникла ошибка в нашем программном коде</div>
+		<div class="we-know">Мы уже об этом знаем, и в ближайшее время все будет исправлено.</div>
+		Просим прощения за неудобства.<br /><br />
 
-	<small>Вы можете <a href="mailto:<?=$developerEmail?>?subject=Ошибка+PHP+<?=htmlspecialcharsbx($request->getServer()->getServerName() . $request->getRequestUri())?>">написать нам</a>, указав подробности,
-		если вы не впервые видите данную ошибку</small><br />
+		<small>Вы можете <a href="mailto:<?=$developerEmail?>?subject=Ошибка+PHP+<?=htmlspecialcharsbx($request->getServer()->getServerName() . $request->getRequestUri())?>">написать нам</a>, указав подробности,
+			если вы не впервые видите данную ошибку</small><br />
 
-	<?
-	if ($isNotBetaTester) {
-		$sendEmailToSupport();
-	}
-	if ($isAdmin()) {?>
-		<div class="error-raw">
-			<?
-			echo $getExceptionStack(true);
-			?>
-		</div>
-	<?}?>
+		<?
+		if ($isNotBetaTester) {
+			$sendEmailToSupport();
+		}
+		if ($isAdmin()) {?>
+			<div class="error-raw">
+				<?
+				echo $getExceptionStack(true);
+				?>
+			</div>
+		<?}?>
 
-	<br /><br />Пожалуйста, обновите страницу через минуту. Скоро все заработает.
+		<br /><br />Пожалуйста, обновите страницу через минуту. Скоро все заработает.
+	</div>
 </div>
 <div class="clearer"></div>
 <!--/noindex-->

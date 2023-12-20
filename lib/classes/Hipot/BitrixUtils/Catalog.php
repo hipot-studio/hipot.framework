@@ -5,6 +5,7 @@ namespace Hipot\BitrixUtils;
 use Bitrix\Catalog\ProductTable;
 use Bitrix\Main\Loader;
 use Bitrix\Iblock;
+use Hipot\BitrixUtils\Iblock as IblockUtils;
 
 Loader::includeModule('catalog');
 

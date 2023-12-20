@@ -10,8 +10,9 @@ namespace Hipot\Components;
 
 defined('B_PROLOG_INCLUDED') || die();
 
-use Hipot\BitrixUtils\IblockUtils,
-	Bitrix\Main;
+use Bitrix\Main,
+	Hipot\BitrixUtils\Iblock as IblockUtils,
+	Hipot\IbAbstractLayer\IblockElemLinkedChains;
 
 /**
  * Уникальный компонент всяческих листов элементов инфоблока
@@ -21,10 +22,10 @@ use Hipot\BitrixUtils\IblockUtils,
  */
 class IblockList extends \CBitrixComponent
 {
-	private const LINKED_CHAINS_CLASS = '\\Hipot\\IbAbstractLayer\\IblockElemLinkedChains';
+	private const LINKED_CHAINS_CLASS = IblockElemLinkedChains::class;
 
 	/**
-	 * @var \Hipot\IbAbstractLayer\IblockElemLinkedChains
+	 * @var IblockElemLinkedChains
 	 */
 	private $obChainBuilder;
 
@@ -39,7 +40,7 @@ class IblockList extends \CBitrixComponent
 		$arParams['SELECT_CHAINS']          = (trim($arParams['SELECT_CHAINS']) == 'Y') ? 'Y' : 'N';
 		$arParams['SELECT_CHAINS_DEPTH']    = (int)$arParams['SELECT_CHAINS_DEPTH'] > 0 ? (int)$arParams['SELECT_CHAINS_DEPTH'] : 3;
 
-		if ($arParams['SELECT_CHAINS'] == 'Y' && !class_exists(static::LINKED_CHAINS_CLASS)) {
+		if ($arParams['SELECT_CHAINS'] === 'Y' && !class_exists(static::LINKED_CHAINS_CLASS)) {
 			$arParams['SELECT_CHAINS'] = 'N';
 		}
 
@@ -83,22 +84,22 @@ class IblockList extends \CBitrixComponent
 			// QUERY 1 MAIN
 			$rsItems = \CIBlockElement::GetList($arOrder, $arFilter, false, $arNavParams, $arSelect);
 
-			if ($arParams['SELECT_CHAINS'] == 'Y') {
-				// создаем объект, должен создаваться до цикла по элементам, т.к. в него складываются
+			if ($arParams['SELECT_CHAINS'] === 'Y') {
+				// Создаем объект, должен создаваться до цикла по элементам, т.к. в него складываются
 				// уже выбранные цепочки в качестве кеша
 				$className = static::LINKED_CHAINS_CLASS;
 				$this->obChainBuilder = new $className();
 			}
 
 			while ($arItem = $rsItems->GetNext()) {
-				if ($arParams['GET_PROPERTY'] == "Y") {
+				if ($arParams['GET_PROPERTY'] === "Y") {
 					// QUERY 2
 					$arItem['PROPERTIES'] = IblockUtils::selectElementProperties(
 						(int)$arItem['ID'],
 						(int)$arItem["IBLOCK_ID"],
 						false,
 						["EMPTY" => "N"],
-						($arParams['SELECT_CHAINS'] == 'Y' ? $this->obChainBuilder : null),
+						($arParams['SELECT_CHAINS'] === 'Y' ? $this->obChainBuilder : null),
 						(int)$arParams['SELECT_CHAINS_DEPTH']
 					);
 				}
@@ -131,7 +132,7 @@ class IblockList extends \CBitrixComponent
 						$navComponentObject,
 						"",
 						$arParams['NAV_TEMPLATE'],
-						($arParams["NAV_SHOW_ALWAYS"] == 'Y'),
+						($arParams["NAV_SHOW_ALWAYS"] === 'Y'),
 						$this
 					);
 
@@ -147,7 +148,7 @@ class IblockList extends \CBitrixComponent
 					"NAV_RESULT"
 				]);
 			} else {
-				if ($arParams["SET_404"] == "Y") {
+				if ($arParams["SET_404"] === "Y") {
 					include Main\Loader::getDocumentRoot() . SITE_DIR . "/404_inc.php";
 				}
 
