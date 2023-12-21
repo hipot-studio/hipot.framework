@@ -171,7 +171,7 @@ if ($isAjaxRequest) {
 	.fatal-error a {text-decoration:underline;}
 	.fatal-error a:hover {color:#b24040;}
 	.fatal-error .error-raw {background:#e8e7e7; padding:8px; font-size:11px; margin:5px 0;}
-	.fatal-error .error-raw * {font-family:Consolas, 'Courier New', Courier, monospace;}
+	.fatal-error .error-raw * {font-family:Consolas, 'Courier New', Courier, monospace !important;}
 	.fatal-error .has-error {font-size:110%; padding:0 0 10px 0; font-weight:bold; color:#b24040;}
 	.fatal-error .we-know {font-weight:bold;}
 	.fatal-error img {float:left; margin:0 6px 6px 0; max-width:120px;}
