@@ -1,4 +1,6 @@
-<?
+<? /** @noinspection GlobalVariableUsageInspection */
+defined('B_PROLOG_INCLUDED') || die();
+
 /**
  * @global $APPLICATION \CMain
  * @global $USER \CUser
@@ -8,8 +10,10 @@
 
 global $APPLICATION;
 
-header("HTTP/1.0 404 Not Found\r\n");
-@define("ERROR_404","Y");
+\CHTTP::setStatus('404 Not Found');
+if (!defined('ERROR_404')) {
+	define('ERROR_404', 'Y');
+}
 ?>
 <?
 if (LANGUAGE_ID == 'en') {
@@ -28,15 +32,14 @@ if (LANGUAGE_ID == 'en') {
 	<?
 	/*\Bitrix\Main\Config\Option::set("main", "map_top_menu_type", 	"en_top");
 	\Bitrix\Main\Config\Option::set("main", "map_left_menu_type", 	"en_left,content");*/
-	
 } else {
 	$APPLICATION->SetTitle("Страница не найдена");
 	?>
 	Уважаемый посетитель! К сожалению, запрашиваемая Вами страница не доступна. Это могло произойти по следующим причинам:
 	<br>
 	<ul>
-		<li>страница была удалена</li>
-		<li>страница была переименована</li>
+		<li>Страница была удалена</li>
+		<li>Страница была переименована</li>
 		<li>Вы допустили ошибку в адресе (https://<?=$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']?>)</li>
 	</ul>
 	<br>
@@ -45,7 +48,6 @@ if (LANGUAGE_ID == 'en') {
 	<?
 	/*\Bitrix\Main\Config\Option::set("main", "map_top_menu_type", 	"top");
 	\Bitrix\Main\Config\Option::set("main", "map_left_menu_type", 	"left,content");*/
-
 }
 ?>
 <br /><br />

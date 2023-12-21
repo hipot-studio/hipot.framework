@@ -135,7 +135,7 @@ $getExceptionStack      = static function (bool $htmlMode = false) use ($excepti
 	return $result;
 };
 
-$isAjaxRequest = (defined('IS_AJAX') && IS_AJAX === true) || $request->isAjaxRequest();
+$isAjaxRequest = (defined('IS_AJAX') && IS_AJAX === true) || $request?->isAjaxRequest();
 $isCliTun = (PHP_SAPI == 'cli');
 $isNotBetaTester = (!defined('IS_BETA_TESTER') || (defined('IS_BETA_TESTER') && IS_BETA_TESTER === false));
 
@@ -186,7 +186,7 @@ if ($isAjaxRequest) {
 		<div class="we-know">Мы уже об этом знаем, и в ближайшее время все будет исправлено.</div>
 		Просим прощения за неудобства.<br /><br />
 
-		<small>Вы можете <a href="mailto:<?=$developerEmail?>?subject=Ошибка+PHP+<?=htmlspecialcharsbx($request->getServer()->getServerName() . $request->getRequestUri())?>">написать нам</a>, указав подробности,
+		<small>Вы можете <a href="mailto:<?=$developerEmail?>?subject=Ошибка+PHP+<?=htmlspecialcharsbx($request?->getServer()->getServerName() . $request?->getRequestUri())?>">написать нам</a>, указав подробности,
 			если вы не впервые видите данную ошибку</small><br />
 
 		<?

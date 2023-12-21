@@ -12,6 +12,7 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Composite\Page as CompositePage;
+use \Bitrix\Main\Composite\Engine as CompositeEngine;
 use Bitrix\Main\Page\Asset;
 use Hipot\BitrixUtils\HiBlockApps;
 
@@ -97,6 +98,42 @@ $eventManager->addEventHandler(	"main", "OnAdminListDisplay",
 	}
 );
 
+// отрисовка 404 страницы с прерыванием текущего буфера и замены его на содержимое 404
+$eventManager->addEventHandler('main', 'OnEpilog', static function () use ($request, $eventManager) {
+	if ($request->isAdminSection() || $request->isAjaxRequest()) {
+		return;
+	}
+	global $APPLICATION;
+	static $isRun = false;
+
+	// process 404 in content part
+	if ((!$isRun && defined('ERROR_404') && ERROR_404 === 'Y' && $APPLICATION->GetCurPage() != '/404.php')) {
+		$isRun = true;
+		// region re-get one time 404 page
+		$eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$content) use ($request) {
+			$contCacheFile = Loader::getDocumentRoot() . sprintf('/upload/404_%s_cache.html', Application::getInstance()?->getContext()?->getSite());
+			if (is_file($contCacheFile) && ((time() - filemtime($contCacheFile)) > 3600)) {
+				unlink($contCacheFile);
+			}
+			$content = is_file($contCacheFile) ? file_get_contents($contCacheFile) : '';
+			if (trim($content) === '') {
+				$el      = new HttpClient();
+				$content = $el->get(($request->isHttps() ? 'https://' : 'http://') . $request->getServer()->getHttpHost() . '/404.php');
+
+				file_put_contents($contCacheFile, $content, LOCK_EX);
+			}
+			\CHTTP::setStatus('404 Not Found');
+
+			CompositePage::getInstance()?->markNonCacheable();
+			CompositeEngine::setEnable(false);
+		});
+		// endregion
+	}
+});
+
+// lazy loaded css, TOFUTURE: js and js-appConfig array
+$eventManager->addEventHandler('main', 'OnEpilog', [\Hipot\BitrixUtils\AssetsContainer::class, 'onEpilogSendAssets']);
+
 // очищаем настройки формы по-умолчанию для всех админов
 // @see https://www.hipot-studio.com/Codex/form_iblock_element_settings/
 $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$content) use ($request) {
@@ -120,33 +157,6 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 	Application::getInstance()->getManagedCache()->cleanDir("user_option");
 });
 
-// отрисовка 404 страницы с прерыванием текущего буфера и замены его на содержимое 404
-$eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$content) use ($request) {
-	global $APPLICATION;
-
-	// process 404 in content part
-	if ((defined('ERROR_404') && constant('ERROR_404') == 'Y' && $APPLICATION->GetCurPage() != '/404.php')
-		|| ($GLOBALS['httpCode'] == 404 && $APPLICATION->GetCurPage() != '/404.php')
-	) {
-		$contCacheFile  = Loader::getDocumentRoot() . '/upload/404_cache.html';
-
-		if (is_file($contCacheFile) && ((time() - filemtime($contCacheFile)) > 3600)) {
-			unlink($contCacheFile);
-		}
-
-		$content = file_get_contents($contCacheFile);
-		if (trim($content) == '') {
-			$el = new HttpClient();
-			$content = $el->get(($request->isHttps() ? 'https://' : 'http://') . $request->getServer()->getServerName() . '/404.php');
-			file_put_contents($contCacheFile, $content);
-		}
-
-		CompositePage::getInstance()->markNonCacheable();
-
-		header("HTTP/1.0 404 Not Found\r\n");
-	}
-});
-
 // drop unused cache to per-product discount on cli run
 $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function (&$arResult) {
 	if (PHP_SAPI == 'cli') {
@@ -164,5 +174,3 @@ $eventManager->addEventHandler('', 'CustomSettingsOnAfterUpdate',   [HiBlockApps
 $eventManager->addEventHandler('', 'CustomSettingsOnAfterAdd',      [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
 $eventManager->addEventHandler('', 'CustomSettingsOnAfterDelete',   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
 
-// lazy loaded css, TOFUTURE: js and js-appConfig array
-$eventManager->addEventHandler('main', 'OnEpilog', [\Hipot\BitrixUtils\AssetsContainer::class, 'onEpilogSendAssets']);

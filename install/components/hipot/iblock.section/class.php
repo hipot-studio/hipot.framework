@@ -5,9 +5,55 @@
  * Date: 02.01.2019 21:47
  * @version pre 1.0
  */
+/** @noinspection AutoloadingIssuesInspection */
+
 namespace Hipot\Components;
 
-class IblockSection extends \CBitrixComponent
+use Hipot\Utils\UUtils;
+
+/**
+ * Компонент выбора списка всех секций.
+ * Может использоваться для постоения рубрикатора (вместо меню) для секций
+ *
+ * <code>
+ * $arParams:
+ * / IBLOCK_ID - Инфоблок из которого выбираем
+ * / SELECTED_SECTION_ID - ID выбранной секции (если это страница секции)
+ * / SELECTED_SECTION_CODE - CODE выбранной секции (если это страница секции)
+ * / SECTION_CODE_PATH = Y если используется SECTION_CODE_PATH в настройках ИБ
+ * / CACHE_TIME - понятно
+ * / ORDER - сортировка выбираемых секций
+ * / FILTER - дополнительный фильтр для выбираемых секций (не документированный параметр SECTION_ID обрабатывается, выбор подсекций секции)
+ * / SELECT_COUNT Y|N выбрать ли кол-во элементов в секции, выбираются два кол-ва ELEMENT_CNT - стандартное поле секций
+ * 		и ELEMENT_CNT_FROM_ELEMS - это кол-во элементов с заданнымы параметрами при помощи SELECT_COUNT_ELEM_FILTER
+ * / SELECT_COUNT_ELEM_FILTER - дополнительный фильтр для определения кол-ва элементов в секции через
+ * 		CIBlockElement::GetList (см. параметр SELECT_COUNT)
+ * / INCLUDE_SEO Y|N Вывести ли СЕО по секции (если это страница секции с SELECTED_SECTION_ID или SELECTED_SECTION_CODE)
+ * / ADDON_PRE_CHAINS - массив массивов дополнительных пунктов, которые нужно включить в хлебные крошки до выбранной
+ * 		секции (требует INCLUDE_SEO => Y), структура одного массива array('TEXT' => 'Страница', 'URL' => '/page.php')
+ * / SET_404 Y|N подключать ли вывод 404й ошибки
+ * / INCLUDE_TEMPLATE_WITH_EMPTY_ITEMS Y|N подключить ли шаблон компонента, в случае если не выбрано ни одной секции
+ *
+ * / PAGESIZE / сколько элементов на странице, при постраничной навигации
+ * / NAV_TEMPLATE / шаблон постранички (по-умолчанию .default)
+ * / NAV_SHOW_ALWAYS / показывать ли постаничку всегда (по-умолчанию N)
+ * / NAV_SHOW_ALL / (разрешить ли вывод ссылки по просмотру всех элементов на одной странице)
+ * / NAV_PAGEWINDOW / ширина диапазона постранички, т.е. напр. тут ширина = 3 "1 .. 3 4 5 .. 50" (т.е. 3,4,5 - 3 шт)
+ *
+ *
+ * $arResult
+ * / SECTIONS - массив всех выбранных секций со всеми полями секций, а также двумя дополнительными:
+ * 		SELECTED = Y - если секция выбрана из SELECTED_SECTION_ID или SELECTED_SECTION_CODE
+ * 		ELEMENT_CNT_FROM_ELEMS - кол-во элементов с параметрами SELECT_COUNT_ELEM_FILTER
+ * / CUR_SECTION - текущая секция со всеми полями, как и в массиве SECTIONS
+ * </code>
+ *
+ * @see http://dev.1c-bitrix.ru/api_help/iblock/fields.php
+ * @see http://dev.1c-bitrix.ru/api_help/iblock/classes/ciblocksection/getlist.php
+ * @copyright 2023, hipot studio
+ * @version 4.x, см. CHANGELOG.TXT
+ */
+final class IblockSection extends \CBitrixComponent
 {
 	public function onPrepareComponentParams($arParams)
 	{
@@ -34,7 +80,11 @@ class IblockSection extends \CBitrixComponent
 		} else {
 			$arParams['SELECTED_SECTION_CODE'] = trim($arParams['SELECTED_SECTION_CODE']);
 		}
-		$arParams['SELECT_COUNT']			   = $arParams['SELECT_COUNT'] == 'Y' ? true : false;
+		$arParams['SELECT_COUNT']			   = $arParams['SELECT_COUNT'] === 'Y';
+
+		$arParams['SELECT_COUNT_ELEM_FILTER']  = (array)$arParams['SELECT_COUNT_ELEM_FILTER'];
+		$arParams['SELECT']                    = (array)$arParams['SELECT'];
+		$arParams['FILTER']                    = (array)$arParams['FILTER'];
 
 		return $arParams;
 	}
@@ -131,10 +181,10 @@ class IblockSection extends \CBitrixComponent
 
 			if (empty($arResult['SECTIONS'])) {
 				$this->abortResultCache();
-				if ($arParams['NO_404'] != 'Y') {
-					include $_SERVER['DOCUMENT_ROOT'] . '/404_inc.php';
+				if ($arParams["SET_404"] === "Y") {
+					UUtils::setStatusNotFound(true);
 				}
-				if ($arParams["INCLUDE_TEMPLATE_WITH_EMPTY_ITEMS"] == "Y") {
+				if ($arParams["INCLUDE_TEMPLATE_WITH_EMPTY_ITEMS"] === "Y") {
 					$this->includeComponentTemplate();
 				}
 			} else {
@@ -147,7 +197,7 @@ class IblockSection extends \CBitrixComponent
 						$navComponentObject,
 						"",
 						$arParams['NAV_TEMPLATE'],
-						($arParams["NAV_SHOW_ALWAYS"] == 'Y'),
+						($arParams["NAV_SHOW_ALWAYS"] === 'Y'),
 						$this
 					);
 				}

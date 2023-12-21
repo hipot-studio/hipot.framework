@@ -8,6 +8,7 @@ namespace Hipot\Utils;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Web\HttpClient;
 
 trait ContextUtils
@@ -251,5 +252,31 @@ trait ContextUtils
 				return $this->cuser;
 			})->bindTo(CurrentUser::get(), CurrentUser::get()) )() !== null;
 		return $bInternalUserExists ? CurrentUser::get() : null;
+	}
+
+	/**
+	 * Use this method to set 404 status + ERROR_404 constant in work-area section of page.
+	 * Use with combination of OnEpilog+OnEndBufferContent-handler
+	 * @param bool $showPage = false Immediately echo content of 404 page, or try later work with OnEpilog+OnEndBufferContent-handler
+	 * @return void
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function setStatusNotFound(bool $showPage = false): void
+	{
+		if (Loader::includeModule('iblock')) {
+			\Bitrix\Iblock\Component\Tools::process404("", true, true, $showPage);
+		} else if (is_file(Loader::getDocumentRoot() . SITE_DIR . "/404_inc.php")) {
+			ob_start();
+			include Loader::getDocumentRoot() . SITE_DIR . "/404_inc.php";
+			$content = ob_get_clean();
+			if ($showPage) {
+				echo $content;
+			}
+		} else {
+			\CHTTP::setStatus('404 Not Found');
+			if (!defined('ERROR_404')) {
+				define('ERROR_404', 'Y');
+			}
+		}
 	}
 }
