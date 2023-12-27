@@ -55,4 +55,10 @@ abstract class HiBaseModel extends DataManager
 	 * @return array
 	 */
 	abstract public static function toReadModel(array $row): array;
+
+	/**
+	 * Return default filter to select read model's
+	 * @return array
+	 */
+	abstract public static function getDefaultFilter(): array;
 }

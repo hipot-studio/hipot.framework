@@ -11,9 +11,10 @@ use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Entity\Query;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\ORM;
 use Hipot\BitrixUtils\HiBlock;
 use Hipot\Model\DataManagerReadModel;
-use Bitrix\Main\Web\Json;
 
 /**
  * universal ajax controller component
@@ -47,7 +48,7 @@ class HipotAjaxController extends Controller
 	}
 
 	/**
-	 * @return list<\Bitrix\Main\Engine\AutoWire\Parameter>
+	 * @return Parameter[]
 	 */
 	public function getAutoWiredParameters(): array
 	{
@@ -56,7 +57,6 @@ class HipotAjaxController extends Controller
 				DataManagerReadModel::class,
 				'entity',
 				function ($className, $entityType, $entityId) {
-					// here you may autoload your custom class
 					return DataManagerReadModel::buildById(
 						HiBlock::getHightloadBlockTable(0, $entityType, true),
 						$entityId
@@ -71,6 +71,8 @@ class HipotAjaxController extends Controller
 	public function getEntityStatAction(string $entityType, array $entityOrder, array $filter = []): string
 	{
 		$dm = HiBlock::getHightloadBlockTable(0, $entityType, true);
+
+		$filter = array_merge($filter, DataManagerReadModel::getDefaultFilter($dm));
 
 		$orderBy = key($entityOrder);
 		$orderOrder = current($entityOrder);
@@ -95,15 +97,18 @@ class HipotAjaxController extends Controller
 			'filter' => $filter,
 			'cache' => ['ttl' => $cacheTtl, "cache_joins" => true]
 		])->fetch();
-		$whereSql = Query::buildFilterSql($dm::getEntity(), $filter);
-		$resultTotal = Application::getConnection()->query(
-			'SELECT COUNT(`ID`) AS COUNT_ROWS FROM ' . $dm::getEntity()->getDBTableName() . ' ' . $whereSql )
-			->fetch();
+		$resultTotal = $dm::getList([
+			'select' => ['CNT'],
+			'runtime' => [
+				new ORM\Fields\ExpressionField('CNT', 'COUNT(*)')
+			],
+			'filter' => $filter
+		])->fetch();
 
 		return Json::encode([
 			'START_ID'      => $resultStart['ID'],
 			'END_ID'        => $resultEnd['ID'],
-			'TOTAL_ROWS'    => $resultTotal['COUNT_ROWS']
+			'TOTAL_ROWS'    => $resultTotal['CNT']
 		]);
 	}
 

@@ -6,13 +6,7 @@
  */
 namespace Hipot\Model;
 
-/**
- * Class DataManagerReadModel
- *
- * This class represents a data manager read model.
- * It provides methods for accessing and manipulating the data stored in the read model.
- */
-final class DataManagerReadModel
+class DataManagerReadModel
 {
 	private array $entityObject;
 
@@ -29,6 +23,15 @@ final class DataManagerReadModel
 		return $this->entityObject;
 	}
 
+	/**
+	 * @param HiBaseModel $className
+	 * @param int         $entityId
+	 *
+	 * @return self
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function buildById($className, int $entityId): self
 	{
 		/**
@@ -40,5 +43,18 @@ final class DataManagerReadModel
 			$obj = $className::toReadModel($obj);
 		}
 		return new self($obj);
+	}
+
+	/**
+	 * @param HiBaseModel $className
+	 * @return array
+	 */
+	public static function getDefaultFilter($className): array
+	{
+		$filter = [];
+		if (method_exists($className, 'getDefaultFilter')) {
+			return $className::getDefaultFilter();
+		}
+		return $filter;
 	}
 }

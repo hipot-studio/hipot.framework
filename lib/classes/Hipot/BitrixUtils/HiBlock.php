@@ -21,19 +21,20 @@ class HiBlock
 	/**
 	 * Получить HighloadBlockTable-строку хл-блока или обряд создания объекта для работы с HL-блоком
 	 *
-	 * @param int $hlblockId в приоритете
-	 * @param string $hiBlockName иначе по строке
-	 * @param boolean $returnEntityClass = false Обряд создания до $hlblock = [] или до \Bitrix\Main\Entity\DataManager (true)
+	 * @param int     $hlblockId в приоритете
+	 * @param string  $hiBlockName иначе по строке
+	 * @param boolean $returnEntityClass = false Обряд создания до $hlblock = [] или до \Bitrix\Main\Entity\DataManager
 	 *
-	 * @return array | false | \Bitrix\Main\Entity\DataManager
+	 * @return null | array | \Bitrix\Main\Entity\DataManager
 	 *
 	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getHightloadBlockTable(int $hlblockId, string $hiBlockName, bool $returnEntityClass = false)
 	{
-		$hlblock = false;
+		$hlblock = null;
 
 		if ($hlblockId > 0) {
 			$hlblock   = HighloadBlockTable::getByPrimary($hlblockId, ['cache' => ["ttl" => self::CACHE_TTL]])->fetch();
