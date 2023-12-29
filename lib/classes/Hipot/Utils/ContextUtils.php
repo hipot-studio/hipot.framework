@@ -208,7 +208,7 @@ trait ContextUtils
 			return null;
 		}
 
-		return 'data: '.mime_content_type($img_file).';base64,'.base64_encode(file_get_contents($img_file));
+		return 'data:'.mime_content_type($img_file).';base64,'.base64_encode(file_get_contents($img_file));
 	}
 
 	/**
