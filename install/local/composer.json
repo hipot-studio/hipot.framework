@@ -4,9 +4,14 @@
     "ext-gd": "*",
     "ext-fileinfo": "*",
     "ext-mbstring": "*",
+    "ext-imagick": "*",
+    "ext-dom": "*",
     "wikimedia/composer-merge-plugin": "dev-master",
-    "intervention/image": "^2.5",
-    "larapack/dd": "^1.1"
+    "intervention/image": "^2.7"
+  },
+  "require-dev": {
+    "larapack/dd": "^1.1",
+    "phpunit/phpunit": "10"
   },
   "config": {
     "allow-plugins": true,
