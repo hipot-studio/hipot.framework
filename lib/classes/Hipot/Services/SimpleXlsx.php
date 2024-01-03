@@ -14,7 +14,7 @@ use PhpOffice\PhpSpreadsheet\Cell\CellAddress;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
-class SimpleXlsx
+final class SimpleXlsx
 {
 	private Spreadsheet $spreadsheet;
 	private int $rowsAdded = 0;

@@ -1,9 +1,7 @@
 <?php
 namespace Hipot\BitrixUtils;
 
-use Bitrix\Main\Application;
-use Bitrix\Main\Data\Cache;
-use Bitrix\Main\Engine\CurrentUser;
+use Hipot\Services\BitrixEngine;
 
 /**
  * Класс для работы с кешированием (как обертка над логикой в виде анонимной функции, возвращающей данные)
@@ -34,13 +32,12 @@ final class PhpCacher
 	 */
 	public static string $LAST_ERROR = '';
 
-	public function __construct()
+	public function __construct(BitrixEngine $engine)
 	{
-		$app = Application::getInstance();
-		$this->cache = Cache::createInstance();
-		$this->taggedCache = $app->getTaggedCache();
-		$this->user = CurrentUser::get();
-		$this->request = $app->getContext()->getRequest();
+		$this->cache = $engine->cache;
+		$this->taggedCache = $engine->taggedCache;
+		$this->user = $engine->user;
+		$this->request = $engine->request;
 	}
 
 	/**
@@ -62,7 +59,7 @@ final class PhpCacher
 	 */
 	public static function cache(string $tagName, int $cacheTime, callable $callbackFunction, array $params = [])
 	{
-		$cacher = new self();
+		$cacher = new self( BitrixEngine::getInstance() );
 		self::$LAST_ERROR = '';
 
 		if (($tagName = trim($tagName)) == '') {
@@ -119,6 +116,7 @@ final class PhpCacher
 	 */
 	public static function getCacheSubDirById($id): string
 	{
+		$id = (string)$id;
 		return '/' . substr(md5($id), 2, 2) . '/' . $id;
 	}
 
@@ -192,12 +190,6 @@ final class PhpCacher
 	}
 
 	/**
-	 * @param       $tagName
-	 * @param       $cacheTime
-	 * @param       $callbackFunction
-	 * @param array $params
-	 *
-	 * @return array|bool
 	 * @deprecated use PhpCacher::cache(...)
 	 */
 	public static function returnCacheDataAndSave($tagName, $cacheTime, $callbackFunction, array $params = [])

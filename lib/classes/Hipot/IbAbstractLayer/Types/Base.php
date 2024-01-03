@@ -1,12 +1,10 @@
 <?
 namespace Hipot\IbAbstractLayer\Types;
 
-use Hipot\Types\ArrayLikeObject;
+use Hipot\Types\ObjectArItem;
 
-class Base
+class Base extends ObjectArItem
 {
-	use ArrayLikeObject;
 }
-
 
 ?>

@@ -11,7 +11,7 @@ namespace Hipot\Types;
 /**
  * Результат добавления или обновления сущностей (напр. инфоблока)
  */
-class UpdateResult extends ObjectArItem
+final class UpdateResult extends ObjectArItem
 {
 	public const STATUS_OK         = 'OK';
 	public const STATUS_ERROR      = 'ERROR';
@@ -27,4 +27,17 @@ class UpdateResult extends ObjectArItem
 	 * @var mixed|string
 	 */
 	public $STATUS;
+
+	/**
+	 * Создание объекта из массива
+	 * @param array|null $result
+	 */
+	public function __construct($result = null)
+	{
+		if (is_array($result)) {
+			foreach ($result as $k => $v) {
+				$this->offsetSet($k, $v);
+			}
+		}
+	}
 }

@@ -9,7 +9,7 @@ namespace Hipot\Services;
 use Bitrix\Main\Web\Json;
 use Orhanerday\OpenAi\OpenAi as OrhOpenAi;
 
-class OpenAI
+final class OpenAI
 {
 	private OrhOpenAi $openAi;
 

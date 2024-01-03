@@ -68,7 +68,7 @@ class DbResultGenerator implements IteratorAggregate
 	public function makeItem(array $item)
 	{
 		if ($this->returnObjects) {
-			return new ObjectArItem($item);
+			return ObjectArItem::fromArr($item);
 		}
 		return $item;
 	}
