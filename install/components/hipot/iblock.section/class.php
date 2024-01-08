@@ -133,7 +133,7 @@ final class IblockSection extends \CBitrixComponent
 			 * Фильтр для определения, сколько элементов в секции с такими параметрами
 			 * @var array
 			 */
-			$arElemCountFilter = ["IBLOCK_ID" => $arParams['IBLOCK_ID'],  'ACTIVE' => 'Y', 'INCLUDE_SUBSECTIONS' => 'Y'];
+			$arElemCountFilter = ["IBLOCK_ID" => $arParams['IBLOCK_ID'],  'ACTIVE' => 'Y', 'INCLUDE_SUBSECTIONS' => 'N'];
 			if (count($arParams['SELECT_COUNT_ELEM_FILTER']) > 0) {
 				$arElemCountFilter = array_merge($arElemCountFilter, $arParams['SELECT_COUNT_ELEM_FILTER']);
 			}
