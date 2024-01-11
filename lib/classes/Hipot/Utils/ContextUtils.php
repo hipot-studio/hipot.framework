@@ -279,4 +279,20 @@ trait ContextUtils
 			}
 		}
 	}
+
+	/**
+	 * Проверяет, находится ли текущая директория в списке директорий для текущего сайта.
+	 * @param array $dirs Массив директорий для проверки
+	 * @return bool Возвращает true, если текущая директория находится в списке директорий, иначе возвращает false.
+	 * @see \CSite::InDir()
+	 */
+	public static function siteIdDirs(array $dirs): bool
+	{
+		foreach ($dirs as $dir) {
+			if (\CSite::InDir($dir)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }
