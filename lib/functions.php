@@ -70,9 +70,8 @@ if (! function_exists('my_print_r')) {
 if (! function_exists('debug_string_backtrace')) {
 	/**
 	 * Simple stack with call params
-	 * @return string
 	 */
-	function debug_string_backtrace(): string
+	function debug_string_backtrace(bool $bArgs = true): string
 	{
 		$result = '';
 		$arBacktrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS & DEBUG_BACKTRACE_PROVIDE_OBJECT);
@@ -83,7 +82,10 @@ if (! function_exists('debug_string_backtrace')) {
 			}
 			$result .= sprintf('#%s %s(%s) ', $cnt - $i, $stack['file'], $stack['line']);
 			$result .= sprintf('%s %s %s ', $stack['class'], $stack['type'], $stack['function']);
-			$result .= sprintf('%s', str_replace('array ', '', var_export($stack['args'], true))) . PHP_EOL;
+			if ($bArgs) {
+				$result .= sprintf('%s', str_replace('array ', '', var_export($stack['args'], true)));
+			}
+			$result .= PHP_EOL;
 		}
 		return $result;
 	}
@@ -231,9 +233,11 @@ if (! function_exists('str_contains')) {
 	 *
 	 * @param $haystack
 	 * @param $needle
+	 *
 	 * @return bool
 	 *
 	 * @todo use symfony/polyfill
+	 * @noinspection StrContainsCanBeUsedInspection
 	 */
 	function str_contains($haystack, $needle): bool
 	{

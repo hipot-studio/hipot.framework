@@ -14,14 +14,15 @@ defined('B_PROLOG_INCLUDED') || die();
 use Bitrix\Main\Diag\ExceptionHandlerFormatter,
 	Bitrix\Main\Application,
 	Bitrix\Main\Engine\CurrentUser,
-	Bitrix\Main\Mail\Event;
+	Bitrix\Main\Mail\Event,
+	Bitrix\Main\SiteTable;
 
 $developerEmail = 'info@hipot-studio.com';
 $request        = Application::getInstance()?->getContext()?->getRequest();
 
 // to copy and one-time-run in admin PHP Command line instrument...
 $installEmailType       = static function ($typeId = 'DEBUG_MESSAGE'): bool {
-	$arSites = \Bitrix\Main\SiteTable::getList([
+	$arSites = SiteTable::getList([
 		'filter' => [],
 		'select' => ["LID", "NAME", "LANGUAGE_ID"],
 	])->fetchAll();
@@ -92,7 +93,8 @@ $sendEmailToSupport     = static function () use ($exception, $developerEmail, $
 	}
 
 	$installEmailType();
-	Event::sendImmediate([
+	// use send() to may clear list of next erros by query "DELETE FROM b_event WHERE EVENT_NAME = 'EVENT_NAME'"
+	Event::send([
 		"EVENT_NAME" => "DEBUG_MESSAGE",
 		"LID" => defined('SITE_ID') ? SITE_ID : Application::getInstance()?->getContext()?->getLanguage(),
 		"DUPLICATE" => "N",
@@ -124,14 +126,6 @@ $isAdmin                = static function (): bool {
 };
 $getExceptionStack      = static function (bool $htmlMode = false) use ($exception): string {
 	$result = ExceptionHandlerFormatter::format($exception, $htmlMode);
-	if (function_exists('debug_string_backtrace')) {
-		$bt = debug_string_backtrace();
-		if ($htmlMode) {
-			$result .= '<pre>' . $bt . '</pre>';
-		} else {
-			$result .= $bt;
-		}
-	}
 	return $result;
 };
 
