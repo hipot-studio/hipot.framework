@@ -1,5 +1,5 @@
 # Мини-фреймворк hipot.framework для создания проектов на bitrix
-(с) hipot, 2017 - 2023\
+(с) hipot, 2017 - 2024\
 mailto: info AT hipot-studio DOT com
 
 ![hipot logo](docs/img/hipot-studio-logo-horizontal.png)
@@ -25,7 +25,8 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
   - с магазином <code>Hipot\BitrixUtils\Sale (aka SaleUtils)</code> и товаром каталога <code>Hipot\BitrixUtils\Catalog</code>
   - различные утилиты-хелперы <code>Hipot\Utils\UUtils (aka UnsortedUtils)</code>
   - для отложенного подключения ресурсов <code>Hipot\Utils\AssetsContainer</code>
-  - различные сервисы в пространстве имен <code>Hipot\Services</code>
+  - различные сервисы в пространстве имен <code>Hipot\Services</code>: не используем global's, используем DTO <code>Hipot\Services\BitrixEngine</code>,
+  а для проброса данных между элементами приложения используем <code>Hipot\Services\Registry</code>
   - различные базовые типы в пространстве имен <code>Hipot\Types</code>  
 
 - автозагрузчик к классам <code>lib/simple_loader.php</code> для копирования в <code>/local/php_interface/lib/simple_loader.php</code><br>
