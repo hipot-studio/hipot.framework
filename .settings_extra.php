@@ -5,7 +5,12 @@
  * Date: 18.11.2019 0:39
  * @version pre 1.0
  */
+
 use Bitrix\Main\Loader;
+use Bitrix\Main\Data\MemcacheConnection;
+use Bitrix\Main\Data\CacheEngineMemcache;
+use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\File\Image\Imagick as BitrixImagick;
 
 $defaultSettings = require __DIR__ . '/.settings.php';
 
@@ -26,8 +31,7 @@ return [
 				],
 			],
 		]
-	],
-	/*'session' => [
+		/*
 		'value' => [
 			'mode' => 'default',
 			'handlers' => [
@@ -35,9 +39,7 @@ return [
 					'type' => 'file',
 				]
 			],
-		]
-	],*/
-	/*'session' => [
+		],
 		'value' => [
 			'mode' => 'default',
 			'handlers' => [
@@ -49,7 +51,8 @@ return [
 				],
 			],
 		],
-	],*/
+		*/
+	],
 	'crypto' => [
 		'value' => [
 			'crypto_key' => '',     //советуем устанавливать 32-х символьную строку из a-z0-9
@@ -59,7 +62,7 @@ return [
 	'cache' => [
 		'value' => [
 			'type' => [
-				'class_name'    => \Bitrix\Main\Data\CacheEngineMemcache::class,
+				'class_name'    => CacheEngineMemcache::class,
 				'extension'     => 'memcache'
 			],
 			'memcache' => [
@@ -90,14 +93,17 @@ return [
 	'composer' => [
 		'value' => ['config_path' => 'local/composer.json']	// may relative path set
 	],
+	/* @see https://dev.1c-bitrix.ru/api_d7/bitrix/main/web/httpclient/legacy.php */
 	'http_client_options' => [
 		'value' => [
 			'redirect'                  => true,
-			'redirectMax'               => 5,
-			'version'                   => '1.1',
-			'socketTimeout'             => 30,
-			'streamTimeout'             => 50,
-			'disableSslVerification'    => true
+			'redirectMax'               => 3,
+			'version'                   => HttpClient::HTTP_1_1,
+			'socketTimeout'             => 20,
+			'streamTimeout'             => 40,
+			'disableSslVerification'    => true,
+			'useCurl'                   => true,
+			'curlLogFile'               => Loader::getDocumentRoot() . '/upload/curl.log' // opt
 		],
 		'readonly' => false,
 	],
@@ -105,7 +111,7 @@ return [
 		'value' => [
 			'default' => $defaultSettings['connections']['value']['default'],
 			'memcache' => [
-				'className' => \Bitrix\Main\Data\MemcacheConnection::class,
+				'className' => MemcacheConnection::class,
 				'port' => 0,
 				'host' => 'unix:///home/bitrix/memcached.sock'
 			],
@@ -116,15 +122,15 @@ return [
 		'value'	=> [
 			'enabled'	=> true,
 			'debug'		=> true,	// opt
-			'log_file'	=> Loader::getDocumentRoot() . '/mailer.log' // opt
+			'log_file'	=> Loader::getDocumentRoot() . '/upload/mailer.log' // opt
 		]
 	],
 
 	'services' => [
 		'value' => [
-			'main.imageEngine' => [
-				'className' => \Bitrix\Main\File\Image\Imagick::class
-			],
+			'main.imageEngine' => array(
+				'className' => BitrixImagick::class
+			),
 			'Orhanerday.OpenAI' => [
 				'constructor' => static function () {
 					// see page https://platform.openai.com/account/api-keys
