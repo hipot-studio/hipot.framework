@@ -9,6 +9,7 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Request;
 use Bitrix\Main\Session\SessionInterface;
+use Bitrix\Main\DI\ServiceLocator;
 use Hipot\Types\Singleton;
 
 final class BitrixEngine
@@ -22,7 +23,8 @@ final class BitrixEngine
 		public ?Cache            $cache = null,
 		public ?TaggedCache      $taggedCache = null,
 		public ?Asset            $asset = null,
-		public ?SessionInterface $session = null
+		public ?SessionInterface $session = null,
+		public ?ServiceLocator   $serviceLocator = null
 	)
 	{
 	}
@@ -36,7 +38,8 @@ final class BitrixEngine
 			Cache::createInstance(),
 			Application::getInstance()->getTaggedCache(),
 			Asset::getInstance(),
-			Application::getInstance()->getSession()
+			Application::getInstance()->getSession(),
+			ServiceLocator::getInstance()
 		);
 	}
 
@@ -59,5 +62,16 @@ final class BitrixEngine
 				return $this->cuser;
 			})->bindTo(CurrentUser::get(), CurrentUser::get()) )() !== null;
 		return $bInternalUserExists ? CurrentUser::get() : null;
+	}
+
+	/**
+	 * Retrieves a service by its name from the service locator.
+	 *
+	 * @param string $serviceName The name of the service to retrieve
+	 * @return mixed|null The retrieved service if found, null otherwise.
+	 */
+	public function getService(string $serviceName)
+	{
+		return $this->serviceLocator->has($serviceName) ? $this->serviceLocator->get($serviceName) : null;
 	}
 }

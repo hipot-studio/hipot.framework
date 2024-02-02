@@ -1,5 +1,5 @@
 # Мини-фреймворк hipot.framework для создания проектов на bitrix
-(с) hipot, 2017 - 2024\
+(с) hipot, 2017 - nowadays /2024/\
 mailto: info AT hipot-studio DOT com
 
 ![hipot logo](docs/img/hipot-studio-logo-horizontal.png)
@@ -14,7 +14,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
   - класс для работы с hightload-блоками <code>Hipot\BitrixUtils\HiBlock</code> и приложение реестра настроек на его основе <code>Hipot\BitrixUtils\HiBlockApps</code>
   - readModel из наследников битрикс DataManager'a: абстрактная заготовка <code>Hipot\Model\HiBaseModel</code> для наследования от нее конкретной hightload-сущности и декоратор <code>Hipot\Model\DataManagerReadModel</code> для создания read-моделей наследников HiBaseModel
   - api для трансформации изображений и наложения водных знаков <code>Hipot\Utils\Img</code>
-  - класс для работы с кешированием <code>Hipot\BitrixUtils\PhpCacher</code>
+  - класс для работы с кешированием [<code>Hipot\BitrixUtils\PhpCacher</code>](docs/cacher.md)
     ```php
     /** @global $USER \CUser */
     use Hipot\BitrixUtils\PhpCacher;
@@ -44,7 +44,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
   - <code>hipot:iblock.menu_ext</code> для создания динамичных _ext-меню по элементам или по секциям инфоблоков
   - <code>hipot:medialibrary.items.list</code> для вывода списка элементов медиабиблиотеки (напр. определенного альбома) в публичную часть
 - пример файла <code>/local/php_interface/init.php</code> с подключением деталей фреймворка к битриксу
-можно найти в файле include.php
+можно найти в файле [include.php](include.php)
 
   
 ### Установка:

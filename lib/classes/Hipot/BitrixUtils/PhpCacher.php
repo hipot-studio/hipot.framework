@@ -2,10 +2,12 @@
 namespace Hipot\BitrixUtils;
 
 use Hipot\Services\BitrixEngine;
+use Bitrix\Main\Data\Cache;
+use Bitrix\Main\Data\CacheEngine;
 
 /**
  * Класс для работы с кешированием (как обертка над логикой в виде анонимной функции, возвращающей данные)
- * @version 3.0
+ * @version 4.0
  */
 final class PhpCacher
 {
@@ -32,34 +34,50 @@ final class PhpCacher
 	 */
 	public static string $LAST_ERROR = '';
 
-	public function __construct(BitrixEngine $engine)
+	public function __construct(BitrixEngine $engine, ?CacheEngine $cacheEngine = null)
 	{
-		$this->cache = $engine->cache;
+		if ($cacheEngine === null) {
+			$this->cache = $engine->cache;
+		} else {
+			$this->cache = new Cache($cacheEngine);
+		}
 		$this->taggedCache = $engine->taggedCache;
-		$this->user = $engine->user;
-		$this->request = $engine->request;
+		$this->user        = $engine->user;
+		$this->request     = $engine->request;
+	}
+
+	public static function getInstance(string $cacheServiceName = ''): self
+	{
+		return new self(BitrixEngine::getInstance(), BitrixEngine::getInstance()->getService($cacheServiceName));
 	}
 
 	/**
-	 * Записываем и возвращает данные в кеш по пути /bitrix/cache/php/$tagName/ с возможностью указать
-	 * в функции $callbackFunction теги для кеша.
+	 * Записываем и возвращает данные в кеш по пути /bitrix/cache/php/$tagName/ с возможностью указать в функции $callbackFunction теги для кеша.
 	 *
 	 * В случае ошибки в статичной переменной $LAST_ERROR - будет строка с ошибкой
 	 *
 	 * @param string                   $tagName - тег (массив тегов)
 	 * @param int                      $cacheTime - время кеша
 	 * @param callable                 $callbackFunction в анонимной функции можно регистрировать и теги для управляемого кеша:
-	 * <pre>global $CACHE_MANAGER;
-	 * $CACHE_MANAGER->RegisterTag("iblock_id_43");
-	 * $CACHE_MANAGER->RegisterTag("iblock_id_new");</pre>
-	 * @param array                    $params - массив параметров функции (deprecated, для старых версий php)
-	 * данные параметры влияют на идентификатор кеша $CACHE_ID
+	 * <code>
+	 *     BitrixEngine::getInstance()->taggedCache->registerTag("iblock_id_43");
+	 *     BitrixEngine::getInstance()->taggedCache->registerTag("iblock_id_new");
+	 * </code>
+	 * @param string $cacheServiceName = '' Использовать DI для службы кэширования (настроить в .settings_extra.php службу 'cache.apc')
+	 * @param array $params массив параметров функции (передаются в $callbackFunction({'cacher':\WeakReference}) а также влияют на идентификатор кеша $cacheId)
 	 *
 	 * @return boolean|array|null|mixed
 	 */
-	public static function cache(string $tagName, int $cacheTime, callable $callbackFunction, array $params = [])
+	public static function cache(string $tagName, int $cacheTime, callable $callbackFunction, string $cacheServiceName = '', array $params = [])
 	{
-		$cacher = new self( BitrixEngine::getInstance() );
+		return self::getInstance($cacheServiceName)->cacheInternal($tagName, $cacheTime, $callbackFunction, $params);
+	}
+
+	/**
+	 * @return boolean|array|null|mixed
+	 */
+	private function cacheInternal(string $tagName, int $cacheTime, callable $callbackFunction, array $params = [])
+	{
 		self::$LAST_ERROR = '';
 
 		if (($tagName = trim($tagName)) == '') {
@@ -81,28 +99,28 @@ final class PhpCacher
 		$cacheDir    = self::getCacheDir($tagName);
 
 		// clear cache now clear folder
-		if ($cacher->request->get('clear_cache') === 'Y' && $cacher->canCurrentUserDropCache()) {
-			$cacher->cache->cleanDir($cacheDir);
+		if ($this->request->get('clear_cache') === 'Y' && $this->canCurrentUserDropCache()) {
+			$this->cache->cleanDir($cacheDir);
 		}
 
-		if ($cacher->cache->startDataCache($cacheTime, $cacheId, $cacheDir)) {
-			$cacher->taggedCache->startTagCache($cacheDir);
+		if ($this->cache->startDataCache($cacheTime, $cacheId, $cacheDir)) {
+			$this->taggedCache->startTagCache($cacheDir);
 
-			// is_callable tests above
-			$params['cacher'] = $cacher;
+			$params['cacher'] = \WeakReference::create($this);
 			$data = $callbackFunction($params);
+			unset($params['cacher']);
 
-			$cacher->taggedCache->endTagCache();
+			$this->taggedCache->endTagCache();
 
 			if ($data !== null) {
-				$cacher->cache->endDataCache($data);
+				$this->cache->endDataCache($data);
 			} else {
-				$cacher->cache->abortDataCache();
+				$this->cache->abortDataCache();
 				self::$LAST_ERROR = 'NO DATA PUSH TO CACHE...';
 				return false;
 			}
 		} else {
-			$data = $cacher->cache->getVars();
+			$data = $this->cache->getVars();
 		}
 		return $data;
 	}
@@ -127,8 +145,8 @@ final class PhpCacher
 	 */
 	public static function clearDirByTag(string $tagName): void
 	{
+		$cacher = self::getInstance();
 		$path = self::getCacheDir($tagName);
-		$cacher = new self();
 		$cacher->cache->cleanDir($path);
 	}
 
@@ -144,7 +162,7 @@ final class PhpCacher
 		if (! is_array($tags)) {
 			$tags = [$tags];
 		}
-		$cacher = new self();
+		$cacher = new self( BitrixEngine::getInstance() );
 		foreach ($tags as $tag) {
 			$cacher->taggedCache->clearByTag($tag);
 		}
@@ -165,7 +183,7 @@ final class PhpCacher
 	 */
 	private static function getCacheDir(string $tagName): string
 	{
-		if (($tagName = trim($tagName)) == '') {
+		if (($tagName = trim($tagName)) === '') {
 			return false;
 		}
 		return '/php/' . $tagName;
@@ -194,7 +212,7 @@ final class PhpCacher
 	 */
 	public static function returnCacheDataAndSave($tagName, $cacheTime, $callbackFunction, array $params = [])
 	{
-		return self::cache($tagName, $cacheTime, $callbackFunction, $params);
+		return self::cache($tagName, $cacheTime, $callbackFunction, '', $params);
 	}
 } //end class
 
