@@ -73,7 +73,42 @@ $arItem['PROPS'] = Hipot\BitrixUtils\PhpCacher::cache(
 Обратите внимание на то, что тег задан не <code>'salon_list_prop_salon_id'.$arItem['ID']</code>, т.к. если речь идет о файловой системе, то нам нужно 
 <b>кластеризовать хранение элементов кэша</b>, т.к. их может быть огромное кол-во, равномерно складывая в поддиректории <code>/bitrix/cache/php/salon_list_prop_salon_id/*</code>
 
-### Возможность кэшировать данные в разных провайдерах
+### Тегированный кэш
+По умолчанию класс использует тегированный кэш и помечает кэш связью с выборками. Для выборок из инфоблоков тут не явное поведение, т.к. сами выборки помечают кэш внутри GetList, но как есть.  
+Внутри функции-замыкания можно помечать итоговый кэш:
+```php
+$statusesCnt = PhpCacher::cache('some_cache_with_tags', 3600 * 24 * 30 * 12 /* one year */, static function () {
+    $result = [];
+    
+    // ... select result
+    BitrixEngine::getInstance()->taggedCache->registerTag("tag_1");
+    BitrixEngine::getInstance()->taggedCache->registerTag("tag_2")
+
+    return $result;
+});
+
+// clear cache 'some_cache_with_tags' in some event place:
+BitrixEngine::getInstance()->taggedCache->clearByTag("tag_2");
+```
+
+А если нужно отключить тегированный кэш, т.е. четко зафиксировать время кэша на переданное, можно использовать класс-синглтон <code>\Bitrix\Services\BitrixEngine</code>, пример выборки статистики:
+```php
+$statusesCnt = PhpCacher::cache('total_statistic', 3600 * 24 * 30, static function () {
+	// use hard cache this block
+	BitrixEngine::getInstance()->taggedCache->abortTagCache();
+
+	$rs = CIBlockElement::GetList(['CNT' => 'DESC'], ['IBLOCK_ID' => Settings::BIDS_PROTOKOLS], ['CODE']);
+	$statusesCnt = [];
+	while ($ar = $rs->Fetch()) {
+		$ar['CODE_NAME'] = Statistic::getStatusText($ar['CODE']);
+		$ar['STATUS_NAME'] = trim($ar['CODE']) == '' ? 'не заполнено' :  $ar['CODE_NAME'];
+		$statusesCnt[ $ar['STATUS_NAME'] ] = $ar['CNT'];
+	}
+	return $statusesCnt;
+});
+```
+
+### Возможность кэшировать данные в разных местах
 
 Теперь этот класс умеет кэшировать не только в кэше по умолчанию, а еще и в любом наследнике от <code>Bitrix\Main\Data\CacheEngine</code>.
 Сами наследники конфигурируются через <code>\Bitrix\Main\DI\ServiceLocator</code>, т.е. в конфигурации [<code>.settings_extra.php</code>](../install/.settings_extra.php) задаем службу:

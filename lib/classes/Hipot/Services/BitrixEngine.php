@@ -3,6 +3,7 @@
 namespace Hipot\Services;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\Connection;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Data\TaggedCache;
 use Bitrix\Main\Engine\CurrentUser;
@@ -24,7 +25,8 @@ final class BitrixEngine
 		public ?TaggedCache      $taggedCache = null,
 		public ?Asset            $asset = null,
 		public ?SessionInterface $session = null,
-		public ?ServiceLocator   $serviceLocator = null
+		public ?ServiceLocator   $serviceLocator = null,
+		public ?Connection       $connection = null
 	)
 	{
 	}
@@ -39,7 +41,8 @@ final class BitrixEngine
 			Application::getInstance()->getTaggedCache(),
 			Asset::getInstance(),
 			Application::getInstance()->getSession(),
-			ServiceLocator::getInstance()
+			ServiceLocator::getInstance(),
+			Application::getConnection()
 		);
 	}
 
@@ -73,5 +76,16 @@ final class BitrixEngine
 	public function getService(string $serviceName)
 	{
 		return $this->serviceLocator->has($serviceName) ? $this->serviceLocator->get($serviceName) : null;
+	}
+
+	/**
+	 * Static method returns database connection for the specified name.
+	 * If name is empty - default connection is returned.
+	 * @param string $name Name of database connection. If empty - default connection.
+	 * @return \Bitrix\Main\Data\Connection|\Bitrix\Main\DB\Connection|null
+	 */
+	public function getConnection(string $name = "")
+	{
+		return $this->app->getConnectionPool()->getConnection($name);
 	}
 }
