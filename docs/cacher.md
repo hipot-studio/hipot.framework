@@ -98,7 +98,7 @@ $statusesCnt = PhpCacher::cache('total_statistic', 3600 * 24 * 30, static functi
 	// use hard cache this block
 	BitrixEngine::getInstance()->taggedCache->abortTagCache();
 
-    // CIBlockElement::GetList used taggedCache inside yourself
+	// CIBlockElement::GetList used taggedCache inside yourself
 	$rs = CIBlockElement::GetList(['CNT' => 'DESC'], ['IBLOCK_ID' => Settings::BIDS_PROTOKOLS], ['CODE']);
 	$statusesCnt = [];
 	while ($ar = $rs->Fetch()) {
