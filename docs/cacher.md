@@ -14,6 +14,7 @@
 /bitrix/cache/php/тег2</code>, и т.д. Тем самым можно быстро почистить кэш функционала "тег" просто удалением папки /bitrix/cache/php/тег
 - Возможность кэшировать данные в разных хранилищах
 - Дополнительная кластеризация кэша при необходимости
+- Возможность помечать кэш тегами (тегированный кэш битиркса)
 
 
 ### Примеры использования
@@ -74,7 +75,7 @@ $arItem['PROPS'] = Hipot\BitrixUtils\PhpCacher::cache(
 <b>кластеризовать хранение элементов кэша</b>, т.к. их может быть огромное кол-во, равномерно складывая в поддиректории <code>/bitrix/cache/php/salon_list_prop_salon_id/*</code>
 
 ### Тегированный кэш
-По умолчанию класс использует тегированный кэш и помечает кэш связью с выборками. Для выборок из инфоблоков тут не явное поведение, т.к. сами выборки помечают кэш внутри GetList, но как есть.  
+По умолчанию класс использует тегированный кэш и помечает кэш связью с указанными тегами. Для выборок из инфоблоков тут не явное поведение, т.к. сами выборки помечают кэш внутри своих GetList, но как есть.  
 Внутри функции-замыкания можно помечать итоговый кэш:
 ```php
 $statusesCnt = PhpCacher::cache('some_cache_with_tags', 3600 * 24 * 30 * 12 /* one year */, static function () {
@@ -91,12 +92,13 @@ $statusesCnt = PhpCacher::cache('some_cache_with_tags', 3600 * 24 * 30 * 12 /* o
 BitrixEngine::getInstance()->taggedCache->clearByTag("tag_2");
 ```
 
-А если нужно отключить тегированный кэш, т.е. четко зафиксировать время кэша на переданное, можно использовать класс-синглтон <code>\Bitrix\Services\BitrixEngine</code>, пример выборки статистики:
+А если нужно отключить тегированный кэш, т.е. четко зафиксировать время кэша на переданное, можно использовать класс-синглтон <code>\Hipot\Services\BitrixEngine</code>, пример выборки статистики:
 ```php
 $statusesCnt = PhpCacher::cache('total_statistic', 3600 * 24 * 30, static function () {
 	// use hard cache this block
 	BitrixEngine::getInstance()->taggedCache->abortTagCache();
 
+    // CIBlockElement::GetList used taggedCache inside yourself
 	$rs = CIBlockElement::GetList(['CNT' => 'DESC'], ['IBLOCK_ID' => Settings::BIDS_PROTOKOLS], ['CODE']);
 	$statusesCnt = [];
 	while ($ar = $rs->Fetch()) {
