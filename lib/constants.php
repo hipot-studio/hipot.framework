@@ -40,3 +40,9 @@ const CONTENT_MANAGER_GID = 0;      // TODO set correct group
  * На сайте редактор
  */
 define('IS_CONTENT_MANAGER', IS_BETA_TESTER || CSite::InGroup([CONTENT_MANAGER_GID]));
+
+/**
+ * Should PhpCacher use tagged cache in callback-function
+ * @var bool PHPCACHER_TAGGED_CACHE_AUTOSTART
+ */
+const PHPCACHER_TAGGED_CACHE_AUTOSTART = true;

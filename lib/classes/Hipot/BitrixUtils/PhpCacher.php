@@ -37,7 +37,7 @@ final class PhpCacher
 	public function __construct(BitrixEngine $engine, ?CacheEngine $cacheEngine = null)
 	{
 		if ($cacheEngine === null) {
-			$this->cache = $engine->cache;
+			$this->cache = clone $engine->cache;
 		} else {
 			$this->cache = new Cache($cacheEngine);
 		}
@@ -62,6 +62,10 @@ final class PhpCacher
 	 * <code>
 	 *     BitrixEngine::getInstance()->taggedCache->registerTag("iblock_id_43");
 	 *     BitrixEngine::getInstance()->taggedCache->registerTag("iblock_id_new");
+	 *
+	 *     // Либо отключить их использование глобальной константой PHPCACHER_TAGGED_CACHE_AUTOSTART = false
+	 *     // или только в конкретном замыкании использовать конструкцию:
+	 *     BitrixEngine::getInstance()->taggedCache->abortTagCache();
 	 * </code>
 	 * @param string $cacheServiceName = '' Использовать DI для службы кэширования (настроить в .settings_extra.php службу 'cache.apc')
 	 * @param array $params массив параметров функции (передаются в $callbackFunction({'cacher':\WeakReference}) а также влияют на идентификатор кеша $cacheId)
@@ -103,14 +107,21 @@ final class PhpCacher
 			$this->cache->cleanDir($cacheDir);
 		}
 
+		$this->cache->noOutput();
+		$bTaggedCacheUse = (!defined('PHPCACHER_TAGGED_CACHE_AUTOSTART') || PHPCACHER_TAGGED_CACHE_AUTOSTART === true);
+
 		if ($this->cache->startDataCache($cacheTime, $cacheId, $cacheDir)) {
-			$this->taggedCache->startTagCache($cacheDir);
+			if ($bTaggedCacheUse) {
+				$this->taggedCache->startTagCache($cacheDir);
+			}
 
 			$params['cacher'] = \WeakReference::create($this);
 			$data = $callbackFunction($params);
 			unset($params['cacher']);
 
-			$this->taggedCache->endTagCache();
+			if ($bTaggedCacheUse) {
+				$this->taggedCache->endTagCache();
+			}
 
 			if ($data !== null) {
 				$this->cache->endDataCache($data);
