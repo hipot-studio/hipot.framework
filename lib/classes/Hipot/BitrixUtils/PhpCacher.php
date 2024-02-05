@@ -52,11 +52,11 @@ final class PhpCacher
 	}
 
 	/**
-	 * Записываем и возвращает данные в кеш по пути /bitrix/cache/php/$tagName/ с возможностью указать в функции $callbackFunction теги для кеша.
+	 * Записываем и возвращает данные в кэш по пути /bitrix/cache/php/$tagName/ с возможностью указать в функции $callbackFunction теги для кэша.
 	 *
 	 * В случае ошибки в статичной переменной $LAST_ERROR - будет строка с ошибкой
 	 *
-	 * @param string                   $tagName - тег (массив тегов)
+	 * @param string                   $tagName - тег
 	 * @param int                      $cacheTime - время кеша
 	 * @param callable                 $callbackFunction в анонимной функции можно регистрировать и теги для управляемого кеша:
 	 * <code>
