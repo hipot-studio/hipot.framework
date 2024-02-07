@@ -56,8 +56,8 @@ final class PhpCacher
 	 *
 	 * В случае ошибки в статичной переменной $LAST_ERROR - будет строка с ошибкой
 	 *
-	 * @param string                   $tagName - тег
-	 * @param int                      $cacheTime - время кеша
+	 * @param string                   $tagName  тег хранения по пути /bitrix/cache/php/$tagName/
+	 * @param int                      $cacheTime время кеша
 	 * @param callable                 $callbackFunction в анонимной функции можно регистрировать и теги для управляемого кеша:
 	 * <code>
 	 *     BitrixEngine::getInstance()->taggedCache->registerTag("iblock_id_43");
@@ -65,20 +65,22 @@ final class PhpCacher
 	 *
 	 *     // Либо отключить их использование глобальной константой PHPCACHER_TAGGED_CACHE_AUTOSTART = false
 	 *     // или только в конкретном замыкании использовать конструкцию:
-	 *     BitrixEngine::getInstance()->taggedCache->abortTagCache();
-	 * </code>
-	 * @param string $cacheServiceName = '' Использовать DI для службы кэширования (настроить в .settings_extra.php службу 'cache.apc')
-	 * @param array $params массив параметров функции (передаются в $callbackFunction({'cacher':\WeakReference}) а также влияют на идентификатор кеша $cacheId)
+	 *     BitrixEngine::getInstance()->taggedCache->abortTagCache();</code>
+	 * @param string $cacheServiceName '' Использовать DI для службы кэширования (настроить в .settings_extra.php службу 'cache.apc'). Глобально задается
+	 * константой <code>PHPCACHER_DEFAULT_CACHE_SERVICE = 'cache.apc'</code>)
 	 *
-	 * @return boolean|array|null|mixed
+	 * @param array $params массив параметров функции (передаются в <code>$callbackFunction({'cacher':\WeakReference})</code> а также влияют на идентификатор кеша $cacheId)
+	 *
+	 * @return false|array|mixed
 	 */
 	public static function cache(string $tagName, int $cacheTime, callable $callbackFunction, string $cacheServiceName = '', array $params = [])
 	{
-		return self::getInstance($cacheServiceName)->cacheInternal($tagName, $cacheTime, $callbackFunction, $params);
+		$useCacheServiceName = defined(PHPCACHER_DEFAULT_CACHE_SERVICE) ? PHPCACHER_DEFAULT_CACHE_SERVICE : $cacheServiceName;
+		return self::getInstance($useCacheServiceName)->cacheInternal($tagName, $cacheTime, $callbackFunction, $params);
 	}
 
 	/**
-	 * @return boolean|array|null|mixed
+	 * @return false|array|mixed
 	 */
 	private function cacheInternal(string $tagName, int $cacheTime, callable $callbackFunction, array $params = [])
 	{
