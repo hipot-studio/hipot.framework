@@ -227,6 +227,19 @@ final class PhpCacher
 	{
 		return self::cache($tagName, $cacheTime, $callbackFunction, '', $params);
 	}
+
+	/**
+	 * Prevents output caching for a specific instance of CPHPCache.
+	 * @param \CPHPCache $cache The instance of CPHPCache to disable output caching for.
+	 * @return void
+	 */
+	public static function noOutputCacheD0(\CPHPCache $cache): void
+	{
+		((function () {
+			$this->cache->noOutput();
+		})->bindTo($cache, $cache))();
+	}
+
 } //end class
 
 
