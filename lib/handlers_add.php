@@ -32,11 +32,11 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 			Loader::getDocumentRoot() . '/bitrix/php_interface/include/constants.php',
 			Loader::getDocumentRoot() . '/bitrix/php_interface/include/lib/constants.php'
 		] as $constFile) {
-			if (is_file($constFile)) {
-				include $constFile;
-				break;
-			}
+		if (is_file($constFile)) {
+			include $constFile;
+			break;
 		}
+	}
 
 	if (! empty($request->get('sources'))) {
 		Asset::getInstance()->disableOptimizeCss();
@@ -136,7 +136,7 @@ $eventManager->addEventHandler('main', 'OnEpilog', [\Hipot\BitrixUtils\AssetsCon
 
 // очищаем настройки формы по-умолчанию для всех админов
 // @see https://www.hipot-studio.com/Codex/form_iblock_element_settings/
-$eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$content) use ($request) {
+$eventManager->addEventHandler('main', 'OnBeforeEndBufferContent', static function () use ($request) {
 	$p = $request->getPost('p');
 
 	if (!isset($p) || !is_array($p) || count($p) <= 0) {
