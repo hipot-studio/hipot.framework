@@ -140,30 +140,27 @@ class Iblock extends _CIBElement
 	}
 
 	/**
-	 * Выбор секции с детьми. В итоговый массив попадает и $sectionId
+	 * Выбор вложенных секций в родительскую, выбранную фильтром $parentSectionFilter
 	 *
-	 * @param int   $sectionId
-	 * @param array $arSelect = ["ID"]
-	 *
-	 * @return array | bool
+	 * @param array $parentSectionFilter [] фильтр для выбора секции-родителя
+	 * @param array $arSelect ["ID"] поля дочерних выбираемых секций
 	 */
-	public static function selectSubsectionByParentSection(int $sectionId, $arSelect = ["ID"])
+	public static function selectSubsectionByParentSection(array $parentSectionFilter = [], array $arSelect = ["ID"], array $filter = ["ACTIVE" => "Y"]): array
 	{
-		if ($sectionId <= 0) {
-			return false;
+		if (count($parentSectionFilter) <= 0) {
+			throw new \RuntimeException('parent section must be selected by $parentSectionFilter');
 		}
-		$arParentSection = CIBlockSection::GetList(["SORT" => "ASC"], [
-			"ACTIVE"    => "Y",
-			"ID"      	=> $sectionId,
-		], false, ['ID', 'IBLOCK_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'IBLOCK_ID'])->GetNext();
 
-		$rsSections = CIBlockSection::GetList(['LEFT_MARGIN' => 'ASC'], [
-			"ACTIVE"        => "Y",
+		$arParentSection = CIBlockSection::GetList(["SORT" => "ASC"], $parentSectionFilter, false,
+			['ID', 'IBLOCK_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'IBLOCK_ID']
+		)->Fetch();
+
+		$rsSections = CIBlockSection::GetList(['LEFT_MARGIN' => 'ASC'], array_merge($filter, [
 			"IBLOCK_ID"     => $arParentSection['IBLOCK_ID'],
-			">LEFT_MARGIN"  => $arParentSection["LEFT_MARGIN"],
+			">LEFT_MARGIN"  => $arParentSection["LEFT_MARGIN"] + 1,     // see "bitrix:catalog.section.list"-component
 			"<RIGHT_MARGIN" => $arParentSection["RIGHT_MARGIN"],
 			'>DEPTH_LEVEL'  => $arParentSection['DEPTH_LEVEL']
-		], false, $arSelect);
+		]), false, $arSelect);
 		$sections = [];
 		while ($Section = $rsSections->GetNext()) {
 			$sections[] = $Section;
@@ -577,12 +574,13 @@ class Iblock extends _CIBElement
 	 * Получить варианты значения выпадающего списка
 	 *
 	 * @param string|int $propCode
-	 * @param array $arFilterEx = array() фильтр по выборке вариантов
-	 * @param array $aSort = array("DEF"=>"DESC", "SORT"=>"ASC")
+	 * @param array      $arFilterEx [] фильтр по выборке вариантов
+	 * @param array      $aSort ["DEF" => "DESC", "SORT" => "ASC"]
+	 * @param bool       $indexed
 	 *
-	 * @return array | bool
+	 * @return array
 	 */
-	public static function selectPropertyEnumArray($propCode, $arFilterEx = [], $aSort = ["DEF" => "DESC", "SORT" => "ASC"])
+	public static function selectPropertyEnumArray($propCode, $arFilterEx = [], array $aSort = ["DEF" => "DESC", "SORT" => "ASC"], bool $indexed = true): array
 	{
 		if (trim($propCode) == '') {
 			return false;
@@ -601,7 +599,11 @@ class Iblock extends _CIBElement
 		$arRes = [];
 		$property_enums = CIBlockPropertyEnum::GetList($aSort, $arFilter);
 		while ($enum_fields = $property_enums->GetNext()) {
-			$arRes[] = $enum_fields;
+			if ($indexed) {
+				$arRes[ $enum_fields['ID'] ] = $enum_fields;
+			} else {
+				$arRes[] = $enum_fields;
+			}
 		}
 		return $arRes;
 	}

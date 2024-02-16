@@ -32,11 +32,11 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 			Loader::getDocumentRoot() . '/bitrix/php_interface/include/constants.php',
 			Loader::getDocumentRoot() . '/bitrix/php_interface/include/lib/constants.php'
 		] as $constFile) {
-		if (is_file($constFile)) {
-			include $constFile;
-			break;
+			if (is_file($constFile)) {
+				include $constFile;
+				break;
+			}
 		}
-	}
 
 	if (! empty($request->get('sources'))) {
 		Asset::getInstance()->disableOptimizeCss();
