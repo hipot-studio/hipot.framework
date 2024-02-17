@@ -1,12 +1,46 @@
 <?php
 namespace Hipot\Utils;
 
+use Bitrix\Main\Loader;
 use Hipot\BitrixUtils\IblockUtils;
 use CIBlock;
 use CBitrixComponentTemplate;
+use CBitrixComponent;
 
 trait ComponentUtils
 {
+
+	/**
+	 * Добавляет иконки включаемых областей для компонента Битрикс
+	 * можно использовать в component_epilog.php
+	 *
+	 * @param CBitrixComponent $component Компонент Битрикс
+	 * @param array{'IBLOCK_ID':int, 'ELEMENT_ID':int, 'SECTION_ID':int} $arParams [] Массив параметров для компонента
+	 * @param array{
+	 *     'SECTION_BUTTONS':bool,
+	 *     'SESSID':bool,
+	 *     'SHOW_CATALOG_BUTTONS':bool,
+	 *     'USE_CATALOG_BUTTONS':array,
+	 *     'LABELS':array
+	 * } $arOptions []
+	 *
+	 * @see \CIBlock::GetPanelButtons()
+	 * @see \CIBlock::GetComponentMenu()
+	 */
+	public static function setComponentEdit(CBitrixComponent $component, array $arParams = [], array $arOptions = []): void
+	{
+		global $USER, $APPLICATION; // todo
+		if ($USER->IsAuthorized() && $APPLICATION->GetShowIncludeAreas() && Loader::includeModule("iblock")) {
+			$arButtons = CIBlock::GetPanelButtons(
+				(int)$arParams["IBLOCK_ID"],
+				(int)$arParams["ELEMENT_ID"],
+				(int)$arParams["SECTION_ID"],
+				$arOptions
+			);
+			$component->addIncludeAreaIcons(CIBlock::GetComponentMenu($APPLICATION->GetPublicShowMode(), $arButtons));
+		}
+	}
+
 	/**
 	 * Sets the element edit actions for a CBitrixComponentTemplate instance.
 	 *
