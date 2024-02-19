@@ -8,7 +8,9 @@
 
 use Bitrix\Main\Data\CacheEngineApc;
 use Bitrix\Main\Data\CacheEngineFiles;
+use Bitrix\Main\Data\CacheEngineMemcache;
 use Bitrix\Main\Data\MemcacheConnection;
+use Bitrix\Main\DB\ConnectionException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\File\Image\Imagick as BitrixImagick;
@@ -53,7 +55,9 @@ return [
 			"b_iblock_min_ttl" =>  68400,
 			"b_iblock_max_ttl" =>  68400,
 			"b_group_min_ttl" => 86400,
-			"b_group_max_ttl" => 86400
+			"b_group_max_ttl" => 86400,
+			"b_lang_min_ttl" => 86400,
+			"b_lang_max_ttl" => 86400,
 		],
 		'readonly' => false,
 	],
@@ -109,9 +113,9 @@ return [
 			'default' => $defaultSettings['connections']['value']['default'],
 			'memcache' => [
 				'className' => MemcacheConnection::class,
-				'port' => 0,
-				'host' => 'unix:///home/bitrix/memcached.sock',
-				'sid' => $sid
+				'port'      => 0,
+				'host'      => 'unix:///home/bitrix/memcached.sock',
+				'sid'       => $sid
 			]
 		]
 	],
@@ -146,9 +150,9 @@ return [
 	/* @see https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=105&LESSON_ID=14032&LESSON_PATH=9209.5062.14032  */
 	'services' => [
 		'value' => [
-			'main.imageEngine' => array(
+			'main.imageEngine' => [
 				'className' => BitrixImagick::class
-			),
+			],
 			'Orhanerday.OpenAI' => [
 				'constructor' => static function () {
 					// see page https://platform.openai.com/account/api-keys
@@ -156,15 +160,53 @@ return [
 					return new \Orhanerday\OpenAi\OpenAi($open_ai_key);
 				},
 			],
+			'cache.files' => [
+				'constructor' => static function () {
+					$options = [];
+					return new CacheEngineFiles($options);
+				}
+			],
 			'cache.apc' => [
 				'constructor' => static function () {
 					// important: set 'sid' in 'cache-value' section of config
 					$options = [
 						'type' => 'apcu'
 					];
-					return new CacheEngineApc($options);
+					return new class ($options) extends CacheEngineApc {
+						/** @noinspection MagicMethodsValidityInspection */
+						public function __construct(array $options = [])
+						{
+							$config = $this->configure($options);
+							$this->connect($config);
+						}
+					};
 				}
-			]
+			],
+			'cache.memcache' => [
+				'constructor' => static function () {
+					// important: set 'sid' in 'cache-value' section of config
+					$options = [
+						'type'    => 'memcache',
+						'servers' => [
+							[
+								'host' => 'unix:///home/bitrix/memcached.sock',
+								'port' => 0
+							]
+						]
+					];
+					return new class ($options) extends CacheEngineMemcache {
+						/** @noinspection MagicMethodsValidityInspection */
+						public function __construct(array $options = [])
+						{
+							$config = $this->configure($options);
+							$this->connect($config);
+							if (self::$isConnected === false) {
+								throw new ConnectionException('Cant connect to memcache');
+							}
+						}
+					};
+				}
+			],
 		],
 		'readonly' => true
 	]

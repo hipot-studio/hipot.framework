@@ -2,8 +2,8 @@
 namespace Hipot\BitrixUtils;
 
 use Hipot\Services\BitrixEngine;
+use Bitrix\Main\Data\CacheEngineInterface;
 use Bitrix\Main\Data\Cache;
-use Bitrix\Main\Data\CacheEngine;
 
 /**
  * Класс для работы с кешированием (как обертка над логикой в виде анонимной функции, возвращающей данные)
@@ -34,7 +34,7 @@ final class PhpCacher
 	 */
 	public static string $LAST_ERROR = '';
 
-	public function __construct(BitrixEngine $engine, ?CacheEngine $cacheEngine = null)
+	public function __construct(BitrixEngine $engine, ?CacheEngineInterface $cacheEngine = null)
 	{
 		if ($cacheEngine === null) {
 			$this->cache = clone $engine->cache;
@@ -75,7 +75,9 @@ final class PhpCacher
 	 */
 	public static function cache(string $tagName, int $cacheTime, callable $callbackFunction, string $cacheServiceName = '', array $params = [])
 	{
-		$useCacheServiceName = defined(PHPCACHER_DEFAULT_CACHE_SERVICE) ? PHPCACHER_DEFAULT_CACHE_SERVICE : $cacheServiceName;
+		$useCacheServiceName = (defined('PHPCACHER_DEFAULT_CACHE_SERVICE') && !empty(PHPCACHER_DEFAULT_CACHE_SERVICE))
+								? PHPCACHER_DEFAULT_CACHE_SERVICE
+								: $cacheServiceName;
 		return self::getInstance($useCacheServiceName)->cacheInternal($tagName, $cacheTime, $callbackFunction, $params);
 	}
 
@@ -84,6 +86,9 @@ final class PhpCacher
 	 */
 	private function cacheInternal(string $tagName, int $cacheTime, callable $callbackFunction, array $params = [])
 	{
+		// uncomment to debug used engine
+		// d( (fn () => $this->cacheEngine)->call($this->cache) );
+
 		self::$LAST_ERROR = '';
 
 		if (($tagName = trim($tagName)) == '') {

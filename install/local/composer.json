@@ -6,6 +6,7 @@
     "ext-mbstring": "*",
     "ext-imagick": "*",
     "ext-dom": "*",
+    "ext-apcu": "*",
     "wikimedia/composer-merge-plugin": "dev-master",
     "intervention/image": "^2.7"
   },

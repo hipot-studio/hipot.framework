@@ -125,7 +125,33 @@ $statusesCnt = PhpCacher::cache('total_statistic', 3600 * 24 * 30, static functi
                 ];
                 return new CacheEngineApc($options);
             }
-        ]
+        ],
+        'cache.memcache' => [
+            'constructor' => static function () {
+                    // important: set 'sid' in 'cache-value' section of config
+                    $options = [
+                        'type'    => 'memcache',
+                        'servers' => [
+                            [
+                                'host' => 'unix:///home/bitrix/memcached.sock',
+                                'port' => 0
+                            ]
+                        ]
+                    ];
+                    // to avoid using of internal constructor static variables
+                    return new class ($options) extends CacheEngineMemcache {
+                        /** @noinspection MagicMethodsValidityInspection */
+                        public function __construct(array $options = [])
+                        {
+                            $config = $this->configure($options);
+                            $this->connect($config);
+                            if (self::$isConnected === false) {
+                                throw new ConnectionException('Cant connect to memcache');
+                            }
+                        }
+                    };
+                }
+           ],
     ],
     'readonly' => true
 ]
@@ -140,9 +166,24 @@ $cachedUser = PhpCacher::cache(
     static function () use ($USER) {
 	    return \CUser::GetByID( $USER->GetID() )->Fetch();
     },
-    'cache.apc'     /* будет подтянут класс Bitrix\Main\Data\CacheEngineApc */
+    'cache.memcache'     /* будет подтянут анонимный класс-наследник Bitrix\Main\Data\CacheEngineMemcache */
 );
 ```
 
 Обратите, внимание, что нужно обязательно указать 'sid' в основной секции настроек <code>'cache'=>'value'</code>, поскольку текущее
 ядро битрикса берет эту настройку только из этого места.
+
+На нашем dev-сервере самый быстрый способ чтения из кэша оказался из файлов (RAID0 NVMe):
+```php
+array:4 [▼
+  "cache.apc" => array:2 [▼
+    "time" => 0.0015130043029785
+  ]
+  "cache.memcache" => array:2 [▼
+    "time" => 0.00053811073303223
+  ]
+  "cache.files" => array:2 [▼
+    "time" => 0.00031805038452148
+  ]
+]
+```

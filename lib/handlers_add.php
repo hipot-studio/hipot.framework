@@ -77,11 +77,11 @@ $eventManager->addEventHandler('main', 'OnAdminTabControlBegin', static function
 $eventManager->addEventHandler(	"main", "OnAdminListDisplay",
 	/** @param CAdminUiList $this_al */
 	static function (&$this_al) {
-		if ($this_al->table_id == "tbl_user" || strpos($this_al->table_id, 'iblock') !== false) {
+		if ($this_al->table_id == "tbl_user" || str_contains($this_al->table_id, 'iblock')) {
 			echo $this_al->sNavText;
 			?>
 			<style>
-				.adm-workarea > .main-ui-pagination {padding:10px 0px;}
+				.adm-workarea > .main-ui-pagination {padding:10px 0;}
 			</style>
 			<?
 		}
@@ -91,7 +91,7 @@ $eventManager->addEventHandler(	"main", "OnAdminListDisplay",
 				$picPath = CFile::GetPath( (CUser::GetByID($userId)->Fetch())["PERSONAL_PHOTO"] );
 				if (trim($picPath) != '') {
 					$row->aFields["LOGIN"]["view"]["value"] .= ' <br><a target="_blank" href="' . $picPath . '">'
-						. '<img style="max-width:200px;" src="' . $picPath  . '"></a>';
+						. '<img style="max-width:200px;" alt="" loading="lazy" src="' . $picPath  . '"></a>';
 				}
 			}
 		}
