@@ -88,8 +88,8 @@ $sendEmailToSupport     = static function () use ($exception, $developerEmail, $
 		$subject .= $argv[0];
 	} else {
 		/** @noinspection GlobalVariableUsageInspection */
-		$subject .= (is_null($request) ? $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI']
-			: $request->getServer()->getServerName() . $request->getRequestUri());
+		$subject .= (is_null($request) ? $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'] . ' IP:' . $_SERVER['REMOTE_ADDR']
+			: $request->getServer()->getServerName() . $request->getRequestUri() . ' IP:' . $request->getServer()->getRemoteAddr());
 	}
 
 	$installEmailType();
@@ -100,7 +100,7 @@ $sendEmailToSupport     = static function () use ($exception, $developerEmail, $
 		"DUPLICATE" => "N",
 		"C_FIELDS" => [
 			"EMAIL"         => $developerEmail,
-			"SUBJECT"       => $subject,
+			"SUBJECT"       => trim($subject),
 			"HTML"          => $html
 		],
 	]);
