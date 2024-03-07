@@ -445,7 +445,7 @@ function funcDefined(func)
  * @param {string} path - Путь к элементу в объекте в формате "key1.key2.key3".
  * @returns {boolean} Возвращает true, если ключ существует, и false в противном случае.
  * @example
- * issetItem(typeof user2 ? "undefined" : user2, typeof newPath ? "undefined" : newPath)
+ * issetItem(typeof newObj != "undefined" ? newObj : null, 'key1.key2.key3')
  */
 function issetItem(obj, path)
 {
