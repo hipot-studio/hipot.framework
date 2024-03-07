@@ -64,7 +64,7 @@
 	 * Проверяет код нажатой клавиши для полей типа "телефон"
 	 * Разрешены символы: 0-9 + - \s ( )
 	 * Разрешены комбинации: Backspace, ctrl + v, ctrl + c, ctrl + r
-	 * 
+	 *
 	 * @returns {Boolean}
 	 */
 	$.fn.checkPhone = function () {
@@ -139,8 +139,9 @@
  * Закрывает открытое окно и убирает овелей
  * @param {obj} th Объект jQuery который необходима закрыть
  */
-function HideWin(th, speed) {
-	if (speed == undefined) {
+function HideWin(th, speed)
+{
+	if (typeof speed === 'undefined') {
 		$(th).hide();
 		$('#overlay').hide();
 	} else {
@@ -155,9 +156,10 @@ function HideWin(th, speed) {
  * Открывает открытое окно и убирает овелей
  * @param {obj} th Объект jQuery который необходима закрыть
  */
-function ShowWin(th, speed) {
+function ShowWin(th, speed)
+{
 	//$("body").prepend('<div id="overlay"></div>');
-	if (speed == undefined) {
+	if (typeof speed === 'undefined') {
 		$("#overlay").center({'resize': true});
 		$('#overlay').show();
 		$(th).center().show();
@@ -174,12 +176,13 @@ function ShowWin(th, speed) {
  * @param {jQuery} layer родитель-форма, в которой после заголовка .headess нужно вставить ошибку
  * @param {String} errorHtml Ошибка в виде html
  */
-function ShowFillFormErrorMess(layer, errorHtml) {
-	if ($.trim(errorHtml) == '') {
+function ShowFillFormErrorMess(layer, errorHtml)
+{
+	if (errorHtml.trim() === '') {
 		return;
 	}
 
-	var html = '<div class="alert-errors">';
+	let html = '<div class="alert-errors">';
 	html += errorHtml;
 	html += '</div>';
 	$(html).insertAfter($('.headess', layer));
@@ -189,7 +192,8 @@ function ShowFillFormErrorMess(layer, errorHtml) {
  * убирает ошибку заполненности формы
  * @param {jQuery} layer родитель-форма, в которой после заголовка .HeaderTitle нужно вставить ошибку
  */
-function ClearFillFormErrorMess(layer) {
+function ClearFillFormErrorMess(layer)
+{
 	$('.alert-errors', layer).remove();
 }
 
@@ -199,7 +203,8 @@ function ClearFillFormErrorMess(layer) {
  * @param str строка для проверки
  * @returns {Boolean}
  */
-function isEmpty(str) {
+function isEmpty(str)
+{
 	if ($.trim(str).length > 0) {
 		return false;
 	} else {
@@ -212,7 +217,8 @@ function isEmpty(str) {
  * @param int cCode код клавиши
  * @returns {Boolean}
  */
-function isNum(cCode) {
+function isNum(cCode)
+{
 	if ((cCode >= 48 && cCode <= 57) || (cCode >= 96 && cCode <= 105) || (cCode >= 17 && cCode <= 20) || cCode == 27 || cCode == 0 || cCode == 127 || cCode == 8 || cCode == 9) {
 		return true;
 	} else {
@@ -226,7 +232,8 @@ function isNum(cCode) {
  *
  * FIXME перестала работать
  */
-function isPhone(cCode) {
+function isPhone(cCode)
+{
 	// позволяю пробел, скобки () и знак + - (и комбинацию "вставить" - нельзя)
 	if (cCode == 32 || cCode == 40 || cCode == 41 || cCode == 43 || cCode == 45 || cCode == 107 || cCode == 109 || cCode == 189 || cCode == 187) {
 		return true;
@@ -241,7 +248,8 @@ function isPhone(cCode) {
  * @returns {Boolen}
  * @version 1.0
  */
-function isMail(str) {
+function isMail(str)
+{
 	return /^[=_.0-9a-z+~-]+@(([-0-9a-z_]+\.)+)([a-z]{2,10})$/i.test(str);
 }
 
@@ -251,7 +259,8 @@ function isMail(str) {
  * @param object params
  * @param callback success function(data, textStatus, jqXHR){}
  */
-function getResultFromUrl(url, params, success) {
+function getResultFromUrl(url, params, success)
+{
 	$.ajax({
 		async: true,
 		cache: false,
@@ -272,8 +281,9 @@ function getResultFromUrl(url, params, success) {
  * @returns
  * @see http://stackoverflow.com/questions/1787322/htmlspecialchars-equivalent-in-javascript
  */
-function escapeHtml(text) {
-	var map = {
+function escapeHtml(text)
+{
+	let map = {
 		'&': '&amp;',
 		'<': '&lt;',
 		'>': '&gt;',
@@ -357,23 +367,24 @@ function trim(str) {
 }
 
 function ltrim(str) {
-	return str.replace(new RegExp("^[\\s]+", "g"), "");
+	return str.replace(new RegExp("^\\s+", "g"), "");
 }
 
 function rtrim(str) {
-	return str.replace(new RegExp("[\\s]+$", "g"), "");
+	return str.replace(new RegExp("\\s+$", "g"), "");
 }
 
 /**
  * Разбивает хеш строку, сформированную по типу GET параметов, в объект [key=val]
  * @returns {Object}
  */
-function hashAsObject() {
-	var hs = location.hash.substr(1);
-	var har = hs.split('&');
-	var opts = {};
-	for (var i in har) {
-		var v = har[i].split('=');
+function hashAsObject()
+{
+	const hs = location.hash.substr(1);
+	const har = hs.split('&');
+	const opts = {};
+	for (let i in har) {
+		let v = har[i].split('=');
 		opts[v[0]] = v[1];
 	}
 	return opts;
@@ -386,7 +397,8 @@ function hashAsObject() {
  * @function rightClick
  * @returns {undefined}
  */
-function rightClick() {
+function rightClick()
+{
 	$('body').on('contextmenu', 'img', function (e) {
 		e.preventDefault();
 	});
@@ -425,4 +437,27 @@ function funcDefined(func)
 	} catch (e) {
 		return false;
 	}
+}
+
+/**
+ * Проверяет, существует ли ключ в объекте или массиве по указанному пути.
+ * @param {Object | Array} obj - Исходный объект или массив
+ * @param {string} path - Путь к элементу в объекте в формате "key1.key2.key3".
+ * @returns {boolean} Возвращает true, если ключ существует, и false в противном случае.
+ * @example
+ * issetItem(typeof user2 ? "undefined" : user2, typeof newPath ? "undefined" : newPath)
+ */
+function issetItem(obj, path)
+{
+	if (!obj || !path || path.trim() === "") {
+		return false;
+	}
+	let current = obj;
+	for (const key of path.split(".")) {
+		if (!current.hasOwnProperty(key)) {
+			return false;
+		}
+		current = current[key];
+	}
+	return true;
 }
