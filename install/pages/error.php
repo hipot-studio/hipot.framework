@@ -1,4 +1,5 @@
 <?php
+/** @noinspection GlobalVariableUsageInspection */
 /**
  * error page with managed errors.
  * You can define your own function debug_string_backtrace() to generate stack-error-message
@@ -74,7 +75,6 @@ $sendEmailToSupport     = static function () use ($exception, $developerEmail, $
 	}
 
 	$html .= "\n\nДополнительные переменные:\n" . "\n";
-	/** @noinspection GlobalVariableUsageInspection */
 	$html .= '<pre>'. wordwrap(print_r([
 			'request'   => is_null($request) ? $_REQUEST    : $request->toArray(),
 			'cookie'    => is_null($request) ? $_COOKIE     : $request->getCookieList()->toArray(),
@@ -85,9 +85,11 @@ $sendEmailToSupport     = static function () use ($exception, $developerEmail, $
 
 	$subject = 'Ошибка PHP ';
 	if (PHP_SAPI == 'cli') {
+		if (!empty($_SERVER['argv']) && (int)ini_get('register_argc_argv') === 0) {
+			$argv = $_SERVER['argv'];
+		}
 		$subject .= $argv[0];
 	} else {
-		/** @noinspection GlobalVariableUsageInspection */
 		$subject .= (is_null($request) ? $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'] . ' IP:' . $_SERVER['REMOTE_ADDR']
 			: $request->getServer()->getServerName() . $request->getRequestUri() . ' IP:' . $request->getServer()->getRemoteAddr());
 	}
