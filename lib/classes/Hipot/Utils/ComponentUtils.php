@@ -55,7 +55,7 @@ trait ComponentUtils
 	 * @see \CBitrixComponentTemplate::AddEditAction()
 	 * @see \CBitrixComponentTemplate::AddDeleteAction()
 	 */
-	public static function setElementEdit(CBitrixComponentTemplate $template, &$arElement, string $confirmDelete): void
+	public static function setElementEdit(CBitrixComponentTemplate $template, &$arElement, ?string $confirmDelete): void
 	{
 		// edit buttons block
 		IblockUtils::setElementPanelButtons($arElement);
@@ -79,7 +79,7 @@ trait ComponentUtils
 	 * @see CBitrixComponentTemplate::AddEditAction()
 	 * @see CBitrixComponentTemplate::AddDeleteAction()
 	 */
-	public static function setSectionEdit(CBitrixComponentTemplate $template, &$arSection, string $confirmDelete): void
+	public static function setSectionEdit(CBitrixComponentTemplate $template, &$arSection, ?string $confirmDelete): void
 	{
 		// edit buttons block
 		IblockUtils::setSectionPanelButtons($arSection);
