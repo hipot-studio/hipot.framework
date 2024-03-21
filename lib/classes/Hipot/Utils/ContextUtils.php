@@ -193,4 +193,54 @@ trait ContextUtils
 		}
 		return false;
 	}
+
+	/** @noinspection GlobalVariableUsageInspection */
+	/**
+	 * Set the URI to the current Bitrix Engine page to work menu property
+	 *
+	 * @param string $uri The URI to be used.
+	 *
+	 * @return void
+	 * @see \Bitrix\Main\Web\Uri
+	 */
+	public static function setUriToBitrixCurPage(string $uri): void
+	{
+		global $APPLICATION;
+		$oUri  = new \Bitrix\Main\Web\Uri($uri);
+		// to work with GetCurPageParam()
+		parse_str($oUri->getQuery(), $_GET);
+		// to work with menu selected check
+		foreach ($_GET as $name => $value) {
+			$GLOBALS[$name] = $value;
+		}
+		$APPLICATION->SetCurPage($oUri->getPath(), $oUri->getQuery());
+	}
+
+	/**
+	 * Возвращает текущую страницу с добавленными параметрами, при этом удаляет некоторые параметры из URL
+	 *
+	 * @param string $addParams Дополнительные параметры
+	 * @param array  $arParamKill Параметры, которые необходимо удалить из URL
+	 * @param bool   $get_index_page Флаг, указывающий на необходимость получения индексной страницы
+	 *
+	 * @return string Текущая страница с добавленными параметрами
+	 * @see \Bitrix\Main\Application::getConnection()
+	 * @see \Bitrix\Main\HttpRequest::getSystemParameters()
+	 * @see \CMain::GetCurPageParam()
+	 */
+	public static function getBitrixCurPageParam(string $addParams = "", array $arParamKill = [], bool $get_index_page = false): string
+	{
+		global $APPLICATION;
+		$delParam = array_merge(
+			[
+				"PAGEN_1", "SIZEN_1", "SHOWALL_1",
+				"PAGEN_2", "SIZEN_2", "SHOWALL_2",
+				"PAGEN_3", "SIZEN_3", "SHOWALL_3",
+				"PHPSESSID", "PageSpeed"
+			],
+			\Bitrix\Main\HttpRequest::getSystemParameters(),
+			$arParamKill
+		);
+		return $APPLICATION->GetCurPageParam($addParams, $delParam, $get_index_page);
+	}
 }

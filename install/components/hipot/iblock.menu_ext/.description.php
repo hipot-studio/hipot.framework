@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
  * TYPE - elements|sections - тип выборки, элементы или секции (ОБЯЗАТЕЛЬНЫЙ)
  * CACHE_TAG - пусть сохранения кеша, будет сохранено /bitrix/cache/php/CACHE_TAG/ (ОБЯЗАТЕЛЬНЫЙ)
  * CACHE_TIME - время кеша (ОБЯЗАТЕЛЬНЫЙ)
+ * ADDON_URL_TO_SELECT_ITEM - шаблон пути для дополнительных пунктов выделения ("ADDITIONAL_LINKS" у элемента меню)
  *
  * Параметры выборки
  *

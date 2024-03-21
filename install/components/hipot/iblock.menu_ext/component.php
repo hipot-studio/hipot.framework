@@ -1,11 +1,15 @@
 <?php if (! defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-/** @var array $arParams */
-/** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
-/** @var CBitrixComponent $this */
+use Hipot\BitrixUtils\PhpCacher;
+
+/**
+ * @var array $arParams
+ * @var array $arResult
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ * @global CDatabase $DB
+ * @var CBitrixComponent $this
+ */
 
 $reqParams = ['TYPE', 'CACHE_TAG', 'CACHE_TIME'];
 foreach ($reqParams as $param) {
@@ -14,7 +18,6 @@ foreach ($reqParams as $param) {
 		return false;
 	}
 }
-$arParams["SELECT"] = (array)$arParams["SELECT"];
 
 // сюда соберем все пункты меню
 $arResult 		= [];
@@ -26,6 +29,7 @@ $CACHE_ID		= __FILE__ . '|' . serialize($arParams);
 $cachePath		= 'php/' . ToLower($arParams['CACHE_TAG']) . '/';
 
 $obMenuCache = new CPHPCache();
+PhpCacher::noOutputCacheD0($obMenuCache);
 
 if ($obMenuCache->StartDataCache($CACHE_TIME, $CACHE_ID, $cachePath)) {
 
@@ -45,17 +49,18 @@ if ($obMenuCache->StartDataCache($CACHE_TIME, $CACHE_ID, $cachePath)) {
 	if ($arParams["TYPE"] == 'elements') {
 
 		$arSelect = ["ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME"];
-		if (count($arParams["SELECT"]) > 0) {
+		if (is_array($arParams["SELECT"]) && count($arParams["SELECT"]) > 0) {
 			$arSelect = array_merge($arSelect, $arParams["SELECT"]);
 		}
 		$rsItems = CIBlockElement::GetList($arOrder, $arFilter, false, false, $arSelect);
 		while ($arItem = $rsItems->GetNext()) {
-			$link_params = (count($arParams["SELECT"]) > 0) ? $arItem : [];
+			$link_params = (is_array($arParams["SELECT"]) && count($arParams["SELECT"]) > 0) ? $arItem : [];
+			$addonsUri = !empty($arParams['ADDON_URL_TO_SELECT_ITEM']) ? [CIBlock::ReplaceDetailUrl($arParams['ADDON_URL_TO_SELECT_ITEM'], $arItem)] : [];
 
 			$arResult[] = [
 				$arItem['NAME'],
 				$arItem['DETAIL_PAGE_URL'],
-				[],
+				$addonsUri,
 				$link_params
 			];
 		}
@@ -71,11 +76,12 @@ if ($obMenuCache->StartDataCache($CACHE_TIME, $CACHE_ID, $cachePath)) {
 		$rsSect = CIBlockSection::GetList($arOrder, $arFilter, false, $arSelect, $arNavStartParams);
 		while ($arSect = $rsSect->GetNext()) {
 			$link_params = (count($arParams["SELECT"]) > 0) ? $arSect : [];
+			$addonsUri = !empty($arParams['ADDON_URL_TO_SELECT_ITEM']) ? [CIBlock::ReplaceSectionUrl($arParams['ADDON_URL_TO_SELECT_ITEM'], $arSect)] : [];
 
 			$arResult[] = [
 				$arSect['NAME'],
 				$arSect['SECTION_PAGE_URL'],
-				[],
+				$addonsUri,
 				$link_params
 			];
 		}
