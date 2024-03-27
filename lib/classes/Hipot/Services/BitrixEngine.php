@@ -37,7 +37,7 @@ final class BitrixEngine
 			Application::getInstance(),
 			Application::getInstance()?->getContext()?->getRequest(),
 			self::getCurrentUser(),
-			Cache::createInstance(),
+			Cache::createInstance(['actual_data' => false]), // "locking mode" @see https://dev.1c-bitrix.ru/community/blogs/rns/interesnye-izmeneniya-v-main-2400.php
 			Application::getInstance()->getTaggedCache(),
 			Asset::getInstance(),
 			Application::getInstance()->getSession(),
