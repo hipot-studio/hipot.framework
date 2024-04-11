@@ -9,6 +9,22 @@ use CBitrixComponent;
 
 trait ComponentUtils
 {
+	/**
+	 * Determines if a component exists in Bitrix CMS.
+	 *
+	 * @param string $componentName The name of the component to check.
+	 *
+	 * @return bool Returns true if the component exists, false otherwise.
+	 * @see \CBitrixComponent::initComponent()
+	 */
+	public static function isComponentExists(string $componentName): bool
+	{
+		$component = new \CBitrixComponent();
+		ob_start();
+		$exists = $component->initComponent($componentName);
+		$response = ob_get_clean();
+		return $exists;
+	}
 
 	/**
 	 * Добавляет иконки включаемых областей для компонента Битрикс
