@@ -11,6 +11,7 @@ use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Request;
 use Bitrix\Main\Session\SessionInterface;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\EventManager;
 use Hipot\Types\Singleton;
 
 final class BitrixEngine
@@ -26,7 +27,8 @@ final class BitrixEngine
 		public ?Asset            $asset = null,
 		public ?SessionInterface $session = null,
 		public ?ServiceLocator   $serviceLocator = null,
-		public ?Connection       $connection = null
+		public ?Connection       $connection = null,
+		public ?EventManager     $eventManager = null,
 	)
 	{
 	}
@@ -42,7 +44,8 @@ final class BitrixEngine
 			Asset::getInstance(),
 			Application::getInstance()->getSession(),
 			ServiceLocator::getInstance(),
-			Application::getConnection()
+			Application::getConnection(),
+			EventManager::getInstance()
 		);
 	}
 

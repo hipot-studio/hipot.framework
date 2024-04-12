@@ -243,4 +243,27 @@ trait ContextUtils
 		);
 		return $APPLICATION->GetCurPageParam($addParams, $delParam, $get_index_page);
 	}
+
+	/**
+	 * Disable all page process events (ex performance on ajax scripts)
+	 *
+	 * This function disables specific events in the Bitrix Engine event manager
+	 * ('OnBeforeProlog', 'OnProlog', 'OnEpilog', 'OnAfterEpilog', 'OnEndBufferContent', 'OnPageStart')
+	 * use in init.php
+	 *
+	 * @param BitrixEngine $bitrixEngine The Bitrix engine instance.
+	 * @return void
+	 */
+	public static function disableAllPageProcessEvents(BitrixEngine $bitrixEngine): void
+	{
+		$bitrixEngine->eventManager->addEventHandler('main', 'OnPageStart', static function() use ($bitrixEngine) {
+			$eventsToTurnOff = ['OnBeforeProlog', 'OnProlog', 'OnEpilog', 'OnAfterEpilog', 'OnEndBufferContent', 'OnPageStart'];
+			foreach ($eventsToTurnOff as $eventType) {
+				$arrResult = $bitrixEngine->eventManager->findEventHandlers('main', $eventType);
+				foreach ($arrResult as $k => $event) {
+					$bitrixEngine->eventManager->removeEventHandler('main', $eventType, $k);
+				}
+			}
+		}, false, 1);
+	}
 }
