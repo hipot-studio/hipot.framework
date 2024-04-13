@@ -236,7 +236,8 @@ trait ContextUtils
 				"PAGEN_1", "SIZEN_1", "SHOWALL_1",
 				"PAGEN_2", "SIZEN_2", "SHOWALL_2",
 				"PAGEN_3", "SIZEN_3", "SHOWALL_3",
-				"PHPSESSID", "PageSpeed"
+				"PHPSESSID", "PageSpeed",
+				"testajax", "is_ajax_post", "via_ajax"
 			],
 			\Bitrix\Main\HttpRequest::getSystemParameters(),
 			$arParamKill
@@ -248,7 +249,7 @@ trait ContextUtils
 	 * Disable all page process events (ex performance on ajax scripts)
 	 *
 	 * This function disables specific events in the Bitrix Engine event manager
-	 * ('OnBeforeProlog', 'OnProlog', 'OnEpilog', 'OnAfterEpilog', 'OnEndBufferContent', 'OnPageStart')
+	 * (page handlers flow: OnPageStart -> OnBeforeProlog -> OnProlog -> OnEpilog -> OnAfterEpilog -> OnEndBufferContent)
 	 * use in init.php
 	 *
 	 * @param BitrixEngine $bitrixEngine The Bitrix engine instance.
@@ -257,7 +258,7 @@ trait ContextUtils
 	public static function disableAllPageProcessEvents(BitrixEngine $bitrixEngine): void
 	{
 		$bitrixEngine->eventManager->addEventHandler('main', 'OnPageStart', static function() use ($bitrixEngine) {
-			$eventsToTurnOff = ['OnBeforeProlog', 'OnProlog', 'OnEpilog', 'OnAfterEpilog', 'OnEndBufferContent', 'OnPageStart'];
+			$eventsToTurnOff = ['OnPageStart', 'OnBeforeProlog', 'OnProlog', 'OnEpilog', 'OnAfterEpilog', 'OnEndBufferContent'];
 			foreach ($eventsToTurnOff as $eventType) {
 				$arrResult = $bitrixEngine->eventManager->findEventHandlers('main', $eventType);
 				foreach ($arrResult as $k => $event) {
@@ -265,5 +266,29 @@ trait ContextUtils
 				}
 			}
 		}, false, 1);
+	}
+
+	/**
+	 * Determines if the current request is an AJAX request.
+	 *
+	 * @param BitrixEngine $bitrixEngine The instance of the BitrixEngine class.
+	 *
+	 * @return bool Returns true if the current request is an AJAX request, false otherwise.
+	 */
+	public static function isAjaxRequest(BitrixEngine $bitrixEngine): bool
+	{
+		$request = $bitrixEngine->request;
+		$server = $bitrixEngine->request->getServer();
+
+		if (
+			($request["testajax"] === 'Y') || ($request["is_ajax_post"] === 'Y') || ($request['via_ajax'] === 'Y') ||
+			$request->isAjaxRequest() ||
+			($server->get('HTTP_X_REQUESTED_WITH') === 'XMLHttpRequest') || ($server->get('HTTP_BX_AJAX') !== null)
+		) {
+			$bIsAjax = true;
+		} else {
+			$bIsAjax = false;
+		}
+		return $bIsAjax;
 	}
 }

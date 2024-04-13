@@ -12,16 +12,35 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Composite\Page as CompositePage;
-use \Bitrix\Main\Composite\Engine as CompositeEngine;
+use Bitrix\Main\Composite\Engine as CompositeEngine;
 use Bitrix\Main\Page\Asset;
 use Hipot\BitrixUtils\HiBlockApps;
+use Hipot\Services\BitrixEngine;
+use Hipot\Utils\UUtils;
 
 $eventManager = EventManager::getInstance();
 $request      = Application::getInstance()->getContext()->getRequest();
 
+// optimize turn off all page-process-handlers when it's ajax request:
+$eventManager->addEventHandler('main', 'OnPageStart', static function () {
+	$be = BitrixEngine::getInstance();
+
+	/**
+	 * На сайт пришел аякс-запрос
+	 */
+	define("IS_AJAX", UUtils::isAjaxRequest($be));
+
+	if (IS_AJAX) {
+		UUtils::disableAllPageProcessEvents($be);
+	}
+});
+
 // определяем глобальные константы, которые могут зависеть от $APPLICATION и $USER
 $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use ($request) {
 	global $APPLICATION, $USER;
+
+	// need user and other internal engine items re-create
+	BitrixEngine::resetInstance();
 
 	foreach (
 		[
