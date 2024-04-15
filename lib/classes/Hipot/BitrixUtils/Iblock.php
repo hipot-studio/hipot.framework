@@ -3,6 +3,7 @@ namespace Hipot\BitrixUtils;
 
 use Hipot\Types\UpdateResult,
 	Hipot\Utils\UUtils,
+	Hipot\Model\EO_Utils,
 	Hipot\IbAbstractLayer\IblockElemLinkedChains;
 
 use	Bitrix\Main\Loader,
@@ -208,7 +209,7 @@ class Iblock extends _CIBElement
 		$ID = $el->Add($arAddFields, false, $bUpdateSearch);
 
 		if ($ID) {
-			return new UpdateResult(['RESULT' => $ID,				'STATUS' => UpdateResult::STATUS_OK]);
+			return new UpdateResult(['RESULT' => $ID,			'STATUS' => UpdateResult::STATUS_OK]);
 		}
 
 		return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
@@ -249,7 +250,7 @@ class Iblock extends _CIBElement
 		}
 
 		if ($bUpd) {
-			return new UpdateResult(['RESULT' => $ID,				'STATUS' => UpdateResult::STATUS_OK]);
+			return new UpdateResult(['RESULT' => $ID,			'STATUS' => UpdateResult::STATUS_OK]);
 		}
 
 		return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
@@ -849,19 +850,23 @@ class Iblock extends _CIBElement
 	 *
 	 * @return boolean | int возвращает ID найденного элемента
 	 */
-	public static function checkExistsByNameOrCode($field, int $iblockId, $fieldType = 'name', $table = 'b_iblock_element')
+	public static function checkExistsByNameOrCode(string $field, int $iblockId, string $fieldType = 'name', string $table = 'b_iblock_element'): bool|int
 	{
 		global $DB;
 
 		$fieldType = ToLower($fieldType);
 
 		$iblockFieldsBase = ['code', 'xml_id', 'name', 'preview_text'];
-		$fields = UUtils::getTableFieldsFromDB($table);
+
+		$pseudoModel = new class() {
+			use EO_Utils;
+		};
+		$fields = $pseudoModel::getTableFields($table);
 		foreach ($fields as &$f) {
 			$f = ToLower($f);
 			$iblockFields[] = $f;
 		}
-		unset($f);
+		unset($f, $pseudoModel);
 
 		/** @noinspection TypeUnsafeArraySearchInspection */
 		if ($iblockId == 0 || trim($field) == ''
@@ -889,20 +894,21 @@ class Iblock extends _CIBElement
 
 		if ((int)$el['ID'] > 0) {
 			return (int)$el['ID'];
-		} else {
-			return false;
 		}
+
+		return false;
 	}
 
 	/**
 	 * Получить массив ids элементов инфоблока $iblockId по запросу $query
+	 *
 	 * @param string $query строка запроса
-	 * @param int $iblockId код инфоблока
+	 * @param int    $iblockId код инфоблока
 	 *
 	 * @return array
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function queryIblockItemsSearch($query, $iblockId): array
+	public static function queryIblockItemsSearch(string $query, $iblockId): array
 	{
 		$r = [];
 		if (!Loader::includeModule('search')) {

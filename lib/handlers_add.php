@@ -28,9 +28,14 @@ $eventManager->addEventHandler('main', 'OnPageStart', static function () {
 	/**
 	 * На сайт пришел аякс-запрос
 	 */
-	define("IS_AJAX", UUtils::isAjaxRequest($be));
+	define('IS_AJAX', UUtils::isAjaxRequest($be));
 
-	if (IS_AJAX) {
+	/**
+	 * Текущий процесс запущен из командной строки
+	 */
+	define('IS_CLI', PHP_SAPI === 'cli');
+
+	if (IS_AJAX || IS_CLI) {
 		UUtils::disableAllPageProcessEvents($be);
 	}
 });
