@@ -7,7 +7,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Page\AssetLocation;
 
-final class AssetsContainer
+class AssetsContainer
 {
 	public const CSS = 1;
 	public const CSS_INLINE = 1;
@@ -17,6 +17,8 @@ final class AssetsContainer
 	private static array $CSS_INLINE = [];
 	private static array $CSS_DEFER = [];
 
+	private static array $siteJsConfigs = [];
+
 	public static function addCss(string $path, int $type = self::CSS): void
 	{
 		match ($type) {
@@ -24,6 +26,30 @@ final class AssetsContainer
 			self::CSS_DEFER         => self::$CSS_DEFER[] = $path,
 			default                 => self::$CSS[] = $path,
 		};
+	}
+
+	public static function addJsConfig(array $config, bool $rewrite = false): void
+	{
+		if (!is_array(self::$siteJsConfigs)) {
+			$initJsConfigs = [
+				'SITE_TEMPLATE_PATH' => SITE_TEMPLATE_PATH,
+				'IS_DEV'             => IS_BETA_TESTER,
+				'lang'               => [],
+				'requireJSs'         => [],
+				'requireCss'         => []
+			];
+			self::$siteJsConfigs = $initJsConfigs;
+		}
+		foreach ($config as $key => $value) {
+			if ($rewrite) {
+				self::$siteJsConfigs[$key] = $value;
+			} else {
+				if (!is_array($value)) {
+					$value = [$value];
+				}
+				self::$siteJsConfigs[$key] = array_merge(self::$siteJsConfigs[$key] ?? [], $value);
+			}
+		}
 	}
 
 	public static function onEpilogSendAssets(): void
@@ -74,5 +100,35 @@ final class AssetsContainer
 			Asset::getInstance()?->addCss($css);
 		}
 		// endregion
+
+		self::sendJsParamsAsset();
+	}
+
+	/**
+	 * need change on concrete site
+	 * @override
+	 * @return void
+	 */
+	public static function sendJsParamsAsset(): void
+	{
+		if (count(self::$siteJsConfigs) == 0) {
+			// init base js config
+			self::addJsConfig([]);
+		}
+
+		ob_start();
+		?>
+		<script data-skip-moving="true">
+			/**
+			 * @type {{
+			 * SITE_TEMPLATE_PATH:string, IS_DEV:boolean, lang:{},
+			 * requireJSs:{},
+			 * requireCss:{}
+			 * }}
+			 */
+			const appParams = <?=\CUtil::PhpToJSObject(self::$siteJsConfigs)?>;
+		</script>
+		<?
+		Asset::getInstance()?->addString(ob_get_clean(), true, AssetLocation::AFTER_JS_KERNEL);
 	}
 }

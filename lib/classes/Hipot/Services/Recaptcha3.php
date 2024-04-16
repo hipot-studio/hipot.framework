@@ -30,7 +30,7 @@ final class Recaptcha3
 		  `UF_REFERER` text,
 		  `UF_USER_AGENT` text,
 		  `UF_ADDR` VARCHAR(100),
-	      `UF_SCORE` FLOAT,
+		  `UF_SCORE` FLOAT,
 		  `UF_DATA` text,
 		  PRIMARY KEY (`ID`),
 		  KEY `IDX_DT` (`UF_DATETIME`),
