@@ -11,6 +11,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Service\GeoIp;
 use Hipot\Services\BitrixEngine;
+use Hipot\Services\BitrixEngine;
 use Hipot\Utils\UUtils;
 
 
@@ -49,9 +50,7 @@ final class Recaptcha3
 
 	const array ANTIVIRUS_BLOCK_ONLY_COUNTRIES = ['FI', 'DE', 'US'];
 	const array ANTIVIRUS_BLOCK_PATH = [
-		'/ru/teach/courses/*',
-		'/en/learn/courses/*',
-		'/ru/learn/courses/*'
+		'/*',
 	];
 
 	/**
