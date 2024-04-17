@@ -85,6 +85,8 @@ final class Recaptcha3
 		return  self::GLOBAL_ENABLED && $this->ENABLED;
 	}
 
+	// region integration
+
 	/**
 	 * Retrieves the HTML code for the reCAPTCHA widget.
 	 * Use outside <body> tag
@@ -142,12 +144,17 @@ final class Recaptcha3
 	 */
 	public function sendRequestToCaptchaServer(): array
 	{
+		$userIp = $this->request->getServer()->getRemoteAddr();
 		$bOkByCountry = false;
-		if (count(self::OK_COUNTRIES) > 0 && in_array($this->request->getServer()->get('GEOIP_COUNTRY_CODE'), self::OK_COUNTRIES)) {
+		if (self::isIgnoredIp($userIp)) {
 			$bOkByCountry = true;
 		}
-		if (self::isIgnoredIp($this->request->getServer()->get('REMOTE_ADDR'))) {
-			$bOkByCountry = true;
+		if (!$bOkByCountry) {
+			if (count(self::OK_COUNTRIES) > 0 &&
+				(in_array($this->request->getServer()->get('GEOIP_COUNTRY_CODE'), self::OK_COUNTRIES) || in_array(self::getCountryByIp($userIp), self::OK_COUNTRIES))
+			) {
+				$bOkByCountry = true;
+			}
 		}
 
 		if (! $this->isEnabled() || $bOkByCountry) {
@@ -197,53 +204,6 @@ final class Recaptcha3
 		}
 	}
 
-	private function saveLogData(array $data): array
-	{
-		$data['uri'] = $this->request['uri'];
-		$data['IP'] = $this->request->getServer()->getRemoteAddr();
-
-		$logTableDm = self::getLogTableEntity();
-
-		$r = $logTableDm::add([
-			'UF_DATETIME'		=> DateTime::createFromTimestamp(time()),
-			'UF_URL'			=> $data['uri'],
-			'UF_REFERER'		=> $this->request->getServer()->get('HTTP_REFERER'),
-			'UF_USER_AGENT'		=> $this->request->getServer()->getUserAgent(),
-			'UF_ADDR'			=> $data['IP'],
-			'UF_SCORE'          => $data['score'],
-			'UF_DATA'           => Json::encode($data)
-		]);
-
-		$needKeys = ['success', 'is_good', 'error'];
-		foreach ($data as $key => $value) {
-			if (!in_array($key, $needKeys)) {
-				unset($data[$key]);
-			}
-		}
-
-		return $data;
-	}
-
-	/**
-	 * Checks if an IP address is locked based on the score and recent activity.
-	 *
-	 * @param string $ipAddress The IP address to check.
-	 * @param int    $intervalDayCheck The number of days to check for recent activity.
-	 *
-	 * @return bool True if the IP address is locked, false otherwise.
-	 */
-	public static function isAddrLocked(?string $ipAddress, int $intervalDayCheck = 3): bool
-	{
-		if (! \filter_var($ipAddress, FILTER_VALIDATE_IP)) {
-			return false;
-		}
-		$rs = BitrixEngine::getInstance()->connection->query(
-			sprintf('SELECT `UF_ADDR` FROM %s WHERE `UF_SCORE` <= %s AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%s DAY) AND `UF_ADDR` = "%s" GROUP BY `UF_ADDR` ORDER BY `UF_ADDR`',
-				self::LOG_TABLE_NAME, self::SCORE_LIMIT, $intervalDayCheck, $ipAddress)
-		);
-		return $rs->getSelectedRowsCount() > 0;
-	}
-
 	/**
 	 * Event handler for the "OnPageStart" event.
 	 *
@@ -259,8 +219,11 @@ final class Recaptcha3
 		}
 		unset($self);
 
-		// block bad recaptcha3 ips by bx-security module
 		$ip = (string)UUtils::getUserIp($be);
+		if (self::isIgnoredIp($ip)) {
+			return;
+		}
+		// block bad recaptcha3 ips by bx-security module
 		$intervalDayCheck = 2;
 		if (self::isAddrLocked($ip, $intervalDayCheck)) {
 			$ruleId = 0;
@@ -303,10 +266,39 @@ final class Recaptcha3
 					$ob->Update($ruleId, $arFields);
 				}
 			}
-			if (!\CSite::InDir(self::URI_403) && !self::isIgnoredIp($ip)) {
+			if (!\CSite::InDir(self::URI_403)) {
 				LocalRedirect(self::URI_403 . '#' . $ruleId, true, '302 Found');
 			}
 		}
+	}
+
+	// endregion
+
+	// region other stuff
+
+	/**
+	 * Checks if an IP address is locked based on the score and recent activity.
+	 *
+	 * @param ?string $ipAddress The IP address to check.
+	 * @param int    $intervalDayCheck The number of days to check for recent activity.
+	 * @param bool $checkMaxScore need check max score by all hits on needed interval
+	 *
+	 * @return bool True if the IP address is locked, false otherwise.
+	 */
+	public static function isAddrLocked(?string $ipAddress, int $intervalDayCheck = 3, bool $checkMaxScore = true): bool
+	{
+		if (! \filter_var($ipAddress, FILTER_VALIDATE_IP)) {
+			return false;
+		}
+		$rs = BitrixEngine::getInstance()->connection->query(
+			str_replace(['%table%', '%ip%', '%score%', '%days%'], [self::LOG_TABLE_NAME, $ipAddress, self::SCORE_LIMIT, $intervalDayCheck],
+				' SELECT `UF_ADDR` FROM `%table%` '
+				. ' WHERE `UF_SCORE` <= %score% AND `UF_ADDR` = "%ip%" '
+				. (!$checkMaxScore ? '' : ' AND (SELECT `UF_SCORE` FROM `%table%` WHERE `UF_ADDR` = "%ip%" AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) ORDER BY `UF_SCORE` DESC LIMIT 1) <= %score% ')
+				. ' AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) GROUP BY `UF_ADDR` ORDER BY `UF_ADDR`'
+			)
+		);
+		return $rs->getSelectedRowsCount() > 0;
 	}
 
 	private static function isIgnoredIp(string $ip): bool
@@ -330,6 +322,33 @@ final class Recaptcha3
 			$recheckCountryCode = '';
 		}
 		return $recheckCountryCode;
+	}
+
+	private function saveLogData(array $data): array
+	{
+		$data['uri'] = $this->request['uri'];
+		$data['IP'] = $this->request->getServer()->getRemoteAddr();
+
+		$logTableDm = self::getLogTableEntity();
+
+		$r = $logTableDm::add([
+			'UF_DATETIME'		=> DateTime::createFromTimestamp(time()),
+			'UF_URL'			=> $data['uri'],
+			'UF_REFERER'		=> $this->request->getServer()->get('HTTP_REFERER'),
+			'UF_USER_AGENT'		=> $this->request->getServer()->getUserAgent(),
+			'UF_ADDR'			=> $data['IP'],
+			'UF_SCORE'          => $data['score'],
+			'UF_DATA'           => Json::encode($data)
+		]);
+
+		$needKeys = ['success', 'is_good', 'error'];
+		foreach ($data as $key => $value) {
+			if (!in_array($key, $needKeys)) {
+				unset($data[$key]);
+			}
+		}
+
+		return $data;
 	}
 
 	/**
@@ -356,4 +375,6 @@ final class Recaptcha3
 		]);
 		return $logTableEntity->getDataClass();
 	}
+
+	// endregion
 }
