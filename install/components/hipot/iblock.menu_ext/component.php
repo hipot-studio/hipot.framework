@@ -35,14 +35,14 @@ if ($obMenuCache->StartDataCache($CACHE_TIME, $CACHE_ID, $cachePath)) {
 
 	CModule::IncludeModule('iblock');
 
-	if (count($arParams["ORDER"]) > 0) {
+	if (is_countable($arParams["ORDER"]) && count($arParams["ORDER"]) > 0) {
 		$arOrder = $arParams["ORDER"];
 	} else {
 		$arOrder = ["SORT" => "ASC"];
 	}
 
 	$arFilter = ["IBLOCK_ID" => $arParams["IBLOCK_ID"], "ACTIVE" => "Y"];
-	if (count($arParams["FILTER"]) > 0) {
+	if (is_countable($arParams["FILTER"]) && count($arParams["FILTER"]) > 0) {
 		$arFilter = array_merge($arFilter, $arParams["~FILTER"]);
 	}
 
