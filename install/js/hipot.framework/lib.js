@@ -64,7 +64,7 @@
 	 * Проверяет код нажатой клавиши для полей типа "телефон"
 	 * Разрешены символы: 0-9 + - \s ( )
 	 * Разрешены комбинации: Backspace, ctrl + v, ctrl + c, ctrl + r
-	 *
+	 * 
 	 * @returns {Boolean}
 	 */
 	$.fn.checkPhone = function () {
@@ -82,6 +82,37 @@
 		});
 	};
 
+	/**
+	 * jQuery plugin that trigger changes to the value of an input field (to track hidden fields)
+	 *
+	 * @since 1.0.0
+	 * @memberOf jQuery.fn
+	 * @function triggerValueChange
+	 *
+	 * @param {Object} options - The options for the trackValueChange plugin.
+	 * @param {function} options.onChange - The callback function to execute when the value changes.	 *
+	 * @returns {jQuery} The jQuery object for chaining.
+	 * @example
+	 * $("input[type=hidden]").triggerValueChange();
+	 * $("#sessid").on('change', () => { console.log('change trigger!'); })
+	 * $("#sessid").val('change hidden');
+	 */
+	$.fn.triggerValueChange = function () {
+		return this.each(function () {
+			const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+			let trackChange = function(element) {
+				let observer = new MutationObserver(function(mutations, observer) {
+					if(mutations[0].attributeName == "value") {
+						$(element).trigger("change");
+					}
+				});
+				observer.observe(element, {
+					attributes: true
+				});
+			}
+			trackChange(this);
+		});
+	};
 
 	/**
 	 * Плагин для работы с выпадающими списками SELECT
