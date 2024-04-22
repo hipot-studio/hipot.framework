@@ -169,10 +169,10 @@ trait EO_Utils
 				"SELECT `ID`, `rank` FROM
 						(SELECT 
 							`{$tableName}`.`ID` AS `ID`,
-								@rownum := @rownum + 1 AS rank
-						FROM `{$tableName}` `{$tableName}`, (SELECT @rownum := 0) r 
-						ORDER BY {$orderSql}
+								@rownum := @rownum + 1 AS `rank`
+						FROM `{$tableName}` `{$tableName}`, (SELECT @rownum := 0) `r`
 						WHERE {$whereSql}
+						ORDER BY {$orderSql}
 						) AS `list`
 					WHERE `ID` = {$id}")->fetch();
 		} catch (\Throwable $ignore) {
@@ -191,21 +191,20 @@ trait EO_Utils
 		if ((int)$offset['rank'] > 0) {
 			$getListParams += [
 				'limit' => 4,
-				'offset' => $offset['rank'],
+				'offset' => max($offset['rank'] - 2, 0),    // to select current and prev
 			];
 		}
 		$list = static::getList($getListParams);
 
-		$prev = $next = [];
-		$iter = false;
+		$prev = $next = $iter = false;
 		$bPrev = false;
 		while ($row = $list->fetch()) {
 			if ($bPrev) {
-				$prev = $row;
+				$next = $row;
 				break;
 			}
 			if ($row['ID'] == $id) {
-				$next = $iter;
+				$prev = $iter;
 				$bPrev = true;
 			}
 			$iter = $row;
