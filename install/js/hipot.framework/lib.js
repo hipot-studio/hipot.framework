@@ -101,7 +101,7 @@
 		const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
 		let trackChange = function(element) {
 			let observer = new MutationObserver(function(mutations, observer) {
-				if(mutations[0].attributeName == "value") {
+				if (mutations[0].attributeName == "value") {
 					$(element).trigger("change");
 				}
 			});
@@ -236,11 +236,7 @@ function ClearFillFormErrorMess(layer)
  */
 function isEmpty(str)
 {
-	if ($.trim(str).length > 0) {
-		return false;
-	} else {
-		return true;
-	}
+	return !str || str.toString().trim().length <= 0;
 }
 
 /**
