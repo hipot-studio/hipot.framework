@@ -98,18 +98,18 @@
 	 * $("#sessid").val('change hidden');
 	 */
 	$.fn.triggerValueChange = function () {
+		const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+		let trackChange = function(element) {
+			let observer = new MutationObserver(function(mutations, observer) {
+				if(mutations[0].attributeName == "value") {
+					$(element).trigger("change");
+				}
+			});
+			observer.observe(element, {
+				attributes: true
+			});
+		}
 		return this.each(function () {
-			const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-			let trackChange = function(element) {
-				let observer = new MutationObserver(function(mutations, observer) {
-					if(mutations[0].attributeName == "value") {
-						$(element).trigger("change");
-					}
-				});
-				observer.observe(element, {
-					attributes: true
-				});
-			}
 			trackChange(this);
 		});
 	};
