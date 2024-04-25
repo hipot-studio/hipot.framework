@@ -18,7 +18,7 @@ if (! defined('ABSTRACT_LAYER_SAULT')) {
 	/**
 	 * Соль в именах генерируемых классов, разрешены символы [0-9a-zA-Z_]
 	 * по-умолчанию, устанавливается в трансформированное имя домена, напр.
-	 * www.good-site.hipot.ru --> GOOD_SITE_HIPOT_RU
+	 * www.good-site.hipot.com --> GOOD_SITE_HIPOT_COM
 	 * @var string
 	 */
 	define('ABSTRACT_LAYER_SAULT', ToUpper(str_replace(['www.', '.', '-', ':80', ':8080'], ['_', '_', '_', ''], $serverName)));
@@ -29,11 +29,15 @@ if (! defined('ABSTRACT_LAYER_SAULT')) {
  * @var string
  * @global
  */
-$fileToGenerateSxema = Loader::getDocumentRoot() . '/bitrix/modules/generated_iblock_sxem.php';
-if (! file_exists($fileToGenerateSxema)) {
-	IblockGenerateSxemManager::updateSxem($fileToGenerateSxema);
+$dir = Loader::getDocumentRoot() . '/bitrix/modules/';
+if (is_dir(Loader::getDocumentRoot() . '/local/php_interface/')) {
+	$dir = Loader::getDocumentRoot() . '/local/php_interface/';
+}
+$fileToGenerateSchema = $dir . 'hipot_annotations.php';
+if (! file_exists($fileToGenerateSchema)) {
+	IblockGenerateSxemManager::updateSchema($fileToGenerateSchema);
 }
 // устанавливаем обработку событий
-IblockGenerateSxemManager::setUpdateHandlers($fileToGenerateSxema);
+IblockGenerateSxemManager::setUpdateHandlers($fileToGenerateSchema);
 
 // endregion /*** END Abstract Iblock Elements Layer ***/

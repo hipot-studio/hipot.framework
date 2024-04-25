@@ -476,7 +476,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 		$out = '';
 		$out .=
 			'use Hipot\IbAbstractLayer\Types\IblockElementItem,
-	Hipot\IbAbstractLayer\Types\IblockElementItemPropertyValue
+	Hipot\IbAbstractLayer\Types\IblockElementItemPropertyValue,
 	Hipot\IbAbstractLayer\Types\ValueFile;
 ';
 

@@ -15,7 +15,7 @@ class IblockGenerateSxemManager
 	 * @return bool
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function updateSxem(string $fileToGenerateSxema)
+	public static function updateSchema(string $fileToGenerateSxema): bool
 	{
 		self::setLastSxem($fileToGenerateSxema);
 

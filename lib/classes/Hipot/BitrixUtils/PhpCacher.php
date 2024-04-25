@@ -60,7 +60,7 @@ final class PhpCacher
 	 * @param int                      $cacheTime время кеша
 	 * @param callable                 $callbackFunction в анонимной функции можно регистрировать и теги для управляемого кеша:
 	 * <code>
-	 *     BitrixEngine::getInstance()->taggedCache->registerTag("iblock_id_43");
+	 *     BitrixEngine::getInstance()->taggedCache->registerTag("iblock_id_43");  // @see CIBlock::registerWithTagCache($catalog_id);
 	 *     BitrixEngine::getInstance()->taggedCache->registerTag("iblock_id_new");
 	 *
 	 *     // Либо отключить их использование глобальной константой PHPCACHER_TAGGED_CACHE_AUTOSTART = false

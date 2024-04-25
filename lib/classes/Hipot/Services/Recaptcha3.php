@@ -293,9 +293,9 @@ final class Recaptcha3
 		$rs = BitrixEngine::getInstance()->connection->query(
 			str_replace(['%table%', '%ip%', '%score%', '%days%'], [self::LOG_TABLE_NAME, $ipAddress, self::SCORE_LIMIT, $intervalDayCheck],
 				' SELECT `UF_ADDR` FROM `%table%` '
-				. ' WHERE `UF_SCORE` <= %score% AND `UF_ADDR` = "%ip%" '
-				. (!$checkMaxScore ? '' : ' AND (SELECT `UF_SCORE` FROM `%table%` WHERE `UF_ADDR` = "%ip%" AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) ORDER BY `UF_SCORE` DESC LIMIT 1) <= %score% ')
-				. ' AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) GROUP BY `UF_ADDR` ORDER BY `UF_ADDR`'
+					. ' WHERE `UF_SCORE` <= %score% AND `UF_ADDR` = "%ip%" '
+					. (!$checkMaxScore ? '' : ' AND (SELECT `UF_SCORE` FROM `%table%` WHERE `UF_ADDR` = "%ip%" AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) ORDER BY `UF_SCORE` DESC LIMIT 1) <= %score% ')
+					. ' AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) GROUP BY `UF_ADDR` ORDER BY `UF_ADDR`'
 			)
 		);
 		return $rs->getSelectedRowsCount() > 0;
@@ -312,7 +312,7 @@ final class Recaptcha3
 		return false;
 	}
 
-	private static function getCountryByIp(string $ip): string
+	private static function getCountryByIp(?string $ip): string
 	{
 		try {
 			$r = GeoIp\Manager::getDataResult($ip, LANGUAGE_ID);
@@ -321,7 +321,7 @@ final class Recaptcha3
 			UUtils::logException($exception);
 			$recheckCountryCode = '';
 		}
-		return $recheckCountryCode;
+		return (string)$recheckCountryCode;
 	}
 
 	private function saveLogData(array $data): array
