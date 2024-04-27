@@ -35,7 +35,7 @@ $eventManager->addEventHandler('main', 'OnPageStart', static function () {
 	 */
 	define('IS_CLI', PHP_SAPI === 'cli');
 
-	if (IS_AJAX || IS_CLI) {
+	if (IS_AJAX || IS_CLI || (defined('DISABLE_PAGE_EVENTS') && DISABLE_PAGE_EVENTS === true)) {
 		UUtils::disableAllPageProcessEvents($be);
 	}
 });
