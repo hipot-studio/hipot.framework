@@ -22,7 +22,7 @@ final class Recaptcha3
 	const bool GLOBAL_ENABLED = true;
 	const string CONFIG_FILE = '/bitrix/php_interface/secrets/recaptcha_keys.php';
 
-	const float SCORE_LIMIT = 0.5;
+	const float SCORE_LIMIT = 0.6;
 	const string EVENT_NAME = 'loadpage';
 	const string TOKEN_REQUEST_NAME = 'token';
 
@@ -57,6 +57,13 @@ final class Recaptcha3
 	 * @var array OK_COUNTYRIES
 	 */
 	const array OK_COUNTRIES = ['RU'];
+
+	/**
+	 * Array of countries with bad traffic
+	 * @var array
+	 */
+	const array ONLY_CHECK_BAD_TRAFIC_COUNTRIES = ['FI', 'DE'];
+
 	/**
 	 * Path to the file containing the list of IP addresses to be ignored by the reCAPTCHA verification process.
 	 * @var string OK_IPS_FILE
@@ -145,13 +152,16 @@ final class Recaptcha3
 	public function sendRequestToCaptchaServer(): array
 	{
 		$userIp = $this->request->getServer()->getRemoteAddr();
+		$userCountry = self::getCountryByIp($userIp);
+
 		$bOkByCountry = false;
-		if (self::isIgnoredIp($userIp)) {
+		if (self::isIgnoredIp($userIp) || (count(self::ONLY_CHECK_BAD_TRAFIC_COUNTRIES) > 0 && !in_array($userCountry, self::ONLY_CHECK_BAD_TRAFIC_COUNTRIES))) {
 			$bOkByCountry = true;
 		}
+
 		if (!$bOkByCountry) {
 			if (count(self::OK_COUNTRIES) > 0 &&
-				(in_array($this->request->getServer()->get('GEOIP_COUNTRY_CODE'), self::OK_COUNTRIES) || in_array(self::getCountryByIp($userIp), self::OK_COUNTRIES))
+				(in_array($this->request->getServer()->get('GEOIP_COUNTRY_CODE'), self::OK_COUNTRIES) || in_array($userCountry, self::OK_COUNTRIES))
 			) {
 				$bOkByCountry = true;
 			}
@@ -163,7 +173,7 @@ final class Recaptcha3
 
 		$token = $this->request[self::TOKEN_REQUEST_NAME];
 		if (empty($token)) {
-			return $this->saveLogData(['success' => false, 'error' => 'empty token', 'score' => 0.0]);
+			return ['success' => false, 'error' => 'empty token', 'score' => 0.0];
 		}
 
 		$secretKey = include Loader::getDocumentRoot() . self::CONFIG_FILE;
@@ -224,7 +234,7 @@ final class Recaptcha3
 			return;
 		}
 		// block bad recaptcha3 ips by bx-security module
-		$intervalDayCheck = 2;
+		$intervalDayCheck = 1;
 		if (self::isAddrLocked($ip, $intervalDayCheck)) {
 			$ruleId = 0;
 			if (Loader::includeModule('security')) {
@@ -293,9 +303,9 @@ final class Recaptcha3
 		$rs = BitrixEngine::getInstance()->connection->query(
 			str_replace(['%table%', '%ip%', '%score%', '%days%'], [self::LOG_TABLE_NAME, $ipAddress, self::SCORE_LIMIT, $intervalDayCheck],
 				' SELECT `UF_ADDR` FROM `%table%` '
-					. ' WHERE `UF_SCORE` <= %score% AND `UF_ADDR` = "%ip%" '
-					. (!$checkMaxScore ? '' : ' AND (SELECT `UF_SCORE` FROM `%table%` WHERE `UF_ADDR` = "%ip%" AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) ORDER BY `UF_SCORE` DESC LIMIT 1) <= %score% ')
-					. ' AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) GROUP BY `UF_ADDR` ORDER BY `UF_ADDR`'
+				. ' WHERE `UF_SCORE` <= %score% AND `UF_ADDR` = "%ip%" '
+				. (!$checkMaxScore ? '' : ' AND (SELECT `UF_SCORE` FROM `%table%` WHERE `UF_ADDR` = "%ip%" AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) ORDER BY `UF_SCORE` DESC LIMIT 1) <= %score% ')
+				. ' AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) GROUP BY `UF_ADDR` ORDER BY `UF_ADDR`'
 			)
 		);
 		return $rs->getSelectedRowsCount() > 0;
@@ -312,7 +322,7 @@ final class Recaptcha3
 		return false;
 	}
 
-	private static function getCountryByIp(?string $ip): string
+	private static function getCountryByIp(string $ip): string
 	{
 		try {
 			$r = GeoIp\Manager::getDataResult($ip, LANGUAGE_ID);

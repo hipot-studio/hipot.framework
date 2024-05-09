@@ -20,6 +20,9 @@ final class BitrixEngine
 
 	public function __construct(
 		public ?Application      $app = null,
+		/**
+		 * @var \Bitrix\Main\Request|\Bitrix\Main\HttpRequest
+		 */
 		public ?Request          $request = null,
 		public ?CurrentUser      $user = null,
 		public ?Cache            $cache = null,
