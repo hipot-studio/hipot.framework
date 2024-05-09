@@ -6,7 +6,7 @@ namespace Hipot\IbAbstractLayer\Types;
  * @author hipot
  * @version 1.0
  */
-class IblockElementItemPropertyValueFile extends IblockElementItemPropertyValue
+final class IblockElementItemPropertyValueFile extends IblockElementItemPropertyValue
 {
 	/**
 	 * Поля параметров файла, возвращаемые методом CFile::GetFileArray()

@@ -5,94 +5,32 @@
  * Date: 08.06.2017 0:06
  * @version pre 1.0
  */
-
 namespace Hipot\IbAbstractLayer\Types;
 
 /**
  * Объект информации о файле, полученный через CFile::GetFileArray()
  * @author hipot
  * @version 1.0
+ *
+ * @property int $ID ID файла
+ * @property int $TIMESTAMP_X Дата изменения записи
+ * @property string $MODULE_ID Идентификатор модуля которому принадлежит файл.
+ * @property int $WIDTH Ширина изображения (если файл - графический)
+ * @property int $HEIGHT Высота изображения (если файл - графический)
+ * @property int $FILE_SIZE Размер файла (байт)
+ * @property string $CONTENT_TYPE MIME тип файла
+ * @property string $SUBDIR Подкаталог в котором находится файл на диске. Основной каталог для хранения файлов "Папка по умолчанию для загрузки файлов" ("main", "upload_dir", "upload")
+ * @property string $FILE_NAME Имя файла на диске сервера
+ * @property string $ORIGINAL_NAME Оригинальное имя файла в момент загрузки его на сервер
+ * @property string $DESCRIPTION Описание файла
+ * @property string $SRC Путь к файлу начинающийся от каталога указанного в параметре DocumentRoot в настройках веб-сервера, заданный по правилам формирования URL-адресов: /ru/about/index.php
+ * @property mixed $HANDLER_ID
+ * @property string $EXTERNAL_ID
+ * @property mixed $VERSION_ORIGINAL_ID
+ * @property mixed $META
  */
-class ValueFile extends Base
+final class ValueFile extends Base
 {
-	/**
-	 * ID файла
-	 * @var int
-	 */
-	public $ID;
-
-	/**
-	 * Дата изменения записи
-	 * @var int
-	 */
-	public $TIMESTAMP_X;
-
-	/**
-	 * Идентификатор модуля которому принадлежит файл.
-	 * @var string
-	 */
-	public $MODULE_ID;
-
-	/**
-	 * Высота изображения (если файл - графический).
-	 * @var int
-	 */
-	public $HEIGHT;
-
-	/**
-	 * Ширина изображения (если файл - графический).
-	 * @var int
-	 */
-	public $WIDTH;
-
-	/**
-	 * Размер файла (байт)
-	 * @var int
-	 */
-	public $FILE_SIZE;
-
-	/**
-	 * MIME тип файла
-	 * @var string
-	 */
-	public $CONTENT_TYPE;
-
-	/**
-	 * Подкаталог в котором находится файл на диске. Основной каталог для хранения файлов
-	 * задается в параметре "Папка по умолчанию для загрузки файлов" в настройках главного
-	 * модуля, значение данного параметра программно можно получить с помощью вызова
-	 * функции: COption::GetOptionString("main", "upload_dir", "upload");
-	 * @var string
-	 */
-	public $SUBDIR;
-
-	/**
-	 * Имя файла на диске сервера
-	 * @var string
-	 */
-	public $FILE_NAME;
-
-	/**
-	 * Оригинальное имя файла в момент загрузки его на сервер
-	 * @var string
-	 */
-	public $ORIGINAL_NAME;
-
-	/**
-	 * Описание файла
-	 * @var string
-	 */
-	public $DESCRIPTION;
-
-	/**
-	 * Функция возвращает путь от корня к зарегистрированному файлу.
-	 * Путь к файлу начинающийся от каталога указанного в параметре DocumentRoot в
-	 * настройках веб-сервера, заданный по правилам формирования URL-адресов.
-	 * Пример: /ru/about/index.php
-	 * @var string
-	 */
-	public $SRC;
-
 	/**
 	 * Создание объекта информации о файле
 	 * @param array $arPropFlds результат, полученный через CFile::GetFileArray()
@@ -100,6 +38,9 @@ class ValueFile extends Base
 	public function __construct($arPropFlds)
 	{
 		foreach ($arPropFlds as $fld => $value) {
+			if ($this->isEmptyValue($value)) {
+				continue;
+			}
 			$this->{$fld} = $value;
 		}
 	}

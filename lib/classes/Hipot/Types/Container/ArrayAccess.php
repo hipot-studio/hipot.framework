@@ -2,49 +2,60 @@
 namespace Hipot\Types\Container;
 
 /**
- * @see https://www.php.net/manual/ru/class.arrayaccess.php
+ * Container implements ArrayAccess
+ *
+ * @see      ArrayAccess
+ *
+ * @method   void  doSetContainer(string $key, $value)
+ * @method   mixed doGetContainer(string $key)
+ * @method   bool  doContainsContainer(string $key)
+ * @method   void  doDeleteContainer(string $key)
  */
 trait ArrayAccess
 {
 	/**
-	 * @param mixed $offset
+	 * Offset to set
+	 *
+	 * @param  mixed $offset
+	 * @param  mixed $value
+	 *
+	 */
+	public function offsetSet($offset, $value): void
+	{
+		$this->doSetContainer($offset, $value);
+	}
+
+	/**
+	 * Offset to retrieve
+	 *
+	 * @param  mixed $offset
+	 *
+	 * @return mixed
+	 */
+	public function offsetGet($offset)
+	{
+		return $this->doGetContainer($offset);
+	}
+
+	/**
+	 * Whether a offset exists
+	 *
+	 * @param  mixed $offset
 	 *
 	 * @return bool
 	 */
 	public function offsetExists($offset): bool
 	{
-		return isset($this->{$offset});
+		return $this->doContainsContainer($offset);
 	}
 
 	/**
-	 * @param mixed $offset
+	 * Offset to unset
 	 *
-	 * @return mixed|null
-	 */
-	public function offsetGet($offset)
-	{
-		if ($this->offsetExists($offset)) {
-			return $this->{$offset};
-		}
-		return null;
-	}
-
-	/**
-	 * @param mixed $offset
-	 * @param mixed $value
-	 */
-	public function offsetSet($offset, $value): void
-	{
-		$this->{$offset} = $value;
-	}
-
-	/**
 	 * @param mixed $offset
 	 */
 	public function offsetUnset($offset): void
 	{
-		if ($this->offsetExists($offset)) {
-			unset($this->{$offset});
-		}
+		$this->doDeleteContainer($offset);
 	}
 }

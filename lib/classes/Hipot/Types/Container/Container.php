@@ -11,6 +11,7 @@ trait Container
 	 */
 	protected $container = [];
 
+
 	/**
 	 * Set key/value pair
 	 *
@@ -33,6 +34,10 @@ trait Container
 	 */
 	protected function doGetContainer(string $key)
 	{
+		if (method_exists($this, 'onBeforeGetContainer')) {
+			$this->onBeforeGetContainer($key);
+		}
+
 		if ($this->doContainsContainer($key)) {
 			return $this->container[$key];
 		}
@@ -97,5 +102,14 @@ trait Container
 		foreach ($this->container as &$value) {
 			$value = null;
 		}
+	}
+
+	/**
+	 * To use the Countable interface
+	 * @return int
+	 */
+	public function count(): int
+	{
+		return count($this->container);
 	}
 }

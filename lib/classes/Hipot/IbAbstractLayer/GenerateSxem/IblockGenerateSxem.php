@@ -152,7 +152,7 @@ class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID# extends IblockEleme
 /**
  * Класс цепочек связанных элементов со свойством "#PROPERTY_CODE#" инфоблока #IBLOCK_ID#
  */
-class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID##PROPERTY_CODE# extends IblockElementItemPropertyValue
+class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID##PROPERTY_CODE# extends IblockElementItemPropertyValueLinkElem
 {
 	/**
 	 * Цепочка из связанных элементов, выводятся все поля связанного элемента, а также его свойства
@@ -251,98 +251,98 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var datetime
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_CREATED_DATE;
+	public $PROPERTY_#PROPERTY_CODE#_CREATED_DATE;
     
-    /**
+	/**
 	 * #PROPERTY_TITLE# - Код пользователя, создавшего связанный элемент
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var int
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_CREATED_BY;
+	public $PROPERTY_#PROPERTY_CODE#_CREATED_BY;
     
-    /**
+	/**
 	 * #PROPERTY_TITLE# - ID информационного блока у связанного элемента
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var int
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_IBLOCK_ID;
+	public $PROPERTY_#PROPERTY_CODE#_IBLOCK_ID;
     
-    /**
+	/**
 	 * #PROPERTY_TITLE# - Флаг активности (Y|N) у связанного элемента
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var string
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_ACTIVE;
+	public $PROPERTY_#PROPERTY_CODE#_ACTIVE;
     
-    /**
+	/**
 	 * #PROPERTY_TITLE# - Дата начала действия у связанного элемента
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var datetime
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_ACTIVE_FROM;
+	public $PROPERTY_#PROPERTY_CODE#_ACTIVE_FROM;
     
-    /**
+	/**
 	 * #PROPERTY_TITLE# - Дата окончания действия у связанного элемента
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var datetime
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_ACTIVE_TO;
+	public $PROPERTY_#PROPERTY_CODE#_ACTIVE_TO;
     
-    /**
+	/**
 	 * #PROPERTY_TITLE# - индекс сортировки у связанного элемента
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var int
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_SORT;
+	public $PROPERTY_#PROPERTY_CODE#_SORT;
     
-    /**
+	/**
 	 * #PROPERTY_TITLE# - Название связанного элемента
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var string
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_NAME;
+	public $PROPERTY_#PROPERTY_CODE#_NAME;
     
-    /**
+	/**
 	 * #PROPERTY_TITLE# - Количество показов связанного элемента
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var int
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_SHOW_COUNTER;
+	public $PROPERTY_#PROPERTY_CODE#_SHOW_COUNTER;
     
-    /**
+	/**
 	 * #PROPERTY_TITLE# - Дата первого показа связанного элемента
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var Datetime
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_SHOW_COUNTER_START;
+	public $PROPERTY_#PROPERTY_CODE#_SHOW_COUNTER_START;
     
-    /**
+	/**
 	 * #PROPERTY_TITLE# - Мнемонический идентификатор связанного элемента
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var string
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_CODE;
+	public $PROPERTY_#PROPERTY_CODE#_CODE;
     
-    /**
+	/**
 	 * #PROPERTY_TITLE# - Теги связанного элемента.
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var string
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_TAGS;
+	public $PROPERTY_#PROPERTY_CODE#_TAGS;
     
-    /**
+	/**
 	 * #PROPERTY_TITLE# - EXTERNAL_ID или XML_ID Внешний идентификатор связанного элемента
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var string
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_XML_ID;
+	public $PROPERTY_#PROPERTY_CODE#_XML_ID;
     
-    /**
+	/**
 	 * #PROPERTY_TITLE# - Текущее состояние блокированности на редактирование связанного элемента.
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
 	 * @var string
 	 */
-    public $PROPERTY_#PROPERTY_CODE#_STATUS;
+	public $PROPERTY_#PROPERTY_CODE#_STATUS;
 	
 #BY_ELEM_PROPS_BY_PROPS#
     
@@ -446,7 +446,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 		}
 
 		$props = new \CIBlockProperty();
-		$rs = $props->GetList(['IBLOCK_ID' => 'ASC', 'SORT' => 'ASC'], ['CHECK_PERMISSIONS' => 'N']);
+		$rs = $props::GetList(['IBLOCK_ID' => 'ASC', 'SORT' => 'ASC'], ['CHECK_PERMISSIONS' => 'N']);
 
 		$arReturn = [];
 		while ($ar = $rs->Fetch()) {
@@ -477,7 +477,8 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 		$out .=
 			'use Hipot\IbAbstractLayer\Types\IblockElementItem,
 	Hipot\IbAbstractLayer\Types\IblockElementItemPropertyValue,
-	Hipot\IbAbstractLayer\Types\ValueFile;
+	Hipot\IbAbstractLayer\Types\IblockElementItemPropertyValueFile,
+	Hipot\IbAbstractLayer\Types\IblockElementItemPropertyValueLinkElem;
 ';
 
 		foreach ($arIblocks as $arIblock) {
@@ -524,7 +525,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 				}
 
 				if ($prop['PROPERTY_TYPE'] == 'F') {
-					$propType = 'ValueFile';
+					$propType = 'IblockElementItemPropertyValueFile';
 				}
 
 				$propByGetListSelect .= str_replace(
@@ -560,7 +561,6 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 			);
 		}
 
-		//@chmod(dirname($this->__fileGenerate), 0777);
 		return file_put_contents($this->__fileGenerate, '<?php ' . $out);
 	}
 }

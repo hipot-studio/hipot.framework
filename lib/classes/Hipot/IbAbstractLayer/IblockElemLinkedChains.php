@@ -10,6 +10,7 @@ namespace Hipot\IbAbstractLayer;
 
 use Hipot\IbAbstractLayer\Types\IblockElementItem,
 	Hipot\BitrixUtils\Iblock;
+use Hipot\Types\Collection\Collection;
 
 /**
  * Класс для работы с получением цепочек связанных элементов (через свойства привязка к элементам),
@@ -179,6 +180,6 @@ final class IblockElemLinkedChains extends Iblock
 			unset($obChainBuilder);
 		}
 
-		return $arResult["ITEMS"];
+		return new Collection($arResult["ITEMS"]);
 	}
 }

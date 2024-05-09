@@ -49,7 +49,9 @@ final class Recaptcha3
 
 	const array ANTIVIRUS_BLOCK_ONLY_COUNTRIES = ['FI', 'DE', 'US'];
 	const array ANTIVIRUS_BLOCK_PATH = [
-		'/*',
+		'/ru/teach/courses/*',
+		'/en/learn/courses/*',
+		'/ru/learn/courses/*'
 	];
 
 	/**

@@ -14,4 +14,3 @@ class IblockElementItemPropertyValueLinkElem extends IblockElementItemPropertyVa
 	 */
 	public $CHAIN;
 }
-?>
