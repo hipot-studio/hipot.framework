@@ -3,6 +3,7 @@ namespace Hipot\IbAbstractLayer\Types;
 
 use Hipot\IbAbstractLayer\IblockElemLinkedChains;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Iblock\PropertyTable;
 
 /**
  * Значение свойств инфоблока, возвращаемые CIBlockElement::GetProperty()
@@ -15,7 +16,8 @@ use Bitrix\Main\Type\DateTime;
  * @property int SORT Индекс сортировки
  * @property string $CODE Мнемонический код свойства
  * @property string $DEFAULT_VALUE Значение свойства по умолчанию (кроме свойства типа список L)
- * @property string $PROPERTY_TYPE Тип свойства. Возможные значения: S - строка, N - число, F - файл, L - список, E - привязка к элементам, G - привязка к группам
+ * @property string $PROPERTY_TYPE Тип свойства. Возможные значения: S - строка, N - число, F - файл, L - список, E - привязка к элементам, G - привязка к
+ *     группам
  * @property int $ROW_COUNT Количество строк в ячейке ввода значения свойства
  * @property int $COL_COUNT
  * @property string $LIST_TYPE Тип для свойства список (L). Может быть "L" - выпадающий список или "C" - флажки
@@ -23,8 +25,10 @@ use Bitrix\Main\Type\DateTime;
  * @property string $XML_ID Внешний код свойства
  * @property string $FILE_TYPE Список допустимых расширений для свойств файл "F" (через запятую)
  * @property int $MULTIPLE_CNT Количество строк в выпадающем списке для свойств типа "список"
- * @property int $LINK_IBLOCK_ID Для свойств типа привязки к элементам и группам задает код информационного блока с элементами/группами которого и будут связано значение.
- * @property string $WITH_DESCRIPTION Признак наличия у значения свойства дополнительного поля описания. Только для типов S - строка, N - число и F - файл (Y|N).
+ * @property int $LINK_IBLOCK_ID Для свойств типа привязки к элементам и группам задает код информационного блока с элементами/группами которого и будут
+ *     связано значение.
+ * @property string $WITH_DESCRIPTION Признак наличия у значения свойства дополнительного поля описания. Только для типов S - строка, N - число и F - файл
+ *     (Y|N).
  * @property string $SEARCHABLE Индексировать значения данного свойства (Y|N)
  * @property string $FILTRABLE Выводить поля для фильтрации по данному свойству на странице списка элементов в административном разделе
  * @property string $IS_REQUIRED Обязательное (Y|N)
@@ -48,7 +52,7 @@ class IblockElementItemPropertyValue extends Base
 	 */
 	public function __construct($arPropFlds)
 	{
-		$ignoredFields = ['CODE', 'IBLOCK_ID', 'VERSION', 'ROW_COUNT', 'COL_COUNT', 'SEARCHABLE', 'MULTIPLE_CNT', 'FILTRABLE'];
+		$ignoredFields = ['IBLOCK_ID', 'VERSION', 'ROW_COUNT', 'COL_COUNT', 'SEARCHABLE', 'MULTIPLE_CNT', 'FILTRABLE'];
 
 		foreach ($arPropFlds as $fld => $value) {
 			if ($this->isEmptyValue($value) || in_array($fld, $ignoredFields)) {
@@ -62,5 +66,20 @@ class IblockElementItemPropertyValue extends Base
 			}
 			$this->{$fld} = $value;
 		}
+	}
+
+	public function isFile(): bool
+	{
+		return isset($this->FILE_PARAMS) || $this->PROPERTY_TYPE == PropertyTable::TYPE_FILE;
+	}
+
+	public function isLinkElem(): bool
+	{
+		return isset($this->CHAIN) || $this->PROPERTY_TYPE == PropertyTable::TYPE_ELEMENT;
+	}
+
+	public function isList(): bool
+	{
+		return $this->PROPERTY_TYPE == PropertyTable::TYPE_LIST;
 	}
 }

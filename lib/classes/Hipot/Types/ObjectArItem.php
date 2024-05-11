@@ -1,17 +1,20 @@
 <?
 namespace Hipot\Types;
 
+use Hipot\Types\Container;
+
 /**
  * Мини-объект, для работы с объектом как с массивом (предпочтительно для хранения одного элемента)
  * Похож на SPL ArrayObject, только со своими нюансами
  */
 #[\AllowDynamicProperties]
-class ObjectArItem implements \ArrayAccess, \Countable
+class ObjectArItem implements \ArrayAccess, \Countable, \IteratorAggregate
 {
 	use Container\Container;
 	use Container\ArrayAccess;
 	use Container\MagicAccess;
 	use Container\MagicChain;
+	use Container\Traversable;
 
 	/**
 	 * unsafe method, use only in test goals because may create trash-keys

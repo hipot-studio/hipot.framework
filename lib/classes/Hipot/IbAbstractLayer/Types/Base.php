@@ -17,5 +17,3 @@ class Base extends ObjectArItem
 		return ($value === null) || ($value === '') || ($value === []);
 	}
 }
-
-?>

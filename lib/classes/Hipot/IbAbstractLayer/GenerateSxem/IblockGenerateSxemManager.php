@@ -6,30 +6,26 @@ use Bitrix\Main\EventManager;
 /**
  * Управленец обновлением схемы
  */
-class IblockGenerateSxemManager
+final class IblockGenerateSxemManager
 {
 	private static string $fileToGenerateSxema;
 
 	/**
 	 * Генератор схемы по классам и подсказки по ним
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function updateSchema(string $fileToGenerateSxema): bool
 	{
 		self::setLastSxem($fileToGenerateSxema);
-
 		self::deleteSxem(self::getLastSxem());
-
-		$oWeIblockGenerateSxem = new IblockGenerateSxem(self::getLastSxem());
-		return $oWeIblockGenerateSxem->generate();
+		return (new IblockGenerateSxem(self::getLastSxem()))->generate();
 	}
 
 	/**
 	 * удаление схемы
 	 * @return bool
 	 */
-	public static function deleteSxem(string $fileToGenerateSxema)
+	private static function deleteSxem(string $fileToGenerateSxema): bool
 	{
 		if (file_exists($fileToGenerateSxema)) {
 			return unlink($fileToGenerateSxema);
@@ -37,17 +33,18 @@ class IblockGenerateSxemManager
 		return true;
 	}
 
-	public static function setLastSxem(string $fileToGenerateSxema)
+	private static function setLastSxem(string $fileToGenerateSxema): void
 	{
 		self::$fileToGenerateSxema = $fileToGenerateSxema;
 	}
-	public static function getLastSxem(): string
+	private static function getLastSxem(): string
 	{
 		return self::$fileToGenerateSxema;
 	}
 
 	/**
 	 * Событие добавления инфоблока
+	 *
 	 * @param array $arFields
 	 */
 	public static function OnAfterIBlockAddHandler(&$arFields)
@@ -107,7 +104,6 @@ class IblockGenerateSxemManager
 	{
 		self::deleteSxem(self::getLastSxem());
 	}
-
 
 	/**
 	 * Установка событий обновления схемы

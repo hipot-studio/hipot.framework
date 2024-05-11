@@ -14,4 +14,3 @@ final class IblockElementItemPropertyValueFile extends IblockElementItemProperty
 	 */
 	public $FILE_PARAMS;
 }
-?>

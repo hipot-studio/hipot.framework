@@ -8,45 +8,40 @@
  */
 namespace Hipot\IbAbstractLayer\GenerateSxem;
 
-use \Bitrix\Main\Loader;
+use Bitrix\Iblock\PropertyTable;
+use Bitrix\Main\Loader;
 
 /**
- * класс генерации схемы инфоблоков
+ * Класс генерации схемы инфоблоков
  */
-class IblockGenerateSxem
+final class IblockGenerateSxem
 {
-	/**
-	 * Путь к файлу, в котором будут сгенерированы классы по инфоблокам
-	 * @var string
-	 */
-	private $__fileGenerate;
-
 	/**
 	 * Шаблон генерации инфоблока со свойствами
 	 * Шаблоны генерации, placeholders:
 	 * #IBLOCK_ID# - ID инфоблока
+	 * #IBLOCK_CODE# - Код API инфоблока
 	 * #IBLOCK_ELEM_NAME# - Имя инфоблока
 	 * #PROPERTYS# - Сгенерированный по шаблону список свойств
 	 * #PROPERTYS_CHAINS# - Сгенерированный по шаблону список цепочек связанных элементов
 	 * #ABSTRACT_LAYER_SAULT# - Соль в имени классов
 	 * @var string
 	 */
-	private $__iblockTemplate =
+	private string $__iblockTemplate =
 		'
 /**
  * Генерируемый автоматически класс со ссылкой на свойства инфоблока #IBLOCK_ID# (IBLOCK_ID = #IBLOCK_ID#)
  * Имя сущности: <b>#IBLOCK_ELEM_NAME#</b>
- * @author hipot
+ * @author info@hipot-studio.com
  * @version 0.x
  */
 class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID# extends IblockElementItem
 {
 	/**
 	 * Свойства инфоблока
-	 * @var __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID#Properties
+	 * @var __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID#_Properties
 	 */
-	public $PROPERTIES;
-	
+	public $PROPERTIES;	
 	
 #PROPERTIES_BY_GETLIST_SELECT#
 	
@@ -60,13 +55,17 @@ class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID# extends IblockEleme
 		parent::__construct($arItem);
 	}
 }
+class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_CODE#_#IBLOCK_ID# extends __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID#
+{
+}
+
 /**
  * Генерируемый автоматически класс со свойствами инфоблока #IBLOCK_ID# (IBLOCK_ID = #IBLOCK_ID#)
  * Свойства инфоблока: #IBLOCK_ELEM_NAME#
- * @author hipot
+ * @author info@hipot-studio.com
  * @version 0.x
  */
-class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID#Properties
+class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID#_Properties extends IbAbstractLayerBase
 {
 #PROPERTYS#
 }
@@ -77,15 +76,16 @@ class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID#Properties
 	/**
 	 * Шаблоны генерации инфоблока без свойств, placeholders:
 	 * #IBLOCK_ID# - ID инфоблока
+	 * #IBLOCK_CODE# - Код API инфоблока
 	 * #ABSTRACT_LAYER_SAULT# - Соль в имени классов
 	 * @var string
 	 */
-	private $__iblockTemplateNoProps =
+	private string $__iblockTemplateNoProps =
 		'
 /**
  * Генерируемый автоматически класс со ссылкой на свойства инфоблока #IBLOCK_ID# (IBLOCK_ID = #IBLOCK_ID#)
  * Имя сущности: <b>#IBLOCK_ELEM_NAME#</b>
- * @author hipot
+ * @author info@hipot-studio.com
  * @version 0.x
  */
 class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID# extends IblockElementItem
@@ -100,7 +100,9 @@ class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID# extends IblockEleme
 		parent::__construct($arItem);
 	}
 }
-
+class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_CODE#_#IBLOCK_ID# extends __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID#
+{
+}
 
 
 ';
@@ -112,7 +114,7 @@ class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID# extends IblockEleme
 	 * #PROPERTY_TYPE# - тип свойства в системе схемы
 	 * @var string
 	 */
-	private $oneRowPropertytemplate =
+	private string $oneRowPropertytemplate =
 		'	/**
 	 * #PROPERTY_TITLE#
 	 * @var #PROPERTY_TYPE#
@@ -128,7 +130,7 @@ class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID# extends IblockEleme
 	 * #PROPERTY_TYPE# - тип свойства в системе схемы
 	 * @var string
 	 */
-	private $multipleRowPropertytemplate =
+	private string $multipleRowPropertyTemplate =
 		'	/**
 	 * #PROPERTY_TITLE#
 	 * @var array[#PROPERTY_TYPE#]
@@ -147,12 +149,12 @@ class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID# extends IblockEleme
 	 * #ABSTRACT_LAYER_SAULT# - Соль в имени классов
 	 * @var string
 	 */
-	private $chainPropChainClasstemplate =
+	private string $chainPropChainClassTemplate =
 		'
 /**
  * Класс цепочек связанных элементов со свойством "#PROPERTY_CODE#" инфоблока #IBLOCK_ID#
  */
-class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID##PROPERTY_CODE# extends IblockElementItemPropertyValueLinkElem
+class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID#_#PROPERTY_CODE# extends IblockElementItemPropertyValueLinkElem
 {
 	/**
 	 * Цепочка из связанных элементов, выводятся все поля связанного элемента, а также его свойства
@@ -170,7 +172,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	 * #BY_ELEM_PROPS_SELECT# - поля и свойства элементов, выбранные через свойства
 	 * @var string
 	 */
-	private $propByGetListSelectTemplate =
+	private string $propByGetListSelectTemplate =
 		'	/**
 	 * #PROPERTY_TITLE# - значение
 	 * @var string|int
@@ -194,7 +196,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	 * #PROPERTY_TITLE# - описание свойства
 	 * @var string
 	 */
-	private $propByGetListSelectTypeListTemplate =
+	private string $propByGetListSelectTypeListTemplate =
 		'	/**
 	 * #PROPERTY_TITLE# - значение
 	 * @var string
@@ -223,7 +225,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	 * #BY_ELEM_PROPS_BY_PROPS# - свойства элементов, связанных с элементом
 	 * @var string
 	 */
-	private $propByElemFiledsProps =
+	private string $propByElemFiledsProps =
 		'
 	/**
 	 * #PROPERTY_TITLE# - ID связанного элемента
@@ -355,7 +357,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	 * #PROPERTY_LINK_CODE# - код завязанного свойства
 	 * @var string
 	 */
-	private $propByElemFiledsPropsTemplate =
+	private string $propByElemFieldsPropsTemplate =
 		'
 	/**
 	 * #PROPERTY_TITLE# - значение
@@ -378,7 +380,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	 * #PROPERTY_LINK_CODE# - код завязанного свойства
 	 * @var string
 	 */
-	private $propByElemFiledsPropsListTemplate =
+	private string $propByElemFieldsPropsListTemplate =
 		'
 	/**
 	 * #PROPERTY_TITLE# - значение
@@ -401,33 +403,30 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 ';
 
 
-
-	/**
-	 * Генератор схемы по классам и подсказки по ним
-	 * @param string $fileGenerate
-	 */
-	public function __construct($fileGenerate)
+	public function __construct(
+		/**
+		 * Путь к файлу, в котором будут сгенерированы классы по инфоблокам
+		 * @var string
+		 */
+		private readonly string $fileGenerate
+	)
 	{
-		$this->__fileGenerate = $fileGenerate;
 	}
 
 	/**
 	 * Получить список инфоблоков со свойствами
 	 */
-	private function getIblockList()
+	private function getIblockList(): array
 	{
-		$arPROPERTIES = $this->getPropertysByIblock();
+		$arPROPERTIES = $this->getPropertiesByIblock();
 
 		$arReturn = [];
 		$rs = \CIBlock::GetList(['ID' => 'ASC'], [], false);
 		while ($ar = $rs->Fetch()) {
 			$ar['PROPERTIES'] = [];
-			foreach ($arPROPERTIES as $prop) {
-				if ($prop['IBLOCK_ID'] == $ar['ID']) {
-					$ar['PROPERTIES'][] = $prop;
-				}
+			foreach ($arPROPERTIES[ $ar['ID'] ] as $prop) {
+				$ar['PROPERTIES'][] = $prop;
 			}
-
 			$arReturn[] = $ar;
 		}
 		return $arReturn;
@@ -437,7 +436,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	 * Получить список свойств инфоблока
 	 * @return array
 	 */
-	private function getPropertysByIblock()
+	private function getPropertiesByIblock(): array
 	{
 		// fix
 		global $USER;
@@ -450,7 +449,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 
 		$arReturn = [];
 		while ($ar = $rs->Fetch()) {
-			$arReturn[] = $ar;
+			$arReturn[ $ar['IBLOCK_ID'] ][] = $ar;
 		}
 		return $arReturn;
 	}
@@ -458,7 +457,6 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	/**
 	 * Генерировать файл
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public function generate(): bool
 	{
@@ -473,9 +471,8 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 		}
 
 		// общий вывод
-		$out = '';
-		$out .=
-			'use Hipot\IbAbstractLayer\Types\IblockElementItem,
+		$out = 'use Hipot\IbAbstractLayer\Types\Base as IbAbstractLayerBase,
+	Hipot\IbAbstractLayer\Types\IblockElementItem,
 	Hipot\IbAbstractLayer\Types\IblockElementItemPropertyValue,
 	Hipot\IbAbstractLayer\Types\IblockElementItemPropertyValueFile,
 	Hipot\IbAbstractLayer\Types\IblockElementItemPropertyValueLinkElem;
@@ -495,8 +492,8 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 				// поля элементов, выбранных через свойства
 				$bySelectLinkedProps = '';
 
-				if ($prop['PROPERTY_TYPE'] == 'E') {
-					$propType = '__IblockElementItemPropertyValueLinkElem_' . ABSTRACT_LAYER_SAULT . '_' . $arIblock['ID'] . $prop['CODE'];
+				if ($prop['PROPERTY_TYPE'] == PropertyTable::TYPE_ELEMENT) {
+					$propType = '__IblockElementItemPropertyValueLinkElem_' . ABSTRACT_LAYER_SAULT . '_' . $arIblock['ID'] . '_' . $prop['CODE'];
 
 					$k = $arIblocksIdsIndex[ $prop['LINK_IBLOCK_ID'] ];
 					$linkIblockName = $arIblocks[$k]['NAME'] . ' / ' . $arIblocks[$k]['ELEMENT_NAME'];
@@ -504,7 +501,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 					$outPropsChains .= str_replace(
 						["#PROPERTY_CODE#", "#IBLOCK_ID#", "#LINK_IBLOCK_ID#", '#LINK_IBLOCK_ELEM_NAME#', '#ABSTRACT_LAYER_SAULT#'],
 						[$prop['CODE'], $arIblock['ID'], $prop['LINK_IBLOCK_ID'], $linkIblockName, ABSTRACT_LAYER_SAULT],
-						$this->chainPropChainClasstemplate
+						$this->chainPropChainClassTemplate
 					);
 
 					// список свойств у привязанных свойств вида PROPERTY_code_PROPERTY_code2_VALUE
@@ -512,29 +509,27 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 					foreach ($arIblocks[$k]['PROPERTIES'] as $propIter) {
 						$byElemsPropByProp .= str_replace(
 							['#PROPERTY_LINK_CODE#', '#PROPERTY_TITLE#', '#PROPERTY_CODE#'],
-							[ToUpper($prop['CODE']), $propIter['NAME'], ToUpper($propIter['CODE'])],
-							($prop['PROPERTY_TYPE'] == 'L') ? $this->propByElemFiledsPropsListTemplate : $this->propByElemFiledsPropsTemplate
+							[strtoupper($prop['CODE']), $propIter['NAME'], strtoupper($propIter['CODE'])],
+							($propIter['PROPERTY_TYPE'] == PropertyTable::TYPE_LIST) ? $this->propByElemFieldsPropsListTemplate : $this->propByElemFieldsPropsTemplate
 						);
 					}
 
 					$bySelectLinkedProps .= str_replace(
 						['#PROPERTY_TITLE#', '#PROPERTY_CODE#', '#LINK_IBLOCK_ELEM_NAME#', '#BY_ELEM_PROPS_BY_PROPS#'],
-						[$prop['NAME'], ToUpper($prop['CODE']), $linkIblockName, $byElemsPropByProp],
+						[$prop['NAME'], strtoupper($prop['CODE']), $linkIblockName, $byElemsPropByProp],
 						$this->propByElemFiledsProps
 					);
-				}
-
-				if ($prop['PROPERTY_TYPE'] == 'F') {
+				} else if ($prop['PROPERTY_TYPE'] == PropertyTable::TYPE_FILE) {
 					$propType = 'IblockElementItemPropertyValueFile';
 				}
 
 				$propByGetListSelect .= str_replace(
 					['#PROPERTY_TITLE#', '#PROPERTY_CODE#', '#BY_ELEM_PROPS_SELECT#'],
-					[$prop['NAME'], ToUpper($prop['CODE']), $bySelectLinkedProps],
-					($prop['PROPERTY_TYPE'] == 'L') ? $this->propByGetListSelectTypeListTemplate : $this->propByGetListSelectTemplate
+					[$prop['NAME'], strtoupper($prop['CODE']), $bySelectLinkedProps],
+					($prop['PROPERTY_TYPE'] == PropertyTable::TYPE_LIST) ? $this->propByGetListSelectTypeListTemplate : $this->propByGetListSelectTemplate
 				);
 
-				$temp = ($prop['MULTIPLE'] != 'Y') ? $this->oneRowPropertytemplate : $this->multipleRowPropertytemplate;
+				$temp = ($prop['MULTIPLE'] != 'Y') ? $this->oneRowPropertytemplate : $this->multipleRowPropertyTemplate;
 				$outPropsIter .= str_replace(
 					['#PROPERTY_TITLE#', '#PROPERTY_CODE#', '#PROPERTY_TYPE#'],
 					[$prop['NAME'], $prop['CODE'], $propType],
@@ -542,8 +537,17 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 				);
 			}
 
+			$iblockCode = $arIblock['ID'] . '_no_code_';
+			foreach (['API_CODE', 'CODE'] as $codeKey) {
+				if (!empty($arIblock[$codeKey])) {
+					$iblockCode = $arIblock[$codeKey];
+					break;
+				}
+			}
+
 			$out .= str_replace([
 				'#IBLOCK_ID#',
+				'#IBLOCK_CODE#',
 				'#PROPERTYS#',
 				'#IBLOCK_ELEM_NAME#',
 				'#PROPERTYS_CHAINS#',
@@ -551,6 +555,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 				'#ABSTRACT_LAYER_SAULT#'
 			], [
 				$arIblock['ID'],
+				$iblockCode,
 				$outPropsIter,
 				$arIblock['NAME'] . ' / ' . $arIblock['ELEMENT_NAME'],
 				$outPropsChains,
@@ -561,7 +566,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 			);
 		}
 
-		return file_put_contents($this->__fileGenerate, '<?php ' . $out);
+		return file_put_contents($this->fileGenerate, '<?php ' . $out, LOCK_EX);
 	}
 }
 

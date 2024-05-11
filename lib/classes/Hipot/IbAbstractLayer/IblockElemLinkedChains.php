@@ -154,9 +154,8 @@ final class IblockElemLinkedChains extends Iblock
 			return $rsItems;
 		}
 
-
 		$arParams = $arResult = [];
-		$arParams['SELECT_CHAINS_DEPTH'] = 3;
+		$arParams['SELECT_CHAINS_DEPTH'] = defined('ABSTRACT_LAYER_SELECT_CHAINS_DEPTH') ? ABSTRACT_LAYER_SELECT_CHAINS_DEPTH : 3;
 		$arResult["ITEMS"] = [];
 
 		$obChainBuilder = new self();

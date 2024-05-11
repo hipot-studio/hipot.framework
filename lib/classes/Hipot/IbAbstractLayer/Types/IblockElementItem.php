@@ -77,9 +77,9 @@ class IblockElementItem extends Base
 
 	/**
 	 * @param $value
-	 * @return mixed
+	 * @return IblockElementItemPropertyValue[] | IblockElementItemPropertyValue
 	 */
-	public function generatePropObj($value)
+	private function generatePropObj($value)
 	{
 		if ((int)$value['ID'] <= 0) {
 			$result = [];
@@ -89,7 +89,6 @@ class IblockElementItem extends Base
 		} else {
 			$result = new IblockElementItemPropertyValue($value);
 		}
-
 		return $result;
 	}
 }
