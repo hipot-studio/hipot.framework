@@ -10,6 +10,7 @@ namespace Hipot\IbAbstractLayer\GenerateSxem;
 
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\Loader;
+use Hipot\IbAbstractLayer\Types\IblockElementItem;
 
 /**
  * Класс генерации схемы инфоблоков
@@ -159,7 +160,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	/**
 	 * Цепочка из связанных элементов, выводятся все поля связанного элемента, а также его свойства
 	 * Имя сущности: <b>#LINK_IBLOCK_ELEM_NAME#</b>
-	 * @var __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#LINK_IBLOCK_ID#
+	 * @var #TYPE#
 	 */
 	public $CHAIN;
 }
@@ -496,28 +497,35 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 					$propType = '__IblockElementItemPropertyValueLinkElem_' . ABSTRACT_LAYER_SAULT . '_' . $arIblock['ID'] . '_' . $prop['CODE'];
 
 					$k = $arIblocksIdsIndex[ $prop['LINK_IBLOCK_ID'] ];
-					$linkIblockName = $arIblocks[$k]['NAME'] . ' / ' . $arIblocks[$k]['ELEMENT_NAME'];
+					if ($prop['LINK_IBLOCK_ID']) {
+						$linkIblockName = $arIblocks[$k]['NAME'] . ' / ' . $arIblocks[$k]['ELEMENT_NAME'];
+						$chainType = str_replace(
+							["#LINK_IBLOCK_ID#", '#ABSTRACT_LAYER_SAULT#'],
+							[$prop['LINK_IBLOCK_ID'], ABSTRACT_LAYER_SAULT], '__IblockElementItem_#ABSTRACT_LAYER_SAULT#_#LINK_IBLOCK_ID#');
 
-					$outPropsChains .= str_replace(
-						["#PROPERTY_CODE#", "#IBLOCK_ID#", "#LINK_IBLOCK_ID#", '#LINK_IBLOCK_ELEM_NAME#', '#ABSTRACT_LAYER_SAULT#'],
-						[$prop['CODE'], $arIblock['ID'], $prop['LINK_IBLOCK_ID'], $linkIblockName, ABSTRACT_LAYER_SAULT],
-						$this->chainPropChainClassTemplate
-					);
-
-					// список свойств у привязанных свойств вида PROPERTY_code_PROPERTY_code2_VALUE
-					$byElemsPropByProp = '';
-					foreach ($arIblocks[$k]['PROPERTIES'] as $propIter) {
-						$byElemsPropByProp .= str_replace(
-							['#PROPERTY_LINK_CODE#', '#PROPERTY_TITLE#', '#PROPERTY_CODE#'],
-							[strtoupper($prop['CODE']), $propIter['NAME'], strtoupper($propIter['CODE'])],
-							($propIter['PROPERTY_TYPE'] == PropertyTable::TYPE_LIST) ? $this->propByElemFieldsPropsListTemplate : $this->propByElemFieldsPropsTemplate
+						// список свойств у привязанных свойств вида PROPERTY_code_PROPERTY_code2_VALUE
+						$byElemsPropByProp = '';
+						foreach ($arIblocks[$k]['PROPERTIES'] as $propIter) {
+							$byElemsPropByProp .= str_replace(
+								['#PROPERTY_LINK_CODE#', '#PROPERTY_TITLE#', '#PROPERTY_CODE#'],
+								[strtoupper($prop['CODE']), $propIter['NAME'], strtoupper($propIter['CODE'])],
+								($propIter['PROPERTY_TYPE'] == PropertyTable::TYPE_LIST) ? $this->propByElemFieldsPropsListTemplate : $this->propByElemFieldsPropsTemplate
+							);
+						}
+						$bySelectLinkedProps .= str_replace(
+							['#PROPERTY_TITLE#', '#PROPERTY_CODE#', '#LINK_IBLOCK_ELEM_NAME#', '#BY_ELEM_PROPS_BY_PROPS#'],
+							[$prop['NAME'], strtoupper($prop['CODE']), $linkIblockName, $byElemsPropByProp],
+							$this->propByElemFiledsProps
 						);
+					} else {
+						$linkIblockName = 'Связь не указана';
+						$chainType = 'IblockElementItem';
 					}
 
-					$bySelectLinkedProps .= str_replace(
-						['#PROPERTY_TITLE#', '#PROPERTY_CODE#', '#LINK_IBLOCK_ELEM_NAME#', '#BY_ELEM_PROPS_BY_PROPS#'],
-						[$prop['NAME'], strtoupper($prop['CODE']), $linkIblockName, $byElemsPropByProp],
-						$this->propByElemFiledsProps
+					$outPropsChains .= str_replace(
+						["#PROPERTY_CODE#", "#IBLOCK_ID#", "#LINK_IBLOCK_ID#", '#LINK_IBLOCK_ELEM_NAME#', '#ABSTRACT_LAYER_SAULT#', '#TYPE#'],
+						[$prop['CODE'], $arIblock['ID'], $prop['LINK_IBLOCK_ID'], $linkIblockName, ABSTRACT_LAYER_SAULT, $chainType],
+						$this->chainPropChainClassTemplate
 					);
 				} else if ($prop['PROPERTY_TYPE'] == PropertyTable::TYPE_FILE) {
 					$propType = 'IblockElementItemPropertyValueFile';
@@ -566,7 +574,11 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 			);
 		}
 
-		return file_put_contents($this->fileGenerate, '<?php ' . $out, LOCK_EX);
+		return file_put_contents($this->fileGenerate,
+			'<?php /** @noinspection PhpMissingParamTypeInspection */ 
+/** @noinspection PhpUnused */ 
+/** @noinspection PhpMissingFieldTypeInspection */' . PHP_EOL . $out, LOCK_EX
+		);
 	}
 }
 
