@@ -192,4 +192,26 @@ final class Sale
 		/* @var $discountTs \Bitrix\Main\Type\DateTime */
 		return $discountTs->format('U');
 	}
+
+	/**
+	 * @param \Bitrix\Sale\Order $order
+	 *
+	 * @return array{\Bitrix\Sale\PaySystem\Service, \Bitrix\Sale\Payment}
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public static function getPaySystemServiceByOrder(Order $order): array
+	{
+		$paymentCollection = $order->getPaymentCollection();
+		/** @var $payment \Bitrix\Sale\Payment */
+		$payment = $paymentCollection->getIterator()->current();
+
+		$paySystemAction = \Bitrix\Sale\PaySystem\Manager::getList([
+			'filter' => ['PAY_SYSTEM_ID' => $payment->getPaymentSystemId()],
+			'select' => ['*'],
+		])->fetch();
+		$service         = new \Bitrix\Sale\PaySystem\Service($paySystemAction);
+		return [$service, $payment];
+	}
 }
