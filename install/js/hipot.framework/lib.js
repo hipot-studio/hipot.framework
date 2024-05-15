@@ -64,7 +64,7 @@
 	 * Проверяет код нажатой клавиши для полей типа "телефон"
 	 * Разрешены символы: 0-9 + - \s ( )
 	 * Разрешены комбинации: Backspace, ctrl + v, ctrl + c, ctrl + r
-	 * 
+	 *
 	 * @returns {Boolean}
 	 */
 	$.fn.checkPhone = function () {
@@ -270,10 +270,10 @@ function isPhone(cCode)
 }
 
 /**
- * Проверяет емайл по регулярке (строго, но не жадно!)
- * @param {String} str строка для проверки
- * @returns {Boolen}
- * @version 1.0
+ * Check if a given string represents a valid email address. (строго, но не жадно!)
+ *
+ * @param {string} str - The string to be checked.
+ * @returns {boolean} - True if the string is a valid email address, false otherwise.
  */
 function isMail(str)
 {
@@ -281,25 +281,44 @@ function isMail(str)
 }
 
 /**
- * получить данные по урлу, передав ему параметры и выполнив функцию при получении данных
- * @param string url
- * @param object params
- * @param callback success function(data, textStatus, jqXHR){}
+ * Retrieve the result from a URL using AJAX POST request.
+ *
+ * @param {string} url - The URL to send the request to.
+ * @param {object|FormData} request - The parameters to send along with the request.
+ * @param {function} success - The function to be invoked upon successful response.
+ * @param {object} params - The parameters of ajax call, see params of $.ajax
+ * @param {function} error - The function to be invoked upon error response.
+ * @return {void}
+ * @see {https://api.jquery.com/jQuery.ajax/}
  */
-function getResultFromUrl(url, params, success)
+function getResultFromUrl(url, request, success, params, error)
 {
-	$.ajax({
+	if (typeof params === 'undefined') {
+		params = {};
+	}
+	if (request instanceof FormData) {
+		$.extend( params, {
+			// support send files
+			processData: false,
+			contentType: false,
+		});
+	}
+
+	$.ajax($.extend({
 		async: true,
 		cache: false,
-		data: params,
-		dataType: 'html',
+		data: request,
+		dataType: 'json',
 		timeout: 8000,
-		type: 'POST',
+		type: 'POST', /*method in jquery 1.9+*/
 		url: url,
 		error: function (jqXHR, textStatus, errorThrown) {
+			if (funcDefined(error)) {
+				error(jqXHR, textStatus, errorThrown);
+			}
 		},
 		success: success
-	});
+	}, params));
 }
 
 /**
@@ -334,11 +353,11 @@ function escapeHtml(text)
 function imgPreloader(src, then, thenAll)
 {
 	if (typeof src == 'object') {
-		var len = src.length,
+		let len = src.length,
 			res = [];
-		var listimg = function () {
-			for (var i in src) {
-				var img = new Image();
+		let listimg = function () {
+			for (let i in src) {
+				let img = new Image();
 				if ('addEventListener' in img) {
 					img.addEventListener('load', function () {
 						var ret = true;
@@ -370,7 +389,7 @@ function imgPreloader(src, then, thenAll)
 			}
 		}, 1);
 	} else {
-		var img = new Image();
+		let img = new Image();
 		if ('addEventListener' in img) {
 			img.addEventListener('load', function () {
 				then.call(this);
@@ -390,7 +409,7 @@ function imgPreloader(src, then, thenAll)
  * @returns {*}
  */
 function trim(str) {
-	return ltrim(rtrim(str));
+	return str.toString().trim();
 }
 
 function ltrim(str) {
@@ -487,4 +506,16 @@ function issetItem(obj, path)
 		current = current[key];
 	}
 	return true;
+}
+
+/**
+ * @param {string} filename
+ * @param {function(): *} getDataUri to get data uri
+ */
+function downloadFile(filename, getDataUri)
+{
+	let link = document.createElement('a');
+	link.download = filename;
+	link.href = getDataUri();
+	link.click();
 }
