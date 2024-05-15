@@ -9,11 +9,27 @@ if ($_SERVER['HTTP_X_REQUESTED_WITH'] != 'XMLHttpRequest'
 	exit;
 }
 
-define("NO_KEEP_STATISTIC", true);
+// performance fixs
+define("STOP_STATISTICS",       true);
+define("NO_KEEP_STATISTIC",     true);
+define("NO_AGENT_STATISTIC",    "Y");
 define("NOT_CHECK_PERMISSIONS", true);
-
+define("DisableEventsCheck",    true);
+define("BX_SECURITY_SHOW_MESSAGE", true);
+// Виртуальная сессия
+if (PHP_SAPI == 'cli') {
+	define('BX_SECURITY_SESSION_VIRTUAL', true);
+}
 require $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php";
 
+/**
+ * @global $APPLICATION \CMain
+ * @global $USER \CUser
+ * @global $DB \CDatabase
+ * @global $USER_FIELD_MANAGER \CUserTypeManager
+ * @global $BX_MENU_CUSTOM \CMenuCustom
+ * @global $stackCacheManager \CStackCacheManager
+ */
 
 /**
  * Экранирует элементы массива
@@ -22,11 +38,11 @@ require $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.
  * @param bool  $orig = false Возвращать ли оригинальные элементы с '~'.
  * @return bool|array
  */
-$escapeArray = function ($array, $orig = false) use (&$escapeArray) {
+$escapeArray = static function ($array, $orig = false) use (&$escapeArray) {
 	$res = false;
 	foreach ($array as $k => $v) {
 		if (is_array($v)) {
-			$o = ($orig) ? true : false;
+			$o = (bool)$orig;
 			$res[$k] = $escapeArray($v, $o);
 		} else {
 			$res[$k] = htmlspecialcharsEx($v);
@@ -44,7 +60,7 @@ if ($escPOST['__form__'] == 'recall') {
 		\CModule::IncludeModule('iblock');
 		$el = CIBlockElement::GetByID( (int)$escPOST[ $escPOST['__form__'] ]['good_id'] )->GetNext();
 		if ($el['ID']) {
-			$url = 'https://www.wellmood.ru' . $el['DETAIL_PAGE_URL'];
+			$url = $el['DETAIL_PAGE_URL'];
 			$escPOST[ $escPOST['__form__'] ]['good_url'] = "<a href={$url}>{$url}</a>";
 			$escPOST[ $escPOST['__form__'] ]['good_name'] = $el['NAME'];
 		}

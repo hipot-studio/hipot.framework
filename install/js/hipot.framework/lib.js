@@ -3,8 +3,8 @@
  * isNum - добавлены коды цифр с NumPad`а + TAB
  * isPhone - добавлены коды знаков "-", "+" основной и цифровой клавиатур
  *
- * hipot js lib
- * @version 2.6 2023
+ * hipot js main lib
+ * @version 2.7 2024
  */
 (function ($) {
 	/**
@@ -12,11 +12,11 @@
 	 * @memberOf JQuery
 	 */
 	$.fn.mailme = function () {
-		var at = / AT /;
-		var dot = / DOT /g;
+		let at = / AT /,
+			dot = / DOT /g;
 
 		return this.each(function () {
-			var text = $(this).text(),
+			let text = $(this).text(),
 				span_class = $(this).attr('class'),
 				addr = text.replace(at, '@').replace(dot, '.'),
 				rgx = new RegExp(text),
@@ -31,6 +31,8 @@
 	/**
 	 * сериализует форму в объект JSON
 	 * @usage $('form').serializeJSON();
+	 * @memberOf jQuery
+	 * @deprecated use new FormData()
 	 */
 	$.fn.serializeJSON = function () {
 		let data = {};
@@ -66,6 +68,7 @@
 	 * Разрешены комбинации: Backspace, ctrl + v, ctrl + c, ctrl + r
 	 *
 	 * @returns {Boolean}
+	 * @memberOf jQuery
 	 */
 	$.fn.checkPhone = function () {
 		return this.each(function () {
@@ -85,23 +88,23 @@
 	/**
 	 * jQuery plugin that trigger changes to the value of an input field (to track hidden fields)
 	 *
-	 * @since 1.0.0
-	 * @memberOf jQuery.fn
-	 * @function triggerValueChange
+	 * @since 1.1.0
+	 * @memberOf jQuery
+	 * @function triggerChangeAttribute
 	 *
 	 * @param {Object} options - The options for the trackValueChange plugin.
 	 * @param {function} options.onChange - The callback function to execute when the value changes.	 *
 	 * @returns {jQuery} The jQuery object for chaining.
 	 * @example
-	 * $("input[type=hidden]").triggerValueChange();
+	 * $("input[type=hidden]").triggerChangeAttribute("value");
 	 * $("#sessid").on('change', () => { console.log('change trigger!'); })
 	 * $("#sessid").val('change hidden');
 	 */
-	$.fn.triggerValueChange = function () {
+	$.fn.triggerChangeAttribute = function (attributeName) {
 		const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
 		let trackChange = function(element) {
 			let observer = new MutationObserver(function(mutations, observer) {
-				if (mutations[0].attributeName == "value") {
+				if (mutations[0].attributeName == attributeName) {
 					$(element).trigger("change");
 				}
 			});
@@ -129,35 +132,27 @@
 	 *
 	 * @version 1.0
 	 */
-	jQuery.extend(jQuery.fn, {
+	$.extend($.fn, {
 		/** @memberOf jQuery */
-		clearSelect: function(defaultOption) {
-			return this.each(function(){
+		clearSelect: function (defaultOption) {
+			return this.each(function () {
 				if (this.tagName == 'SELECT') {
 					this.options.length = 0;
-					if (! defaultOption) {
+					if (!defaultOption) {
 						return;
 					}
-					if ($.support.cssFloat) {
-						this.add(defaultOption, null);
-					} else {
-						this.add(defaultOption);
-					}
+					this.add(defaultOption, null);
 				}
 			});
 		},
 		/** @memberOf jQuery */
-		fillSelect: function(dataArray, defaultOption) {
-			return this.clearSelect(defaultOption).each(function(){
+		fillSelect: function (dataArray, defaultOption) {
+			return this.clearSelect(defaultOption).each(function () {
 				if (this.tagName == 'SELECT') {
-					var currentSelect = this;
-					$.each(dataArray, function(index, data) {
-						var option = new Option(data.name, data.value);
-						if($.support.cssFloat) {
-							currentSelect.add(option, null);
-						} else {
-							currentSelect.add(option);
-						}
+					let currentSelect = this;
+					$.each(dataArray, function (index, data) {
+						let option = new Option(data.name, data.value);
+						currentSelect.add(option, null);
 					});
 				}
 			});
@@ -165,69 +160,22 @@
 	});
 })(jQuery);
 
-
 /**
- * Закрывает открытое окно и убирает овелей
- * @param {obj} th Объект jQuery который необходима закрыть
+ * @deprecated
+ * @param str
+ * @returns {*}
  */
-function HideWin(th, speed)
-{
-	if (typeof speed === 'undefined') {
-		$(th).hide();
-		$('#overlay').hide();
-	} else {
-		$(th).animate({'opacity': '0'}, speed, function () {
-			$('#overlay').hide();
-			$(this).hide();
-		});
-	}
+function trim(str) {
+	return str.toString().trim();
 }
 
-/**
- * Открывает открытое окно и убирает овелей
- * @param {obj} th Объект jQuery который необходима закрыть
- */
-function ShowWin(th, speed)
-{
-	//$("body").prepend('<div id="overlay"></div>');
-	if (typeof speed === 'undefined') {
-		$("#overlay").center({'resize': true});
-		$('#overlay').show();
-		$(th).center().show();
-	} else {
-		$("#overlay").center({'resize': true});
-		$('#overlay').show(speed, function () {
-			$(th).css({'opacity': '0', 'display': 'block'}).center().animate({'opacity': '1'}, speed);
-		});
-	}
+function ltrim(str) {
+	return str.replace(new RegExp("^\\s+", "g"), "");
 }
 
-/**
- * отображает ошибку заполненности формы
- * @param {jQuery} layer родитель-форма, в которой после заголовка .headess нужно вставить ошибку
- * @param {String} errorHtml Ошибка в виде html
- */
-function ShowFillFormErrorMess(layer, errorHtml)
-{
-	if (errorHtml.trim() === '') {
-		return;
-	}
-
-	let html = '<div class="alert-errors">';
-	html += errorHtml;
-	html += '</div>';
-	$(html).insertAfter($('.headess', layer));
+function rtrim(str) {
+	return str.replace(new RegExp("\\s+$", "g"), "");
 }
-
-/**
- * убирает ошибку заполненности формы
- * @param {jQuery} layer родитель-форма, в которой после заголовка .HeaderTitle нужно вставить ошибку
- */
-function ClearFillFormErrorMess(layer)
-{
-	$('.alert-errors', layer).remove();
-}
-
 
 /**
  * Проверяет строку на пустоту
@@ -254,7 +202,7 @@ function isNum(cCode)
 }
 /**
  * Проверяет код нажатой клавиши для полей типа "телефон"
- * @param int cCode код клавиши
+ * @param {int} cCode код клавиши
  * @returns {Boolean}
  *
  * FIXME перестала работать
@@ -281,47 +229,6 @@ function isMail(str)
 }
 
 /**
- * Retrieve the result from a URL using AJAX POST request.
- *
- * @param {string} url - The URL to send the request to.
- * @param {object|FormData} request - The parameters to send along with the request.
- * @param {function} success - The function to be invoked upon successful response.
- * @param {object} params - The parameters of ajax call, see params of $.ajax
- * @param {function} error - The function to be invoked upon error response.
- * @return {void}
- * @see {https://api.jquery.com/jQuery.ajax/}
- */
-function getResultFromUrl(url, request, success, params, error)
-{
-	if (typeof params === 'undefined') {
-		params = {};
-	}
-	if (request instanceof FormData) {
-		$.extend( params, {
-			// support send files
-			processData: false,
-			contentType: false,
-		});
-	}
-
-	$.ajax($.extend({
-		async: true,
-		cache: false,
-		data: request,
-		dataType: 'json',
-		timeout: 8000,
-		type: 'POST', /*method in jquery 1.9+*/
-		url: url,
-		error: function (jqXHR, textStatus, errorThrown) {
-			if (funcDefined(error)) {
-				error(jqXHR, textStatus, errorThrown);
-			}
-		},
-		success: success
-	}, params));
-}
-
-/**
  * Analog PHP htmlspecialchars
  * @param text
  * @returns
@@ -342,91 +249,12 @@ function escapeHtml(text)
 }
 
 /**
- * Предзагрузчик картинок, исполняет функцию then и thenAll после загрузки, соответственно, каждой картинки и всех картинок.
- *
- * @param src {string|array} Путь к картинке, может быть строкой(одна картинка), или массивом строк(несколько картинок).
- * @param then {function} Callback функция исполняется после загрузки каждой из картинок.
- *          Здесь this - загруженная картинка(объект Image()).
- * @param thenAll { function(ar) } Callback функция исполняется после загрузки всех картинок.
- *           Здесь ar - массив всех значений возвращаемых функцией then.
- */
-function imgPreloader(src, then, thenAll)
-{
-	if (typeof src == 'object') {
-		let len = src.length,
-			res = [];
-		let listimg = function () {
-			for (let i in src) {
-				let img = new Image();
-				if ('addEventListener' in img) {
-					img.addEventListener('load', function () {
-						var ret = true;
-						if (typeof then == 'function') {
-							ret = then.call(this);
-						}
-						res.push(ret);
-					}, false);
-				} else {
-					img.attachEvent('onload', function () {
-						var ret = true;
-						if (typeof then == 'function') {
-							ret = then.call(this);
-						}
-						res.push(ret);
-					});
-				}
-				img.src = src[i];
-			}
-		};
-		listimg();
-		setTimeout(function () {
-			if (res.length >= len) {
-				if (typeof thenAll == 'function')
-					thenAll(res);
-			} else {
-				listimg();
-				setTimeout(arguments.callee, 1);
-			}
-		}, 1);
-	} else {
-		let img = new Image();
-		if ('addEventListener' in img) {
-			img.addEventListener('load', function () {
-				then.call(this);
-			}, false);
-		} else {
-			img.attachEvent('onload', function () {
-				then.call(this);
-			});
-		}
-		img.src = src;
-	}
-}
-
-/**
- * @deprecated
- * @param str
- * @returns {*}
- */
-function trim(str) {
-	return str.toString().trim();
-}
-
-function ltrim(str) {
-	return str.replace(new RegExp("^\\s+", "g"), "");
-}
-
-function rtrim(str) {
-	return str.replace(new RegExp("\\s+$", "g"), "");
-}
-
-/**
  * Разбивает хеш строку, сформированную по типу GET параметов, в объект [key=val]
  * @returns {Object}
  */
 function hashAsObject()
 {
-	const hs = location.hash.substr(1);
+	const hs = location.hash.substring(1);
 	const har = hs.split('&');
 	const opts = {};
 	for (let i in har) {
@@ -434,36 +262,6 @@ function hashAsObject()
 		opts[v[0]] = v[1];
 	}
 	return opts;
-}
-
-/**
- * Attaches a right-click event handler to all the images within the <body> of the current document,
- * preventing the default context menu from being displayed.
- *
- * @function rightClick
- * @returns {undefined}
- */
-function rightClick()
-{
-	$('body').on('contextmenu', 'img', function (e) {
-		e.preventDefault();
-	});
-}
-
-/**
- * Requires JavaScript libraries and executes a logic function
- *
- * @param {Array<string>} libs - An array of library URLs to be loaded
- * @param {Function} logik - The function to be executed after loading the libraries
- *
- * @return {undefined}
- */
-function requireJJs(libs, logik)
-{
-	BX.loadScript(libs, function () {
-		logik();
-	});
-	// console.info(libs);
 }
 
 /**
@@ -509,6 +307,47 @@ function issetItem(obj, path)
 }
 
 /**
+ * Retrieve the result from a URL using AJAX POST request.
+ *
+ * @param {string} url - The URL to send the request to.
+ * @param {object|FormData} request - The parameters to send along with the request.
+ * @param {function} success - The function to be invoked upon successful response.
+ * @param {object} params - The parameters of ajax call, see params of $.ajax
+ * @param {function} error - The function to be invoked upon error response.
+ * @return {void}
+ * @see {https://api.jquery.com/jQuery.ajax/}
+ */
+function getResultFromUrl(url, request, success, params, error)
+{
+	if (typeof params === 'undefined') {
+		params = {};
+	}
+	if (request instanceof FormData) {
+		$.extend( params, {
+			// support send files
+			processData: false,
+			contentType: false,
+		});
+	}
+
+	$.ajax($.extend({
+		async: true,
+		cache: false,
+		data: request,
+		dataType: 'json',
+		timeout: 8000,
+		type: 'POST', /*method in jquery 1.9+*/
+		url: url,
+		error: function (jqXHR, textStatus, errorThrown) {
+			if (funcDefined(error)) {
+				error(jqXHR, textStatus, errorThrown);
+			}
+		},
+		success: success
+	}, params));
+}
+
+/**
  * @param {string} filename
  * @param {function(): *} getDataUri to get data uri
  */
@@ -518,4 +357,97 @@ function downloadFile(filename, getDataUri)
 	link.download = filename;
 	link.href = getDataUri();
 	link.click();
+}
+
+/**
+ * Предзагрузчик картинок, исполняет функцию then и thenAll после загрузки, соответственно, каждой картинки и всех картинок.
+ *
+ * @param src {string|array} Путь к картинке, может быть строкой(одна картинка), или массивом строк(несколько картинок).
+ * @param then {function} Callback функция исполняется после загрузки каждой из картинок.
+ *          Здесь this - загруженная картинка(объект Image()).
+ * @param thenAll { function(ar) } Callback функция исполняется после загрузки всех картинок.
+ *           Здесь ar - массив всех значений возвращаемых функцией then.
+ */
+function imgPreloader(src, then, thenAll)
+{
+	if (typeof src == 'object') {
+		let len = src.length,
+			res = [];
+		let listimg = function () {
+			for (let i in src) {
+				let img = new Image();
+				if ('addEventListener' in img) {
+					img.addEventListener('load', function () {
+						let ret = true;
+						if (funcDefined(then)) {
+							ret = then.call(this);
+						}
+						res.push(ret);
+					}, false);
+				} else {
+					img.attachEvent('onload', function () {
+						let ret = true;
+						if (funcDefined(then)) {
+							ret = then.call(this);
+						}
+						res.push(ret);
+					});
+				}
+				img.src = src[i];
+			}
+		};
+		listimg();
+		setTimeout(function () {
+			if (res.length >= len) {
+				if (funcDefined(thenAll)) {
+					thenAll(res);
+				}
+			} else {
+				listimg();
+				setTimeout(arguments.callee, 1);
+			}
+		}, 1);
+	} else {
+		let img = new Image();
+		if ('addEventListener' in img) {
+			img.addEventListener('load', function () {
+				then.call(this);
+			}, false);
+		} else {
+			img.attachEvent('onload', function () {
+				then.call(this);
+			});
+		}
+		img.src = src;
+	}
+}
+
+/**
+ * Attaches a right-click event handler to all the images within the <body> of the current document,
+ * preventing the default context menu from being displayed.
+ *
+ * @function rightClick
+ * @returns {undefined}
+ */
+function rightClick()
+{
+	$('body').on('contextmenu', 'img', function (e) {
+		e.preventDefault();
+	});
+}
+
+/**
+ * Requires JavaScript libraries and executes a logic function
+ *
+ * @param {Array<string>} libs - An array of library URLs to be loaded
+ * @param {Function} logik - The function to be executed after loading the libraries
+ *
+ * @return {undefined}
+ */
+function requireJJs(libs, logik)
+{
+	BX.loadScript(libs, function () {
+		logik();
+	});
+	// console.info(libs);
 }
