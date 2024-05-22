@@ -74,6 +74,20 @@ final class BitrixEngine
 	}
 
 	/**
+	 * Retrieves the current user from the global $USER variable.
+	 *
+	 * @return \CUser The current user if found, an instance of \CUser otherwise.
+	 */
+	public static function getCurrentUserD0(): \CUser
+	{
+		global $USER;
+		if (! is_a($USER, \CUser::class)) {
+			$USER = new \CUser();
+		}
+		return $USER;
+	}
+
+	/**
 	 * Retrieves a service by its name from the service locator.
 	 *
 	 * @param string $serviceName The name of the service to retrieve
@@ -93,5 +107,19 @@ final class BitrixEngine
 	public function getConnection(string $name = "")
 	{
 		return $this->app->getConnectionPool()->getConnection($name);
+	}
+
+	/**
+	 * Retrieves the main application object on global $APPLICATION variable
+	 *
+	 * @return \CMain The main application object.
+	 */
+	public static function getAppD0(): \CMain
+	{
+		global $APPLICATION;
+		if (! is_a($APPLICATION, \CMain::class)) {
+			$APPLICATION = new \CMain();
+		}
+		return $APPLICATION;
 	}
 }
