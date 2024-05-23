@@ -70,7 +70,7 @@ class AssetsContainer
 			if (is_file(Loader::getDocumentRoot() . $testMinCss)) {
 				$css = $testMinCss;
 			}
-			echo str_replace(['url(../'], 'url(' . SITE_TEMPLATE_PATH . '/', file_get_contents(Loader::getDocumentRoot() . $css)) . PHP_EOL;
+			echo sprintf('/* __%s__ */ ', basename($css)) . str_replace(['url(../'], 'url(' . SITE_TEMPLATE_PATH . '/', file_get_contents(Loader::getDocumentRoot() . $css)) . PHP_EOL;
 		}
 		unset($testMinCss);
 		if (count(self::$CSS_INLINE)) {

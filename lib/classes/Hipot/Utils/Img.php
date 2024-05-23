@@ -1,31 +1,36 @@
 <?php
 namespace Hipot\Utils;
 
-use Intervention\Image\ImageManagerStatic as iiImage;
-use Bitrix\Main\Loader,
+use Intervention\Image\ImageManagerStatic as iiImage,
+	Opis\Closure\SerializableClosure,
+	JetBrains\PhpStorm\ExpectedValues,
+	Bitrix\Main\Loader,
 	Bitrix\Main\Config\Option,
 	CMainPage,
-	Bitrix\Main\IO;
-use RuntimeException,
+	Bitrix\Main\IO,
+	RuntimeException,
 	Bitrix\Main\ArgumentException;
 
 /**
- * Обработка изображений aka CImg 2.0.
- * Использует библиотеку трансформации \Intervention\Image 2.X *
+ * Обработка изображений
+ * Использует библиотеку трансформации \Intervention\Image 2.X* (переписать под 3)
  *
- * Необходимо: php 8.0, Extensions: fileinfo, GD (лучше Imagick)
+ * Необходимо: php 8.1, Extensions: fileinfo, GD (лучше Imagick)
  *
  * @see https://image.intervention.io/v2
  * @see https://www.hipot-studio.com/Codex/cimg-constantly-integrable-modifier-of-graphics/
  *
  * @author		(c) hipot studio
- * @version		4.0.0, 2023
+ * @version		5.0.0, 2024
+ *
+ * @method static void setTag(string $tag) Установка тега, ставить тег перед каждой трансформацией. Для структурирования
+ *     /upload/hiimg_cache/<$tagName>/aaa/aaaaaaaaaaaaaaaaaaa/... При этом можно удобно удалять кеш через удаление папки /upload/himg_cache/<$tagName>
+ * @method static void oneResizeParams(array $params = []) Установить предварительные настройки для ОДНОГО последующего вызова Resize() или ResizeOverlay()
+ *     ['tag' => 'detail-pics', 'decodeToFormat'  => 'jpg', 'saveAlpha' => false, 'jpgQuality' => 95]
  */
 final class Img
 {
-	////////////////////
 	// useful constants:
-	////////////////////
 
 	/* методы ресайза */
 	public const M_CROP			    = 'CROP';
@@ -35,15 +40,21 @@ final class Img
 	public const M_PROPORTIONAL	    = 'PROPORTIONAL';
 	public const M_STRETCH			= 'STRETCH';
 
-	////////////////////
-	// class fields:
-	////////////////////
+	/* filepath types */
+	private const FILEPATH_BITRIX_ID = 'bxid';
+	private const FILEPATH_ABS_PATH = 'abs';
+	private const FILEPATH_REL_DOC_ROOT_PATH = 'rel';
+	private const OVERLAY_POSITION_TYPES = ['center', 'top-left', 'top', 'top-right', 'left', 'right', 'bottom-left', 'bottom', 'bottom-right'];
+	private const IMAGE_DECODE_FORMATS = ['webp', 'png', 'jpeg', 'jpg', 'gif'];
+
+	// region class fields:
 
 	/**
 	 * Тип пути изображения.
 	 * Путь к изображению относительно корня сайта, либо относительно корня документов, либо битрикс ID
 	 * @var string = bxid|abs|rel
 	 */
+	#[ExpectedValues([Img::FILEPATH_BITRIX_ID, Img::FILEPATH_ABS_PATH, Img::FILEPATH_REL_DOC_ROOT_PATH])]
 	private string $path_type;
 
 	/**
@@ -90,40 +101,103 @@ final class Img
 
 	private int $defaultJpgQuality;
 
-	/**
-	 * Имя тега, <b>вызывать перед каждым вызовом трансформации</b>
-	 * см SetTag(...)
-	 * @var string
-	 */
-	public static string $tagName = '';
+	// region deprecated oneResizeParams(), use $config in getInstance()
 
 	/**
-	 * Сохранять ли полупрозрачность при методах FULL и FULL_S?
-	 * При этом меняется формат на png
+	 * Имя тега, см. setTag(...)
+	 * @use self::oneResizeParams();
+	 * @var string
+	 */
+	private static string $tag = '';
+
+	/**
+	 * Сохранять ли полупрозрачность при методах FULL и FULL_S? При этом меняется формат на png
+	 * @use self::oneResizeParams();
 	 * @var bool
 	 */
-	public static bool $saveAlpha = false;
+	private static bool $saveAlpha = false;
 
 	/**
 	 * Можно переопределить в какой формат в итоге сохранить png|gif|jpeg|webp
+	 * @use self::oneResizeParams();
 	 * @var bool|string
+	 * @internal
 	 */
-	public static $decodeToFormat = false;
+	public static bool|string $decodeToFormat = false;
 
-	public function __construct()
+	/**
+	 * Качество jpeg сохранения изображения
+	 * @use self::oneResizeParams();
+	 * @var int
+	 */
+	private static int $jpgQuality = 0;
+
+	// endregion
+
+	// endregion
+
+	/**
+	 * @param array|null $config
+	 * @param bool       $setSid = false в путь установить ID сайта (удобно при многосайтовости)
+	 */
+	public function __construct(
+		/**
+		 * @var array{'tag':string, 'decodeToFormat':string, 'saveAlpha': bool, 'jpgQuality': int}
+		 */
+		private ?array $config = [],
+		private bool $setSid = false
+	)
 	{
+		// region dependencies
 		if (class_exists('Imagick') && extension_loaded('imagick')) {
 			iiImage::configure(['driver' => 'imagick']);
 		}
 		if (!class_exists(CMainPage::class)) {
 			require_once Loader::getDocumentRoot() . "/bitrix/modules/main/include/mainpage.php";
 		}
+		// endregion
+
 		$this->defaultJpgQuality = (int)Option::get('main', 'image_resize_quality', '95');
+
+		$this->setResizeParams($config);
 	}
 
-	///////////////////////////
-	// service addons methods:
-	///////////////////////////
+	/**
+	 * @param ?array{'tag':string, 'decodeToFormat':string, 'saveAlpha': bool, 'jpgQuality': int} $config = []
+	 */
+	public static function getInstance(?array $config = []): self
+	{
+		return new self($config);
+	}
+
+	/**
+	 * Work with deprecated code (compatibility)
+	 * @param string     $name
+	 * @param array|null $arguments
+	 * @return mixed
+	 */
+	public static function __callStatic(string $name, ?array $arguments = null)
+	{
+		if (strtolower($name) == 'oneresizeparams') {
+			$name = 'setResizeParams';
+		} else {
+			$name .= 'Internal';
+		}
+		return self::getInstance()->$name(...$arguments);
+	}
+
+	/**
+	 * Получить значение параметра трансофмации (для совместимости со старыми вызовами если не определены в контрейнере $config, то берет из статичных полей)
+	 *
+	 * @param string $name The name of the parameter
+	 * @return mixed The value of the parameter if it exists, otherwise the default value.
+	 */
+	public function getParam(string $name)
+	{
+		return $this->config[$name] ?? self::${$name};
+	}
+
+	// region service addons methods:
 
 	/**
 	 * Загружает картинку
@@ -148,7 +222,7 @@ final class Img
 
 		if (is_numeric($img)) {
 			// если входит БитриксID картинки
-			$this->path_type		= 'bxid';
+			$this->path_type		= self::FILEPATH_BITRIX_ID;
 			$this->r_src			= \CFile::GetPath($img);
 			$this->src				= Loader::getDocumentRoot() . $this->r_src;
 		} elseif (str_contains($img, Loader::getDocumentRoot())) {
@@ -156,12 +230,12 @@ final class Img
 			if (! is_file($img)) {
 				throw new RuntimeException('wrong_input_img_type');
 			}
-			$this->path_type		= 'abs';
+			$this->path_type		= self::FILEPATH_ABS_PATH;
 			$this->src				= $img;
 			$this->r_src			= str_replace(Loader::getDocumentRoot(), '', $this->src);
 		} elseif (is_file(Loader::getDocumentRoot() . $img)) {
 			// если входит путь к картинке относительно корня сайта
-			$this->path_type		= 'rel';
+			$this->path_type		= self::FILEPATH_REL_DOC_ROOT_PATH;
 			$this->r_src			= $img;
 			$this->src				= Loader::getDocumentRoot() . $this->r_src;
 		} else {
@@ -171,22 +245,14 @@ final class Img
 
 	/**
 	 * Формирует путь для сохранения изображения в дереве директорий Битрикс.
-	 *
-	 * @param bool $ssid = false ID сайта указывается при многосайтовости
 	 * @throws \Bitrix\Main\IO\InvalidPathException
 	 */
-	private function makeSavePathForBx(bool $ssid = false): void
+	private function makeSavePathForBx(): void
 	{
-		// учет многосайтовости
-		if ($ssid) {
-			$this->postfix = CMainPage::GetSiteByHost() . '/' . $this->postfix;
-		}
-
 		// 32000-2 folders can have unix folder (ext3)
 		$imgPath = substr($this->postfix, 0, 3);
-		if (trim(self::$tagName) != '') {
-			$imgPath = self::$tagName . '/' . $imgPath;
-			self::setTag('');
+		if (trim($this->getParam('tag')) != '') {
+			$imgPath = $this->getParam('tag') . '/' . $imgPath;
 		}
 
 		$this->r_path = '/upload/himg_cache/' . $imgPath . '/' . $this->postfix . '/' . basename($this->src);
@@ -197,17 +263,16 @@ final class Img
 
 	private function decodeFormat(): void
 	{
-		if (self::$saveAlpha && in_array($this->method, [self::M_FULL, self::M_FULL_S])) {
+		if ($this->getParam('saveAlpha') && in_array($this->method, [self::M_FULL, self::M_FULL_S])) {
 			$this->r_path = preg_replace('#(jpe?g)|(gif)$#i', 'png', $this->r_path);
 		}
 		// gif has bug in this methods
 		if (in_array($this->method, [self::M_FULL, self::M_FULL_S])) {
 			$this->r_path = preg_replace('#gif$#i', 'png', $this->r_path);
 		}
-		if (self::$decodeToFormat) {
-			$this->r_path = preg_replace('#(png)|(gif)|(jpe?g)$#i', self::$decodeToFormat, $this->r_path);
+		if ($this->getParam('decodeToFormat')) {
+			$this->r_path = preg_replace('#(png)|(gif)|(jpe?g)$#i', $this->getParam('decodeToFormat'), $this->r_path);
 		}
-		self::$decodeToFormat = false;
 	}
 
 	/**
@@ -229,16 +294,16 @@ final class Img
 	 *
 	 * @throws \RuntimeException
 	 */
-	private function doResize(?int $w = null, ?int $h = null, string $method = self::M_CROP): void
+	private function doResizeMethod(?int $w = null, ?int $h = null, string $method = self::M_CROP): void
 	{
 		if (empty($method)) {
 			throw new RuntimeException('no_resize_method_set');
 		}
 
-		$aspectRatio = function ($constraint) {
+		$aspectRatio = static function ($constraint) {
 			$constraint->aspectRatio();
 		};
-		$aspectRatioNoUpside = function ($constraint) {
+		$aspectRatioNoUpside = static function ($constraint) {
 			$constraint->aspectRatio();
 			$constraint->upsize();
 		};
@@ -291,6 +356,9 @@ final class Img
 			$jpgQuality = $this->defaultJpgQuality;
 		}
 
+		// progressive JPEG and animated GIFs
+		$this->iiImage->interlace(true);
+
 		// итог - сохраняем либо gif, либо png, либо jpeg
 		$this->iiImage->save($this->path, $jpgQuality);
 	}
@@ -303,10 +371,36 @@ final class Img
 	private function normalizePath(string $path): string
 	{
 		// on winnt all paths is windows-1251 encoding
-		if (constant('BX_UTF') === true && strpos(ToLower(PHP_OS), 'win') !== false) {
+		if (constant('BX_UTF') === true && str_contains(strtolower(PHP_OS), 'win')) {
 			$path = mb_convert_encoding($path, 'UTF-8', 'WINDOWS-1251');
 		}
 		return IO\Path::normalize($path) ?? $path;
+	}
+
+	/**
+	 * returner array must be serialized
+	 * @param array $resizeArgs
+	 * @return array
+	 */
+	private function getConfigPathPostfix(array $resizeArgs = []): array
+	{
+		foreach ($resizeArgs as $arg => &$argVal) {
+			if (is_a($argVal, \Closure::class)) {
+				if (class_exists(SerializableClosure::class)) {
+					$argVal = new SerializableClosure($argVal);
+				} else {
+					$debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)[1];
+					$argVal = 'Closure_' . $debug['file'] . ':' . $debug['line'];
+				}
+			}
+		}
+		unset($argVal);
+		return $resizeArgs + array_merge([
+				'tag'            => self::$tag,
+				'saveAlpha'      => self::$saveAlpha,
+				'decodeToFormat' => self::$decodeToFormat,
+				'jpgQuality'     => self::$jpgQuality
+			], (array)$this->config);
 	}
 
 	public static function insertOverlay(self $mi, string $lastWm, string $lastWmPos): void
@@ -314,9 +408,9 @@ final class Img
 		$mi->iiImage->insert($lastWm, $lastWmPos);
 	}
 
-	//////////////////////////////////////////////////////////////////
-	// useful methods:
-	//////////////////////////////////////////////////////////////////
+	// endregion
+
+	// region config setters and getters
 
 	/**
 	 * Установить предварительные настройки для ОДНОГО последующего вызова Resize() или ResizeOverlay()
@@ -325,36 +419,90 @@ final class Img
 	 *   'tag'             => 'detail-pics',
 	 *   'decodeToFormat'  => 'jpg'              // принудительно выставить формат итогового изображения png|gif|jpeg
 	 *   'saveAlpha'       => false,             // M_FULL и M_FULL_S превращать в png
+	 *   'jpgQuality'      => 95                 // Качество сохранения jpeg
 	 * ]</pre>
-	 * @param array{'tag':string, 'decodeToFormat':string, 'saveAlpha': bool} $params = []
+	 * @param array{'tag':string, 'decodeToFormat':string, 'saveAlpha': bool, 'jpgQuality': int} $params = []
 	 */
-	public static function oneResizeParams(array $params = []): void
+	public function setResizeParams(array $params = []): void
 	{
 		foreach ($params as $name => $value) {
-			$ln = ToLower($name);
-			if ($ln == 'tag') {
-				self::SetTag($value);
+			$loweName = strtolower($name);
+			if ($loweName == 'tag') {
+				$this->setTagInternal($value);
 			}
-			if ($ln == 'savealpha') {
-				self::$saveAlpha = $value;
+			if ($loweName == 'savealpha') {
+				$this->setSaveAlpha($value);
 			}
-			if ($ln == 'decodetoformat') {
-				self::$decodeToFormat = $value;
+			if ($loweName == 'decodetoformat') {
+				$this->setDecodeToFormat($value);
+			}
+			if ($loweName == 'jpgquality') {
+				$this->setJpgQuality($value);
 			}
 		}
 	}
 
 	/**
-	 * Установка тега, ставить тег перед каждой трансформацией.
-	 * Для структурирования /upload/hiimg_cache/<$tagName>/aaa/aaaaaaaaaaaaaaaaaaa/...
-	 * При этом можно удобно удалять кеш через удаление папки /upload/himg_cache/<$tagName>
+	 * Восстанавливает параметры ресайза по умолчанию
 	 *
+	 * @param bool $confToo = false сбросить внутренние настройки инстанса, либо только статичные поля
+	 * @return void
+	 * @see self::setResizeParams()
+	 */
+	public function restoreResizeParams(bool $confToo = true): void
+	{
+		self::$tag = '';
+		self::$saveAlpha = false;
+		self::$decodeToFormat = false;
+		self::$jpgQuality = 0;
+		if ($confToo) {
+			$this->config = [];
+		}
+	}
+
+	/**
+	 * Установка тега для структурирования копий по схеме /upload/hiimg_cache/<$tagName>/aaa/aaaaaaaaaaaaaaaaaaa/...
+	 * При этом можно удобно удалять кеш через удаление папки /upload/himg_cache/<$tagName>
 	 * @param string $tagName = '';
 	 */
-	public static function SetTag(string $tagName = ''): void
+	public function setTagInternal(string $tagName = ''): void
 	{
-		self::$tagName = trim($tagName);
+		self::$tag           = trim($tagName);
+		$this->config['tag'] = self::$tag;
 	}
+
+	public function setSaveAlpha(bool $saveAlpha): void
+	{
+		self::$saveAlpha = $saveAlpha;
+		$this->config['saveAlpha'] = self::$saveAlpha;
+	}
+
+	public function setDecodeToFormat(
+		#[ExpectedValues(Img::IMAGE_DECODE_FORMATS)]
+		bool|string $decodeToFormat = false
+	): void
+	{
+		self::$decodeToFormat = $decodeToFormat;
+		$this->config['decodeToFormat'] = self::$decodeToFormat;
+	}
+
+	public function setJpgQuality(int $jpgQuality = 0): void
+	{
+		self::$jpgQuality = $jpgQuality;
+		$this->config['jpgQuality'] = self::$jpgQuality;
+	}
+
+	/**
+	 * @return \Intervention\Image\Image|mixed
+	 */
+	public function getProcessEngine()
+	{
+		return $this->iiImage;
+	}
+
+	// endregion
+
+	// region useful methods:
 
 	/**
 	 * Сделать ресайз изображения $f
@@ -366,32 +514,35 @@ final class Img
 	 * @param bool                  $retAr = false Возвращать массив или строку. По умолчанию строку с путем к файлу
 	 * @param ?callable             $callbackMi = null Метод, в который передается объект перед сохранением, сигнатура: $callbackMi(Img $mi)
 	 *
-	 * @return string|array{'SRC':string,'src':string, 'WIDTH':int,'width':int, 'HEIGHT':int,'height':int} путь к результирующей картинке или массив {путь, шир, выс}
+	 * @return array{'SRC':string,'src':string, 'WIDTH':int,'width':int, 'HEIGHT':int,'height':int}|string массив {путь, шир, выс} или путь к результирующей
+	 *     картинке
 	 * @throws \Exception
 	 */
-	public static function Resize($f, ?int $w = null, ?int $h = null, string $m = self::M_CROP, bool $retAr = false, ?callable $callbackMi = null): string|array
+	public function doResize($f, ?int $w = null, ?int $h = null, string $m = self::M_CROP, bool $retAr = false, ?callable $callbackMi = null): string|array
 	{
-		$mi = new self();
-		$mi->load($f);
+		$this->load($f);
 
-		$mi->method		= $m;
-		$mi->postfix	= md5(serialize(func_get_args()));
-		$mi->makeSavePathForBx();
+		$this->method	= $m;
+		$this->postfix	= md5(serialize($this->getConfigPathPostfix(func_get_args())));
+		if ($this->setSid) {
+			$this->postfix = CMainPage::GetSiteByHost() . '/' . $this->postfix;
+		}
+		$this->makeSavePathForBx();
 
-		if (! $mi->wasCached()) {
-			$mi->doResize($w, $h, $m);
+		if (! $this->wasCached()) {
+			$this->doResizeMethod($w, $h, $m);
 
 			if (is_callable($callbackMi)) {
-				$callbackMi($mi);
+				$callbackMi($this);
 			}
 
-			$mi->imageSave();
+			$this->imageSave( $this->getParam('jpgQuality') );
 		}
 
-		$r_path = $mi->normalizePath( $mi->r_path );
+		$r_path = $this->normalizePath($this->r_path);
 
 		if ($retAr) {
-			$par = getimagesize($mi->path);
+			$par = getimagesize($this->path);
 			$return = [
 				'SRC'		=> $r_path,
 				'WIDTH'		=> $par[0],
@@ -401,10 +552,23 @@ final class Img
 				'width'		=> $par[0],
 				'height'	=> $par[1]
 			];
+			if (is_numeric($f) && $this->path_type == self::FILEPATH_BITRIX_ID) {
+				$return = ['ID' => $f] + $return;
+			}
 		} else {
 			$return			= $r_path;
 		}
+		return $return;
+	}
 
+	/**
+	 * @see self::doResize()
+	 */
+	public static function resize($f, ?int $w = null, ?int $h = null, string $m = self::M_CROP, bool $retAr = false, ?callable $callbackMi = null): string|array
+	{
+		$mi = new self();
+		$return = $mi->doResize(...func_get_args());
+		$mi->restoreResizeParams();
 		unset($mi);
 		return $return;
 	}
@@ -423,9 +587,12 @@ final class Img
 	 * @param bool     $retAr = false Возвращать массив или путь к результирующему файлу. По умолчанию путь
 	 *
 	 * @return string|array{'SRC':string,'src':string, 'WIDTH':int,'width':int, 'HEIGHT':int,'height':int} путь к результирующей картинке или массив {путь, шир, выс}
-	 * @throws \Exception
+	 * @throws \RuntimeException|\Exception
 	 */
-	public static function ResizeOverlay($f, string $to, string $pos = 'center', ?int $w = null, ?int $h = null, string $m = self::M_PROPORTIONAL, bool $retAr = false): string|array
+	public function doResizeOverlay($f, string $to,
+	                                #[ExpectedValues(Img::OVERLAY_POSITION_TYPES)]
+	                                string $pos = 'center',
+	                                ?int $w = null, ?int $h = null, string $m = self::M_PROPORTIONAL, bool $retAr = false): string|array
 	{
 		if (!str_contains($to, Loader::getDocumentRoot()) && is_file(Loader::getDocumentRoot() . $to)) {
 			$to = Loader::getDocumentRoot() . $to;
@@ -433,9 +600,17 @@ final class Img
 		if (! is_file($to)) {
 			throw new RuntimeException('wrong_image_wm ' . $to);
 		}
-		return self::Resize($f, $w, $h, $m, $retAr, static function ($mi) use ($to, $pos) {
-			self::insertOverlay($mi, $to, $pos);
+		return $this->doResize($f, $w, $h, $m, $retAr, function (self $mi) use ($to, $pos) {
+			self::insertOverlay($this, $to, $pos);
 		});
+	}
+
+	/**
+	 * @see self::doResizeOverlay()
+	 */
+	public static function resizeOverlay($f, string $to, string $pos = 'center', ?int $w = null, ?int $h = null, string $m = self::M_PROPORTIONAL, bool $retAr = false): string|array
+	{
+		return (new self())->doResizeOverlay(...func_get_args());
 	}
 
 	/**
@@ -488,6 +663,8 @@ final class Img
 			return $result;
 		}, $htmlText);
 	}
+
+	// endregion
 
 } // end class
 
