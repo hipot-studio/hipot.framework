@@ -12,8 +12,10 @@ use Hipot\Utils\UUtils;
 /**
  * yum install ffmpeg
  */
-final class FfmpegExec
+class FfmpegExec
 {
+	static $IS_DEBUG = false;
+
 	/**
 	 * 1080p (HD): 1920 x 1080
 	 * 720p (HD): 1280 x 720
@@ -42,8 +44,10 @@ final class FfmpegExec
 			return $sizes;
 		}
 
+		$cmd = str_replace('#FILENAME#', $filename, self::GET_SIZE_SH);
 		try {
-			@exec( str_replace('#FILENAME#', $filename, self::GET_SIZE_SH), $cmdResult );
+			$cmdResult = [];
+			self::runCli($cmd, $cmdResult);
 			$result = Json::decode( implode('', $cmdResult) );
 			$sizes = current($result['streams']);
 		} catch (\Error|\Exception $e) {
@@ -66,14 +70,23 @@ final class FfmpegExec
 		}
 
 		$cmd = str_replace([
-				'#WIDTH#', '#HEIGHT#', '#SRC_FILENAME#', '#DEST_FILENAME#'
-			], [
-				$sizes['width'], $sizes['height'], $srcFilename, $destFilename
-			],
+			'#WIDTH#', '#HEIGHT#', '#SRC_FILENAME#', '#DEST_FILENAME#'
+		], [
+			$sizes['width'], $sizes['height'], $srcFilename, $destFilename
+		],
 			self::RESIZE_SIZE_BY_HEIGHT_SH
 		);
-		@exec($cmd, $cmdResult);
+		$cmdResult = [];
+		self::runCli($cmd, $cmdResult);
 
-		return is_file($destFilename);
+		return is_file($destFilename) && filesize($destFilename) > 1024 * 1024;
+	}
+
+	private static function runCli($cmd, &$output)
+	{
+		@exec($cmd, $output);
+		if (self::$IS_DEBUG) {
+			echo d($cmd, $output);
+		}
 	}
 }

@@ -235,53 +235,65 @@ final class Recaptcha3
 		if (self::isIgnoredIp($ip)) {
 			return;
 		}
-		// block bad recaptcha3 ips by bx-security module
+
+		// region block bad recaptcha3 ips by bx-security module
+		if (! Loader::includeModule('security')) {
+			return;
+		}
+
 		$intervalDayCheck = 1;
 		if (self::isAddrLocked($ip, $intervalDayCheck)) {
 			$ruleId = 0;
-			if (Loader::includeModule('security')) {
-				$blockedRow = \Bitrix\Security\IPRuleInclIPTable::getByPrimary([
-					'RULE_IP' => $ip
-				])->fetch();
 
-				$ob = new \CSecurityIPRule();
-				$arFields = [
-					"RULE_TYPE" => "M",
-					"ACTIVE" => 'Y',
-					"ADMIN_SECTION" => 'N',
-					"SITE_ID" => false,
-					"SORT" => 1010,
-					"NAME" => 'Recaptcha3 block ' . $ip,
-					"ACTIVE_FROM" => false,
-					"ACTIVE_TO" => (new \DateTime('now'))
-						->modify( sprintf('+%s days', $intervalDayCheck) )
-						->format( Date::convertFormatToPhp(FORMAT_DATETIME) ),
-					"INCL_IPS" => [$ip],
-					"EXCL_IPS" => [],
-					"INCL_MASKS" => self::ANTIVIRUS_BLOCK_PATH,
-					"EXCL_MASKS" => []
-				];
+			$blockedRow = \Bitrix\Security\IPRuleInclIPTable::getByPrimary([
+				'RULE_IP' => $ip
+			])->fetch();
 
-				if (! isset($blockedRow['RULE_IP'])) {
-					if (count(self::ANTIVIRUS_BLOCK_ONLY_COUNTRIES) > 0) {
-						$recheckCountryCode = self::getCountryByIp($ip);
-						if ($recheckCountryCode === '' || in_array($recheckCountryCode, self::ANTIVIRUS_BLOCK_ONLY_COUNTRIES)) {
-							$ruleId = $ob->Add($arFields);
-						} else {
-							$ruleId = 'tmp';
-						}
-					} else {
+			$ob = new \CSecurityIPRule();
+			$arFields = [
+				"RULE_TYPE" => "M",
+				"ACTIVE" => 'Y',
+				"ADMIN_SECTION" => 'N',
+				"SITE_ID" => false,
+				"SORT" => 1010,
+				"NAME" => 'Recaptcha3 block ' . $ip,
+				"ACTIVE_FROM" => false,
+				"ACTIVE_TO" => (new \DateTime('now'))
+					->modify( sprintf('+%s days', $intervalDayCheck) )
+					->format( Date::convertFormatToPhp(FORMAT_DATETIME) ),
+				"INCL_IPS" => [$ip],
+				"EXCL_IPS" => [],
+				"INCL_MASKS" => self::ANTIVIRUS_BLOCK_PATH,
+				"EXCL_MASKS" => []
+			];
+
+			if (! isset($blockedRow['RULE_IP'])) {
+				if (count(self::ANTIVIRUS_BLOCK_ONLY_COUNTRIES) > 0) {
+					$recheckCountryCode = self::getCountryByIp($ip);
+					if ($recheckCountryCode === '' || in_array($recheckCountryCode, self::ANTIVIRUS_BLOCK_ONLY_COUNTRIES)) {
 						$ruleId = $ob->Add($arFields);
+					} else {
+						$ruleId = 'tmp';
 					}
 				} else {
-					$ruleId = $blockedRow['RULE_ID'];
-					$ob->Update($ruleId, $arFields);
+					$ruleId = $ob->Add($arFields);
 				}
+			} else {
+				$ruleId = $blockedRow['IPRULE_ID'];
+				$cntUpd = 0;
+				if (preg_match('#\((?<cnt>\d+)\)$#', $blockedRow['NAME'], $m)) {
+					$cntUpd = (int)$m['cnt'];
+				}
+				$cntUpd++;
+				$arFields['NAME'] .= sprintf(' (%d)', $cntUpd);
+				$ob->Update($ruleId, $arFields);
 			}
+
 			if (!\CSite::InDir(self::URI_403)) {
 				LocalRedirect(self::URI_403 . '#' . $ruleId, true, '302 Found');
 			}
 		}
+		// endregion
 	}
 
 	// endregion
