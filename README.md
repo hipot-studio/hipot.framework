@@ -5,7 +5,7 @@ mailto: info AT hipot-studio DOT com
 ![hipot logo](docs/img/hipot-studio-logo-horizontal.png)
 
 ### Требования:
-bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=main), PHP 8.0+
+bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=main), PHP 8.1+
 
 # Доступные инструменты и возможности:
 - библиотека классов <code>/lib/classes</code> для копирования в <code>/local/php_interface/lib/classes</code>
