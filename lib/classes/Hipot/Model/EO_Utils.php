@@ -13,16 +13,38 @@ use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\DB;
 use Bitrix\Main\Entity\Query;
+use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\ORM\Fields\ScalarField;
 use Bitrix\Main\Result;
 use Hipot\Utils\UUtils;
 
 /**
- * Дополнительные утилиты для сущностей
+ * Дополнительные утилиты для сущностей DataManager (для датамаппера)
  * @package Hipot\BitrixUtils
  */
 trait EO_Utils
 {
+	/**
+	 * Get the value of a specific field with checks from a row when used fetch() instead of fetchObject()
+	 *
+	 * @param array  $row The row containing the fields.
+	 * @param string $field The name of the field to retrieve.
+	 *
+	 * @return mixed The value of the field.
+	 * @throws \RuntimeException if the specified field does not exist in the entity's table.
+	 */
+	public static function getRowField(array $row, string $field, ?Entity $entity = null)
+	{
+		if ($entity === null) {
+			$entity = static::getEntity();
+		}
+		$entityFields = $entity->getFields();
+		if (!isset($entityFields[$field])) {
+			throw new \RuntimeException("Field '{$field}' does not exist in " . static::getTableName());
+		}
+		return $row[$field];
+	}
+
 	/**
 	 * @param ScalarField $field
 	 *

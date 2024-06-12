@@ -279,7 +279,8 @@ final class Recaptcha3
 					$ruleId = $ob->Add($arFields);
 				}
 			} else {
-				$ruleId = $blockedRow['IPRULE_ID'];
+				// get field with check
+				$ruleId = \Hipot\Model\EntityHelper::getRowField($blockedRow, 'IPRULE_ID', \Bitrix\Security\IPRuleInclIPTable::getEntity());
 				$cntUpd = 0;
 				if (preg_match('#\((?<cnt>\d+)\)$#', $blockedRow['NAME'], $m)) {
 					$cntUpd = (int)$m['cnt'];

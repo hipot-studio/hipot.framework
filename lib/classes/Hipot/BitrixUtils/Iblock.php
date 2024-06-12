@@ -3,6 +3,7 @@ namespace Hipot\BitrixUtils;
 
 use Hipot\Types\UpdateResult,
 	Hipot\Utils\UUtils,
+	Hipot\Model\EntityHelper,
 	Hipot\Model\EO_Utils,
 	Hipot\IbAbstractLayer\IblockElemLinkedChains;
 
@@ -858,15 +859,12 @@ class Iblock extends _CIBElement
 
 		$iblockFieldsBase = ['code', 'xml_id', 'name', 'preview_text'];
 
-		$pseudoModel = new class() {
-			use EO_Utils;
-		};
-		$fields = $pseudoModel::getTableFields($table);
+		$fields = EntityHelper::getTableFields($table);
 		foreach ($fields as &$f) {
 			$f = ToLower($f);
 			$iblockFields[] = $f;
 		}
-		unset($f, $pseudoModel);
+		unset($f);
 
 		/** @noinspection TypeUnsafeArraySearchInspection */
 		if ($iblockId == 0 || trim($field) == ''
