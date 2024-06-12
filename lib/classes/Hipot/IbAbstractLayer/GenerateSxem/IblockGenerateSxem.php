@@ -403,6 +403,24 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	
 ';
 
+	private string $ufFieldsList =
+		'
+/**
+ * Пользовательские поля
+ */
+class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
+{
+	#UF_LIST_ITEMS#
+}
+';
+	private string $ufFieldsListItem =
+		'
+	/**
+	 * #ENTITY_ID#_#FIELD_NAME# - #NAME#
+	 * @var string
+	 */
+	public const string #ENTITY_ID#___#FIELD_NAME# = "#NAME#";
+';
 
 	public function __construct(
 		/**
@@ -494,7 +512,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 				$bySelectLinkedProps = '';
 
 				if ($prop['PROPERTY_TYPE'] == PropertyTable::TYPE_ELEMENT) {
-					$propType = '__IblockElementItemPropertyValueLinkElem_' . ABSTRACT_LAYER_SAULT . '_' . $arIblock['ID'] . '_' . $prop['CODE'];
+					$propType = '__IblockElementItemPropertyValueLinkElem_' . \ABSTRACT_LAYER_SAULT . '_' . $arIblock['ID'] . '_' . $prop['CODE'];
 
 					$k = $arIblocksIdsIndex[ $prop['LINK_IBLOCK_ID'] ];
 					if ($prop['LINK_IBLOCK_ID']) {
@@ -573,6 +591,30 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 				(count($arIblock['PROPERTIES']) > 0) ? $this->__iblockTemplate : $this->__iblockTemplateNoProps
 			);
 		}
+
+		$ufRs = \CUserTypeEntity::GetList(['ENTITY_ID' => 'ASC', 'SORT' => 'ASC', 'FIELD_NAME' => 'ASC'], ['LANG' => \LANGUAGE_ID]);
+		$outUfs = '';
+		while ($ufField = $ufRs->Fetch()) {
+			$outUfs .= str_replace([
+				'#ENTITY_ID#',
+				'#FIELD_NAME#',
+				'#NAME#',
+				'#ABSTRACT_LAYER_SAULT#'
+			], [
+				$ufField['ENTITY_ID'],
+				$ufField['FIELD_NAME'],
+				$ufField['EDIT_FORM_LABEL'] ?? $ufField['FIELD_NAME'],
+				ABSTRACT_LAYER_SAULT
+			], $this->ufFieldsListItem);
+		}
+		$out .= str_replace([
+			'#UF_LIST_ITEMS#',
+			'#ABSTRACT_LAYER_SAULT#'
+		], [
+			$outUfs,
+			ABSTRACT_LAYER_SAULT
+		], $this->ufFieldsList);
+		unset($outUfs);
 
 		return file_put_contents($this->fileGenerate,
 			'<?php /** @noinspection PhpMissingParamTypeInspection */ 
