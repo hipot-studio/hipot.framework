@@ -20,7 +20,7 @@ use Hipot\Utils\UUtils;
 final class Recaptcha3
 {
 	const bool GLOBAL_ENABLED = true;
-	const string CONFIG_FILE = '/bitrix/php_interface/secrets/recaptcha_keys.php';
+	const string CONFIG_FILE = '/local/php_interface/secrets/recaptcha_keys.php';
 
 	const float SCORE_LIMIT = 0.6;
 	const string EVENT_NAME = 'loadpage';
@@ -43,7 +43,6 @@ final class Recaptcha3
 		);
 	*/
 	const string LOG_TABLE_NAME = 'hi_recaptcha3_log';
-
 	const string URI_403 = '/403.php';
 	const string URI_AJAX_BACKEND = '/ajax/recaptcha_token.php';
 
@@ -51,7 +50,9 @@ final class Recaptcha3
 	const array ANTIVIRUS_BLOCK_PATH = [
 		'/ru/teach/courses/*',
 		'/en/learn/courses/*',
-		'/ru/learn/courses/*'
+		'/ru/learn/courses/*',
+		'/ru/*',
+		'/en/*'
 	];
 
 	/**
@@ -70,7 +71,7 @@ final class Recaptcha3
 	 * Path to the file containing the list of IP addresses to be ignored by the reCAPTCHA verification process.
 	 * @var string OK_IPS_FILE
 	 */
-	const string OK_IPS_FILE = '/bitrix/php_interface/secrets/recaptcha_ignore_ips.php';
+	const string OK_IPS_FILE = '/local/php_interface/secrets/recaptcha_ignore_ips.php';
 
 	/**
 	 * dynamic enabled by request
@@ -196,7 +197,7 @@ final class Recaptcha3
 		];
 		$context = stream_context_create($options);
 		try {
-			$response     = file_get_contents($url, false, $context);
+			$response     = \file_get_contents($url, false, $context);
 			$responseKeys = json_decode($response, true);
 
 			// 1 - значит это точно человек, а 0 - это точно бот
@@ -231,6 +232,20 @@ final class Recaptcha3
 		}
 		unset($self);
 
+		// region grecaptcha-badge-custom
+
+		global $APPLICATION;
+		ob_start();
+		// see https://developers.google.com/recaptcha/docs/faq?hl=ru#id-like-to-hide-the-recaptcha-badge.-what-is-allowed
+		?>
+		<!--noindex-->
+		<p class="grecaptcha-badge-custom">This site is protected by reCAPTCHA and the <a href="https://policies.google.com/privacy" rel="nofollow" target="_blank">Google Privacy Policy</a>.</p>
+		<!--/noindex-->
+		<?
+		$APPLICATION->AddViewContent('MISC_END_FOOTER_CONTENT', ob_get_clean());
+
+		// endregion
+
 		$ip = (string)UUtils::getUserIp($be);
 		if (self::isIgnoredIp($ip)) {
 			return;
@@ -241,57 +256,12 @@ final class Recaptcha3
 			return;
 		}
 
-		$intervalDayCheck = 1;
+		$intervalDayCheck = 2;
 		if (self::isAddrLocked($ip, $intervalDayCheck)) {
-			$ruleId = 0;
-
-			$blockedRow = \Bitrix\Security\IPRuleInclIPTable::getByPrimary([
-				'RULE_IP' => $ip
-			])->fetch();
-
-			$ob = new \CSecurityIPRule();
-			$arFields = [
-				"RULE_TYPE" => "M",
-				"ACTIVE" => 'Y',
-				"ADMIN_SECTION" => 'N',
-				"SITE_ID" => false,
-				"SORT" => 1010,
-				"NAME" => 'Recaptcha3 block ' . $ip,
-				"ACTIVE_FROM" => false,
-				"ACTIVE_TO" => (new \DateTime('now'))
-					->modify( sprintf('+%s days', $intervalDayCheck) )
-					->format( Date::convertFormatToPhp(FORMAT_DATETIME) ),
-				"INCL_IPS" => [$ip],
-				"EXCL_IPS" => [],
-				"INCL_MASKS" => self::ANTIVIRUS_BLOCK_PATH,
-				"EXCL_MASKS" => []
-			];
-
-			if (! isset($blockedRow['RULE_IP'])) {
-				if (count(self::ANTIVIRUS_BLOCK_ONLY_COUNTRIES) > 0) {
-					$recheckCountryCode = self::getCountryByIp($ip);
-					if ($recheckCountryCode === '' || in_array($recheckCountryCode, self::ANTIVIRUS_BLOCK_ONLY_COUNTRIES)) {
-						$ruleId = $ob->Add($arFields);
-					} else {
-						$ruleId = 'tmp';
-					}
-				} else {
-					$ruleId = $ob->Add($arFields);
-				}
-			} else {
-				// get field with check
-				$ruleId = \Hipot\Model\EntityHelper::getRowField($blockedRow, 'IPRULE_ID', \Bitrix\Security\IPRuleInclIPTable::getEntity());
-				$cntUpd = 0;
-				if (preg_match('#\((?<cnt>\d+)\)$#', $blockedRow['NAME'], $m)) {
-					$cntUpd = (int)$m['cnt'];
-				}
-				$cntUpd++;
-				$arFields['NAME'] .= sprintf(' (%d)', $cntUpd);
-				$ob->Update($ruleId, $arFields);
-			}
+			$ruleId = self::addToSecurityStopList($ip, 3);
 
 			if (!\CSite::InDir(self::URI_403)) {
-				LocalRedirect(self::URI_403 . '#' . $ruleId, true, '302 Found');
+				\LocalRedirect(self::URI_403 . '#' . $ruleId, true, '302 Found');
 			}
 		}
 		// endregion
@@ -317,10 +287,10 @@ final class Recaptcha3
 		}
 		$rs = BitrixEngine::getInstance()->connection->query(
 			str_replace(['%table%', '%ip%', '%score%', '%days%'], [self::LOG_TABLE_NAME, $ipAddress, self::SCORE_LIMIT, $intervalDayCheck],
-				' SELECT `UF_ADDR` FROM `%table%` '
-				. ' WHERE `UF_SCORE` <= %score% AND `UF_ADDR` = "%ip%" '
-				. (!$checkMaxScore ? '' : ' AND (SELECT `UF_SCORE` FROM `%table%` WHERE `UF_ADDR` = "%ip%" AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) ORDER BY `UF_SCORE` DESC LIMIT 1) <= %score% ')
-				. ' AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) GROUP BY `UF_ADDR` ORDER BY `UF_ADDR`'
+			' SELECT `UF_ADDR` FROM `%table%` '
+					. ' WHERE `UF_SCORE` <= %score% AND `UF_ADDR` = "%ip%" '
+					. (!$checkMaxScore ? '' : ' AND (SELECT `UF_SCORE` FROM `%table%` WHERE `UF_ADDR` = "%ip%" AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) ORDER BY `UF_SCORE` DESC LIMIT 1) <= %score% ')
+					. ' AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) GROUP BY `UF_ADDR` ORDER BY `UF_ADDR`'
 			)
 		);
 		return $rs->getSelectedRowsCount() > 0;
@@ -340,7 +310,7 @@ final class Recaptcha3
 	private static function getCountryByIp(string $ip): string
 	{
 		try {
-			$r = GeoIp\Manager::getDataResult($ip, LANGUAGE_ID);
+			$r = GeoIp\Manager::getDataResult($ip, \LANGUAGE_ID);
 			$recheckCountryCode = $r?->getGeoData()?->countryCode;
 		} catch (\Throwable $exception) {
 			UUtils::logException($exception);
@@ -399,6 +369,76 @@ final class Recaptcha3
 			'table_name' => self::LOG_TABLE_NAME
 		]);
 		return $logTableEntity->getDataClass();
+	}
+
+
+	/**
+	 * @param string $ip
+	 * @param int    $intervalDayLock
+	 *
+	 * @return int|string
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function addToSecurityStopList(string $ip, int $intervalDayLock = 3): int|string
+	{
+		$ruleId = 0;
+
+		$blockedRow = \Bitrix\Security\IPRuleInclIPTable::getByPrimary([
+			'RULE_IP' => $ip
+		])->fetch();
+
+		$obIPRule  = new \CSecurityIPRule();
+		$arFields = [
+			"RULE_TYPE"     => "M",
+			"ACTIVE"        => 'Y',
+			"ADMIN_SECTION" => 'N',
+			"SITE_ID"       => false,
+			"SORT"          => 1010,
+			"NAME"          => 'Recaptcha3 block ' . $ip,
+			"ACTIVE_FROM"   => false,
+			"ACTIVE_TO"     => (new \DateTime('now'))
+				->modify(sprintf('+%s days', $intervalDayLock))
+				->format(Date::convertFormatToPhp(\FORMAT_DATETIME)),
+			"INCL_IPS"      => [$ip],
+			"EXCL_IPS"      => [],
+			"INCL_MASKS"    => self::ANTIVIRUS_BLOCK_PATH,
+			"EXCL_MASKS"    => []
+		];
+
+		if (!isset($blockedRow['RULE_IP'])) {
+			if (count(self::ANTIVIRUS_BLOCK_ONLY_COUNTRIES) > 0) {
+				$recheckCountryCode = self::getCountryByIp($ip);
+				if ($recheckCountryCode === '' || in_array($recheckCountryCode, self::ANTIVIRUS_BLOCK_ONLY_COUNTRIES)) {
+					$ruleId = $obIPRule->Add($arFields);
+				} else {
+					$ruleId = 'tmp';
+				}
+			} else {
+				$ruleId = $obIPRule->Add($arFields);
+			}
+		} else {
+			// get field with check
+			$ruleId = (int)\Hipot\Model\EntityHelper::getRowField($blockedRow, 'IPRULE_ID', \Bitrix\Security\IPRuleInclIPTable::getEntity());
+			$blockedRow += $obIPRule::GetList([
+				"RULE_TYPE",
+				"ACTIVE",
+				"ADMIN_SECTION",
+				"SITE_ID",
+				"NAME",
+				"ACTIVE_FROM",
+				"ACTIVE_TO",
+			], ['ID' => $ruleId], ['ID' => 'ASC'])->Fetch();
+			$cntUpd = 0;
+			if (preg_match('#\((?<cnt>\d+)\)$#', $blockedRow['NAME'], $m)) {
+				$cntUpd = (int)$m['cnt'];
+			}
+			$cntUpd++;
+			$arFields['NAME'] .= sprintf(' (%d)', $cntUpd);
+			$bUpd             = $obIPRule->Update($ruleId, $arFields);
+		}
+		return $ruleId;
 	}
 
 	// endregion
