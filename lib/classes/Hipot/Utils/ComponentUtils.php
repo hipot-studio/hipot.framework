@@ -2,10 +2,11 @@
 namespace Hipot\Utils;
 
 use Bitrix\Main\Loader;
-use Hipot\BitrixUtils\IblockUtils;
+use Hipot\BitrixUtils\Iblock AS IblockUtils;
 use CIBlock;
 use CBitrixComponentTemplate;
 use CBitrixComponent;
+use Hipot\Services\BitrixEngine;
 
 trait ComponentUtils
 {
@@ -45,16 +46,16 @@ trait ComponentUtils
 	 */
 	public static function setComponentEdit(CBitrixComponent $component, array $arParams = [], array $arOptions = []): void
 	{
-		global $USER, $APPLICATION; // todo
-		if ($USER->IsAuthorized() && $APPLICATION->GetShowIncludeAreas() && Loader::includeModule("iblock")) {
-			$arButtons = CIBlock::GetPanelButtons(
-				(int)$arParams["IBLOCK_ID"],
-				(int)$arParams["ELEMENT_ID"],
-				(int)$arParams["SECTION_ID"],
-				$arOptions
-			);
-			$component->addIncludeAreaIcons(CIBlock::GetComponentMenu($APPLICATION->GetPublicShowMode(), $arButtons));
+		if (! BitrixEngine::getAppD0()->GetShowIncludeAreas()) {
+			return;
 		}
+		$arButtons = \CIBlock::GetPanelButtons(
+			(int)$arParams["IBLOCK_ID"],
+			(int)$arParams["ELEMENT_ID"],
+			(int)$arParams["SECTION_ID"],
+			$arOptions
+		);
+		$component->addIncludeAreaIcons(\CIBlock::GetComponentMenu(BitrixEngine::getAppD0()->GetPublicShowMode(), $arButtons));
 	}
 
 	/**

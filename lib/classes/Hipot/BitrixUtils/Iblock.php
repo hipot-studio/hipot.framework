@@ -1,10 +1,10 @@
 <?php
 namespace Hipot\BitrixUtils;
 
+use Hipot\Services\BitrixEngine;
 use Hipot\Types\UpdateResult,
 	Hipot\Utils\UUtils,
 	Hipot\Model\EntityHelper,
-	Hipot\Model\EO_Utils,
 	Hipot\IbAbstractLayer\IblockElemLinkedChains;
 
 use	Bitrix\Main\Loader,
@@ -342,7 +342,7 @@ class Iblock extends _CIBElement
 	 * @param bool $OnlyPropsValue = true
 	 * @param bool $bSelectChains = false
 	 * @param int $selectChainsDepth = 3
-	 * @return array | int
+	 * @return array|int
 	 */
 	public static function selectElementsByFilterArray($arOrder, $arFilter, $arGroupBy = false, $arNavParams = false,
 	                                                   $arSelect = [], $SelectAllProps = false, $OnlyPropsValue = true,
@@ -964,6 +964,17 @@ class Iblock extends _CIBElement
 		);
 		$element['EDIT_LINK'] = $buttons['edit']['edit_element']['ACTION_URL'];
 		$element['DELETE_LINK'] = $buttons['edit']['delete_element']['ACTION_URL'];
+	}
+
+	/**
+	 * @param \CBitrixComponent $component
+	 * @param array{'IBLOCK_ID':int, 'SECTION_ID':int} $arResult
+	 *
+	 * @return void
+	 */
+	public static function addComponentPanelButtons(\CBitrixComponent $component, array $arResult): void
+	{
+		UUtils::setComponentEdit($component, $arResult, ['SECTION_BUTTONS' => false]);
 	}
 
 	/**

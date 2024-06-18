@@ -68,6 +68,7 @@ class HipotAjaxController extends Controller
 
 	///// region ajax-actions
 
+	// TODO: контроллеры не должны заниматься обработкой данных, это должно происходить в слое моделей;
 	public function getEntityStatAction(string $entityType, array $entityOrder, array $filter = []): string
 	{
 		$dm = HiBlock::getHightloadBlockTable(0, $entityType, true);

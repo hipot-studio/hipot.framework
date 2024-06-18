@@ -9,6 +9,7 @@
 
 namespace Hipot\Components;
 
+use Hipot\Services\BitrixEngine;
 use Hipot\Utils\UUtils;
 
 /**
@@ -85,6 +86,8 @@ final class IblockSection extends \CBitrixComponent
 		$arParams['SELECT_COUNT_ELEM_FILTER']  = (array)$arParams['SELECT_COUNT_ELEM_FILTER'];
 		$arParams['SELECT']                    = (array)$arParams['SELECT'];
 		$arParams['FILTER']                    = (array)$arParams['FILTER'];
+
+		$arParams['IS_SHOW_INCLUDE_AREAS'] = BitrixEngine::getCurrentUserD0()->IsAuthorized() ? BitrixEngine::getAppD0()->GetShowIncludeAreas() : false;
 
 		return $arParams;
 	}

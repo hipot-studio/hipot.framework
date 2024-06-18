@@ -12,6 +12,7 @@ namespace Hipot\Components;
 use Bitrix\Main,
 	Hipot\BitrixUtils\Iblock as IblockUtils,
 	Hipot\IbAbstractLayer\IblockElemLinkedChains;
+use Hipot\Services\BitrixEngine;
 use Hipot\Utils\UUtils;
 
 /**
@@ -65,9 +66,11 @@ final class IblockList extends \CBitrixComponent
 		$arParams['SELECT_CHAINS']          = (trim($arParams['SELECT_CHAINS']) == 'Y') ? 'Y' : 'N';
 		$arParams['SELECT_CHAINS_DEPTH']    = (int)$arParams['SELECT_CHAINS_DEPTH'] > 0 ? (int)$arParams['SELECT_CHAINS_DEPTH'] : 3;
 
-		if ($arParams['SELECT_CHAINS'] === 'Y' && !class_exists(static::LINKED_CHAINS_CLASS)) {
+		if ($arParams['SELECT_CHAINS'] === 'Y' && !class_exists(self::LINKED_CHAINS_CLASS)) {
 			$arParams['SELECT_CHAINS'] = 'N';
 		}
+
+		$arParams['IS_SHOW_INCLUDE_AREAS'] = BitrixEngine::getCurrentUserD0()->IsAuthorized() ? BitrixEngine::getAppD0()->GetShowIncludeAreas() : false;
 
 		return $arParams;
 	}

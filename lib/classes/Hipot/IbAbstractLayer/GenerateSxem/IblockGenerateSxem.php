@@ -512,7 +512,7 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 				$bySelectLinkedProps = '';
 
 				if ($prop['PROPERTY_TYPE'] == PropertyTable::TYPE_ELEMENT) {
-					$propType = '__IblockElementItemPropertyValueLinkElem_' . \ABSTRACT_LAYER_SAULT . '_' . $arIblock['ID'] . '_' . $prop['CODE'];
+					$propType = '__IblockElementItemPropertyValueLinkElem_' . ABSTRACT_LAYER_SAULT . '_' . $arIblock['ID'] . '_' . $prop['CODE'];
 
 					$k = $arIblocksIdsIndex[ $prop['LINK_IBLOCK_ID'] ];
 					if ($prop['LINK_IBLOCK_ID']) {
@@ -592,7 +592,7 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 			);
 		}
 
-		$ufRs = \CUserTypeEntity::GetList(['ENTITY_ID' => 'ASC', 'SORT' => 'ASC', 'FIELD_NAME' => 'ASC'], ['LANG' => \LANGUAGE_ID]);
+		$ufRs = \CUserTypeEntity::GetList(['ENTITY_ID' => 'ASC', 'SORT' => 'ASC', 'FIELD_NAME' => 'ASC'], ['LANG' => LANGUAGE_ID]);
 		$outUfs = '';
 		while ($ufField = $ufRs->Fetch()) {
 			$outUfs .= str_replace([
