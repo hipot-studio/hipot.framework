@@ -171,7 +171,8 @@ return [
 				'constructor' => static function () {
 					// important: set 'sid' in 'cache-value' section of config
 					$options = [
-						'type' => 'apcu'
+						'type' => 'apcu',
+						'use_lock' => true
 					];
 					return new class ($options) extends CacheEngineApc {
 						/** @noinspection MagicMethodsValidityInspection */
@@ -193,7 +194,8 @@ return [
 								'host' => 'unix:///home/bitrix/memcached.sock',
 								'port' => 0
 							]
-						]
+						],
+						'use_lock' => true
 					];
 					return new class ($options) extends CacheEngineMemcache {
 						/** @noinspection MagicMethodsValidityInspection */

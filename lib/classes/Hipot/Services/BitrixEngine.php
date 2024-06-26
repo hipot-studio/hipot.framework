@@ -12,6 +12,7 @@ use Bitrix\Main\Request;
 use Bitrix\Main\Session\SessionInterface;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\Data\LocalStorage\SessionLocalStorageManager;
 use Hipot\Types\Singleton;
 
 final class BitrixEngine
@@ -19,19 +20,20 @@ final class BitrixEngine
 	use Singleton;
 
 	public function __construct(
-		public ?Application      $app = null,
+		public ?Application                $app = null,
 		/**
 		 * @var \Bitrix\Main\Request|\Bitrix\Main\HttpRequest
 		 */
-		public ?Request          $request = null,
-		public ?CurrentUser      $user = null,
-		public ?Cache            $cache = null,
-		public ?TaggedCache      $taggedCache = null,
-		public ?Asset            $asset = null,
-		public ?SessionInterface $session = null,
-		public ?ServiceLocator   $serviceLocator = null,
-		public ?Connection       $connection = null,
-		public ?EventManager     $eventManager = null,
+		public ?Request                    $request = null,
+		public ?CurrentUser                $user = null,
+		public ?Cache                      $cache = null,
+		public ?TaggedCache                $taggedCache = null,
+		public ?Asset                      $asset = null,
+		public ?SessionInterface           $session = null,
+		public ?ServiceLocator             $serviceLocator = null,
+		public ?Connection                 $connection = null,
+		public ?EventManager               $eventManager = null,
+		public ?SessionLocalStorageManager $sessionLocalStorageManager = null,
 	)
 	{
 	}
@@ -48,7 +50,8 @@ final class BitrixEngine
 			Application::getInstance()->getSession(),
 			ServiceLocator::getInstance(),
 			Application::getConnection(),
-			EventManager::getInstance()
+			EventManager::getInstance(),
+			Application::getInstance()->getSessionLocalStorageManager()
 		);
 	}
 
