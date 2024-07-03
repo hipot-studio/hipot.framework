@@ -1,6 +1,7 @@
 <?php if (! defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Hipot\BitrixUtils\PhpCacher;
+use Opis\Closure\SerializableClosure;
 
 /**
  * @var array $arParams
@@ -23,8 +24,8 @@ foreach ($reqParams as $param) {
 $arResult 		= [];
 
 $CACHE_TIME		= (COption::GetOptionString("main", "component_cache_on", "Y") == "N")
-	? 0
-	: (int)$arParams['CACHE_TIME'];
+					? 0
+					: (int)$arParams['CACHE_TIME'];
 $CACHE_ID		= __FILE__ . '|' . serialize($arParams);
 $cachePath		= 'php/' . ToLower($arParams['CACHE_TAG']) . '/';
 
@@ -35,14 +36,14 @@ if ($obMenuCache->StartDataCache($CACHE_TIME, $CACHE_ID, $cachePath)) {
 
 	CModule::IncludeModule('iblock');
 
-	if (is_countable($arParams["ORDER"]) && count($arParams["ORDER"]) > 0) {
+	if (count($arParams["ORDER"]) > 0) {
 		$arOrder = $arParams["ORDER"];
 	} else {
 		$arOrder = ["SORT" => "ASC"];
 	}
 
 	$arFilter = ["IBLOCK_ID" => $arParams["IBLOCK_ID"], "ACTIVE" => "Y"];
-	if (is_countable($arParams["FILTER"]) && count($arParams["FILTER"]) > 0) {
+	if (count($arParams["FILTER"]) > 0) {
 		$arFilter = array_merge($arFilter, $arParams["~FILTER"]);
 	}
 
@@ -56,6 +57,11 @@ if ($obMenuCache->StartDataCache($CACHE_TIME, $CACHE_ID, $cachePath)) {
 		while ($arItem = $rsItems->GetNext()) {
 			$link_params = (is_array($arParams["SELECT"]) && count($arParams["SELECT"]) > 0) ? $arItem : [];
 			$addonsUri = !empty($arParams['ADDON_URL_TO_SELECT_ITEM']) ? [CIBlock::ReplaceDetailUrl($arParams['ADDON_URL_TO_SELECT_ITEM'], $arItem)] : [];
+
+			if (is_a($arParams['MODIFY_ITEM'], SerializableClosure::class)) {
+				$closure = $arParams['MODIFY_ITEM']->getClosure();
+				$closure($arItem);
+			}
 
 			$arResult[] = [
 				$arItem['NAME'],
@@ -77,6 +83,11 @@ if ($obMenuCache->StartDataCache($CACHE_TIME, $CACHE_ID, $cachePath)) {
 		while ($arSect = $rsSect->GetNext()) {
 			$link_params = (count($arParams["SELECT"]) > 0) ? $arSect : [];
 			$addonsUri = !empty($arParams['ADDON_URL_TO_SELECT_ITEM']) ? [CIBlock::ReplaceSectionUrl($arParams['ADDON_URL_TO_SELECT_ITEM'], $arSect)] : [];
+
+			if (is_a($arParams['MODIFY_ITEM'], SerializableClosure::class)) {
+				$closure = $arParams['MODIFY_ITEM']->getClosure();
+				$closure($arSect);
+			}
 
 			$arResult[] = [
 				$arSect['NAME'],

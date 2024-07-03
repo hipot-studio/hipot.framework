@@ -7,29 +7,31 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
  * TYPE - elements|sections - тип выборки, элементы или секции (ОБЯЗАТЕЛЬНЫЙ)
  * CACHE_TAG - пусть сохранения кеша, будет сохранено /bitrix/cache/php/CACHE_TAG/ (ОБЯЗАТЕЛЬНЫЙ)
  * CACHE_TIME - время кеша (ОБЯЗАТЕЛЬНЫЙ)
- * ADDON_URL_TO_SELECT_ITEM - шаблон пути для дополнительных пунктов выделения ("ADDITIONAL_LINKS" у элемента меню)
  *
  * Параметры выборки
  *
  * IBLOCK_ID / конечно же указать инфоблок
  * ORDER / если нужна иная сортировка, по-умолчанию array("SORT" => "ASC")
  * FILTER / если нужна еще какая-то дополнительная фильтрация
+ * SELECT / выбрать поля элемента/секции в параметры меню (иначе выбираются поля элемента)
+ * ADDON_URL_TO_SELECT_ITEM / string Дополнительный пункт меню для выделения
+ * MODIFY_ITEM / Opis\Closure\SerializableClosure позволяет создать callback с ссылкой на элемент и поменять его перед присвоением
  *
- * @version 1.0
- * @copyright hipot, 2017
+ * @version 2.0
+ * @copyright hipot, 2024
  */
 
-$arComponentDescription = [
+$arComponentDescription = array(
 	"NAME"			=> basename(__DIR__),
 	"DESCRIPTION"	=> "",
 	"ICON"			=> "/images/ico.gif",
-	"PATH" => [
+	"PATH" => array(
 		"ID"		=> "hipot_root",
 		"NAME"		=> "hipot"
-	],
-	"AREA_BUTTONS"	=> [],
+	),
+	"AREA_BUTTONS"	=> array(),
 	"CACHE_PATH"	=> "Y",
 	"COMPLEX"		=> "N"
-];
+);
 
 ?>
