@@ -11,6 +11,7 @@ use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Discount;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Internals\DiscountTable;
+use Bitrix\Sale\Internals\OrderChangeTable;
 use Bitrix\Sale\Order;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity\ReferenceField;
@@ -213,5 +214,31 @@ final class Sale
 		])->fetch();
 		$service         = new \Bitrix\Sale\PaySystem\Service($paySystemAction);
 		return [$service, $payment];
+	}
+
+	/**
+	 * Проверяет, был ли заказ оплачен в истории изменений заказа
+	 *
+	 * @param int $orderId Идентификатор заказа
+	 *
+	 * @return bool Возвращает true, если заказ оплачен в истории изменений заказа, иначе - false
+	 */
+	public static function orderHasPayedInHistory(int $orderId): bool
+	{
+		$history = OrderChangeTable::getList([
+			'order'  => ['ID' => 'DESC'],
+			'select' => ['ID', 'DATA', 'ENTITY', 'TYPE'],
+			'filter' => ['=ORDER_ID' => $orderId, 'ENTITY' => 'PAYMENT']
+		]);
+		while ($historyItem = $history->fetch()) {
+			if (!is_array($historyItem['DATA'])) {
+				/** @noinspection UnserializeExploitsInspection */
+				$historyItem['DATA'] = unserialize($historyItem['DATA']);
+			}
+			if (isset($historyItem['DATA']['PAID']) && $historyItem['DATA']['PAID'] == 'Y') {
+				return true;
+			}
+		}
+		return false;
 	}
 }
