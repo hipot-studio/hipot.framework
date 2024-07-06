@@ -47,11 +47,16 @@ trait StringUtils
 	 * @param array $allowedTags
 	 * @return string
 	 */
-	public static function getClearHtmlValue($value, array $allowedTags = ['p', 'b', 'em', 'i', 'br', 'a', 'ul', 'ol', 'li', 'span', 'img']): string
+	public static function getClearHtmlValue($value, array $allowedTags = ['p', 'b', 'strong', 'em', 'i', 'br', 'a', 'ul', 'ol', 'li', 'span', 'img']): string
 	{
 		if ($value === null) {
 			return '';
 		}
-		return strip_tags((string)$value, $allowedTags);
+		$value = strip_tags((string)$value, $allowedTags);
+		if (class_exists(\tidy::class)) {
+			$tidy = new \tidy();
+			$value = $tidy->repairString($value);
+		}
+		return $value;
 	}
 }

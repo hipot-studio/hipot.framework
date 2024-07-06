@@ -115,8 +115,24 @@ final class Recaptcha3
 		ob_start();
 		if (!empty($reCAPTCHA_site_key)) {
 			?>
-			<script data-skip-moving="true" src="https://www.google.com/recaptcha/api.js?render=<?=$reCAPTCHA_site_key?>"></script>
+			<script async data-skip-moving="true" src="https://www.google.com/recaptcha/api.js?render=<?=$reCAPTCHA_site_key?>"></script>
 			<script data-skip-moving="true">
+				if (typeof grecaptcha === 'undefined') {
+					grecaptcha = {};
+				}
+				grecaptcha.ready = function (cb) {
+					if (typeof grecaptcha.execute === 'undefined') {
+						<?
+						// window.__grecaptcha_cfg is a global variable that stores reCAPTCHA's configuration.
+						// By default, any functions listed in its 'fns' property are automatically executed when reCAPTCHA loads.
+						?>
+						const c = '___grecaptcha_cfg';
+						window[c] = window[c] || {};
+						(window[c]['fns'] = window[c]['fns'] || []).push(cb);
+					} else {
+						cb();
+					}
+				}
 				grecaptcha.ready(function() {
 					grecaptcha.execute('<?=$reCAPTCHA_site_key?>', {action: '<?=self::EVENT_NAME?>'}).then(function(token) {
 						$.post('<?=self::URI_AJAX_BACKEND?>', {
