@@ -1,8 +1,13 @@
 <?
 namespace Hipot\Utils;
 
-use Bitrix\Main\Loader,
-	Hipot\Types\UpdateResult;
+use Bitrix\Main\Loader;
+use Hipot\Types\UpdateResult;
+use Hipot\Utils\Helper\StringUtils;
+use Hipot\Utils\Helper\ContextUtils;
+use Hipot\Utils\Helper\ComponentUtils;
+use Hipot\Utils\Helper\DateTimeUtils;
+use Hipot\Utils\Helper\UserFieldUtils;
 
 /**
  * Различные не-структурированные утилиты

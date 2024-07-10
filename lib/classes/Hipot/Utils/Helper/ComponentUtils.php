@@ -1,11 +1,10 @@
 <?php
-namespace Hipot\Utils;
+namespace Hipot\Utils\Helper;
 
-use Bitrix\Main\Loader;
-use Hipot\BitrixUtils\Iblock AS IblockUtils;
-use CIBlock;
-use CBitrixComponentTemplate;
 use CBitrixComponent;
+use CBitrixComponentTemplate;
+use CIBlock;
+use Hipot\BitrixUtils\Iblock as IblockUtils;
 use Hipot\Services\BitrixEngine;
 
 trait ComponentUtils

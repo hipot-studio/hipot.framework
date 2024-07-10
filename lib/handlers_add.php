@@ -17,12 +17,13 @@ use Bitrix\Main\Page\Asset;
 use Hipot\BitrixUtils\HiBlockApps;
 use Hipot\Services\BitrixEngine;
 use Hipot\Utils\UUtils;
+use Bitrix\Main\Config\Option;
 
 $eventManager = EventManager::getInstance();
 $request      = Application::getInstance()->getContext()->getRequest();
 
 // optimize turn off all page-process-handlers when it's ajax request:
-$eventManager->addEventHandler('main', 'OnPageStart', static function () {
+$eventManager->addEventHandler('main', 'OnPageStart', static function () use ($request) {
 	$be = BitrixEngine::getInstance();
 
 	/**
@@ -37,6 +38,25 @@ $eventManager->addEventHandler('main', 'OnPageStart', static function () {
 
 	if (IS_AJAX || IS_CLI || (defined('DISABLE_PAGE_EVENTS') && DISABLE_PAGE_EVENTS === true)) {
 		UUtils::disableAllPageProcessEvents($be);
+	}
+
+	if (! empty($request->get('sources'))) {
+		Asset::getInstance()->disableOptimizeCss();
+		Asset::getInstance()->disableOptimizeJs();
+		Asset::getInstance()->setJsToBody(false);
+
+		// no .min.js and .min.css
+		$canLoad = Option::get("main","use_minified_assets", "Y") === "Y";
+		if ($canLoad) {
+			$optionClass = new \ReflectionClass(Option::class);
+			$options = $optionClass->getStaticPropertyValue('options');
+			$options['main']['-']['use_minified_assets'] = 'N';
+			$optionClass->setStaticPropertyValue('options', $options);
+			$canLoad = Asset::getInstance()::canUseMinifiedAssets();
+			$options['main']['-']['use_minified_assets'] = 'Y';
+			$optionClass->setStaticPropertyValue('options', $options);
+			unset($options, $optionClass, $canLoad);
+		}
 	}
 });
 
@@ -61,12 +81,6 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 				break;
 			}
 		}
-
-	if (! empty($request->get('sources'))) {
-		Asset::getInstance()->disableOptimizeCss();
-		Asset::getInstance()->disableOptimizeJs();
-		Asset::getInstance()->setJsToBody(false);
-	}
 });
 
 // проставляем id инфоблоков в административном меню

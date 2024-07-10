@@ -4,7 +4,7 @@
  * Created 11.05.2023 17:04
  * @version pre 1.0
  */
-namespace Hipot\Utils;
+namespace Hipot\Utils\Helper;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;

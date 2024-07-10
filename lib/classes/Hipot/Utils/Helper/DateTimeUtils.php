@@ -4,7 +4,7 @@
  * Created 11.05.2023 17:12
  * @version pre 1.0
  */
-namespace Hipot\Utils;
+namespace Hipot\Utils\Helper;
 
 trait DateTimeUtils
 {

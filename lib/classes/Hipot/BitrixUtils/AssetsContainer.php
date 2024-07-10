@@ -6,6 +6,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Page\AssetLocation;
+use Bitrix\Main\Web\Json;
 
 class AssetsContainer
 {
@@ -126,7 +127,7 @@ class AssetsContainer
 			 * requireCss:{}
 			 * }}
 			 */
-			const appParams = <?=\CUtil::PhpToJSObject(self::$siteJsConfigs)?>;
+			const appParams = <?=Json::encode(self::$siteJsConfigs)?>;
 		</script>
 		<?
 		Asset::getInstance()?->addString(ob_get_clean(), true, AssetLocation::AFTER_JS_KERNEL);

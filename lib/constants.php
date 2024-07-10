@@ -4,6 +4,7 @@
  */
 
 use Hipot\Services\BitrixEngine;
+use Hipot\BitrixUtils\PhpCacher;
 
 /**
  * @global $APPLICATION \CMain
@@ -21,14 +22,24 @@ $request = $be->request;
 define('IS_BETA_TESTER', $be->user->isAdmin() || $be->user->getLogin() == 'hipot@ya.ru' || str_contains($be->user->getLogin(), '@hipot-studio.com'));
 
 /**
+ * Символьный код группы контент редактора
+ */
+const CONTENT_MANAGER_G_CODE = 'content_editor';
+
+/**
  * Группа контент-редактора
  */
-const CONTENT_MANAGER_GID = 0;      // TODO set correct group
+define('CONTENT_MANAGER_GID', PhpCacher::cache('content_manager_gid', 3600 * 24,
+	static function () {
+		$groupId = is_numeric(CONTENT_MANAGER_G_CODE) ? CONTENT_MANAGER_G_CODE : \CGroup::GetIDByCode(CONTENT_MANAGER_G_CODE);
+		return $groupId;
+	})
+);
 
 /**
  * На сайте редактор
  */
-define('IS_CONTENT_MANAGER', IS_BETA_TESTER || (CONTENT_MANAGER_GID > 0 && CSite::InGroup([CONTENT_MANAGER_GID])));
+define('IS_CONTENT_MANAGER', IS_BETA_TESTER || ((int)CONTENT_MANAGER_GID > 0 && CSite::InGroup([CONTENT_MANAGER_GID])));
 
 /**
  * Should PhpCacher use tagged cache in callback-function

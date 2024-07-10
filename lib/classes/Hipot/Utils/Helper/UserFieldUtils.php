@@ -5,7 +5,7 @@
  * @version pre 1.0
  */
 
-namespace Hipot\Utils;
+namespace Hipot\Utils\Helper;
 
 /**
  * Trait UserFieldUtils
