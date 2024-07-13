@@ -55,7 +55,9 @@ trait StringUtils
 		$value = strip_tags((string)$value, $allowedTags);
 		if (class_exists(\tidy::class)) {
 			$tidy = new \tidy();
-			$value = $tidy->repairString($value);
+			$value = $tidy->repairString($value, [
+				'show-body-only' => true,
+			]);
 		}
 		return $value;
 	}
