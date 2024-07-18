@@ -53,10 +53,11 @@ class Iblock extends _CIBElement
 		$ID = $el->Add($arAddFields, $bResort, $bUpdateSearch);
 
 		if ($ID) {
-			return new UpdateResult(['RESULT' => $ID,				'STATUS' => UpdateResult::STATUS_OK]);
-		} else {
-			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
+			return new UpdateResult(['RESULT' => $ID, 'STATUS' => UpdateResult::STATUS_OK]);
 		}
+
+		$errorTxt = method_exists($el, 'getLastError') ? $el->getLastError() : $el->LAST_ERROR;
+		return new UpdateResult(['RESULT' => $errorTxt, 'STATUS' => UpdateResult::STATUS_ERROR]);
 	}
 
 	/**
@@ -83,10 +84,11 @@ class Iblock extends _CIBElement
 		$el		= new CIBlockSection();
 		$res	= $el->Update($ID, $arAddFields, $bResort, $bUpdateSearch);
 		if ($res) {
-			return new UpdateResult(['RESULT' => $ID,				'STATUS' => UpdateResult::STATUS_OK]);
-		} else {
-			return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
+			return new UpdateResult(['RESULT' => $ID, 'STATUS' => UpdateResult::STATUS_OK]);
 		}
+
+		$errorTxt = method_exists($el, 'getLastError') ? $el->getLastError() : $el->LAST_ERROR;
+		return new UpdateResult(['RESULT' => $errorTxt,	'STATUS' => UpdateResult::STATUS_ERROR]);
 	}
 
 	/**
@@ -210,10 +212,11 @@ class Iblock extends _CIBElement
 		$ID = $el->Add($arAddFields, false, $bUpdateSearch);
 
 		if ($ID) {
-			return new UpdateResult(['RESULT' => $ID,			'STATUS' => UpdateResult::STATUS_OK]);
+			return new UpdateResult(['RESULT' => $ID, 'STATUS' => UpdateResult::STATUS_OK]);
 		}
 
-		return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
+		$errorTxt = method_exists($el, 'getLastError') ? $el->getLastError() : $el->LAST_ERROR;
+		return new UpdateResult(['RESULT' => $errorTxt,	'STATUS' => UpdateResult::STATUS_ERROR]);
 	}
 
 	/**
@@ -251,10 +254,11 @@ class Iblock extends _CIBElement
 		}
 
 		if ($bUpd) {
-			return new UpdateResult(['RESULT' => $ID,			'STATUS' => UpdateResult::STATUS_OK]);
+			return new UpdateResult(['RESULT' => $ID, 'STATUS' => UpdateResult::STATUS_OK]);
 		}
 
-		return new UpdateResult(['RESULT' => $el->LAST_ERROR,	'STATUS' => UpdateResult::STATUS_ERROR]);
+		$errorTxt = method_exists($el, 'getLastError') ? $el->getLastError() : $el->LAST_ERROR;
+		return new UpdateResult(['RESULT' => $errorTxt,	'STATUS' => UpdateResult::STATUS_ERROR]);
 	}
 
 	/**
