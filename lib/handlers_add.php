@@ -81,6 +81,11 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 				break;
 			}
 		}
+
+	// create user-d0 to work in agents
+	if ($USER === null) {
+		$USER = BitrixEngine::getCurrentUserD0();
+	}
 });
 
 // проставляем id инфоблоков в административном меню
