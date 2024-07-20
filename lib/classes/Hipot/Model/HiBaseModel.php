@@ -1,64 +1,48 @@
 <?php
-/**
- * hipot studio source file <info AT hipot-studio DOT com>
- * Created 16.06.2023 22:41
- * @version pre 1.0
- */
+
 namespace Hipot\Model;
 
-use Bitrix\Highloadblock\DataManager;
-use Bitrix\Highloadblock\HighloadBlockTable;
-use Hipot\BitrixUtils\HiBlock;
+use Bitrix\Main\ORM\Data\DataManager;
 
 /**
- * Base class to extends in concrete Hiload-DataManagers-classes (ex. HiBlockTable extends  HiBaseModel)
+ * Base type to extends in concrete Hiload-DataManagers-classes (ex. HiBlock<s>Table</s>Model extends HiBaseModel)
  */
-abstract class HiBaseModel extends DataManager
+abstract class HiBaseModel implements HiBaseModelInterface
 {
 	use EO_Utils;
 
-	// region init block
-	public static function getTableName(): string
+	/**
+	 * @inheritDoc
+	 */
+	public static function toReadModel(array $row): array
 	{
-		$hlblock = self::getHiBlock();
-
-		return $hlblock['TABLE_NAME'];
-	}
-
-	public static function getMap(): array
-	{
-		return [
-			'ID' => [
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true
-			]
-		];
-	}
-
-	public static function getHighloadBlock(): array
-	{
-		$hlblock = self::getHiBlock();
-		return HighloadBlockTable::resolveHighloadblock($hlblock);
-	}
-	// endregion
-
-	private static function getHiBlock(): array
-	{
-		$class   = str_replace('Table', '', static::class); // HiBlockTable suffix drop
-		return HiBlock::getHightloadBlockTable(0, $class);
+		return [];
 	}
 
 	/**
-	 * Transform row from DataManager::getById() to ReadModel
-	 * @param array $row
-	 * @return array
+	 * @inheritDoc
 	 */
-	abstract public static function toReadModel(array $row): array;
+	public static function getDefaultFilter(): array
+	{
+		return [];
+	}
 
 	/**
-	 * Return default filter to select read model's
-	 * @return array
+	 * @param class-string<DataManager> $className
+	 *
+	 * @return class-string<\Hipot\Model\HiBaseModelInterface>
 	 */
-	abstract public static function getDefaultFilter(): array;
+	public static function getModelClass($className): string
+	{
+		return str_replace('Table', 'Model', $className);
+	}
+
+	/**
+	 * @param class-string<\Hipot\Model\HiBaseModel> $className
+	 * @return class-string<DataManager>
+	 */
+	public static function getDataManagerClass($className): string
+	{
+		return str_replace('Model', 'Table', $className);
+	}
 }

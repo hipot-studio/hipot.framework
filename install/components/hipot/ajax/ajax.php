@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection AutoloadingIssuesInspection */
 /**
  * hipot studio source file <info AT hipot-studio DOT com>
  * Created 08.06.2023 23:38
@@ -6,15 +6,14 @@
  */
 defined('B_PROLOG_INCLUDED') || die();
 
-use Bitrix\Main\Application;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\ActionFilter;
-use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Web\Json;
-use Bitrix\Main\ORM;
+
 use Hipot\BitrixUtils\HiBlock;
 use Hipot\Model\DataManagerReadModel;
+use Hipot\Model\HiBaseModel;
 
 /**
  * universal ajax controller component
@@ -56,9 +55,10 @@ class HipotAjaxController extends Controller
 			new ExactParameter(
 				DataManagerReadModel::class,
 				'entity',
-				function ($className, $entityType, $entityId) {
+				static function ($className, $entityType, $entityId) {
+					$entityClass = HiBlock::getHightloadBlockTable(0, $entityType, true);
 					return DataManagerReadModel::buildById(
-						HiBlock::getHightloadBlockTable(0, $entityType, true),
+						$entityClass,
 						$entityId
 					);
 				}
@@ -68,43 +68,18 @@ class HipotAjaxController extends Controller
 
 	///// region ajax-actions
 
-	// TODO: контроллеры не должны заниматься обработкой данных, это должно происходить в слое моделей;
 	public function getEntityStatAction(string $entityType, array $entityOrder, array $filter = []): string
 	{
-		$dm = HiBlock::getHightloadBlockTable(0, $entityType, true);
+		$entityClass = HiBlock::getHightloadBlockTable(0, $entityType, true);
+		$classModelName = HiBaseModel::getModelClass($entityClass);
 
-		$filter = array_merge($filter, DataManagerReadModel::getDefaultFilter($dm));
+		$filter = array_merge($filter, DataManagerReadModel::getDefaultFilter($classModelName));
 
 		$orderBy = key($entityOrder);
 		$orderOrder = current($entityOrder);
-		$orderOrderRev = 'DESC';
-		if (strtoupper($orderOrder) == 'DESC') {
-			$orderOrderRev = 'ASC';
-		}
-
 		$cacheTtl = 3600 * 24 * 7;
 
-		$resultStart = $dm::getList([
-			'order' => [$orderBy => $orderOrder],
-			'limit' => 1,
-			'select' => ['ID'],
-			'filter' => $filter,
-			"cache" => ["ttl" => $cacheTtl, "cache_joins" => true]
-		])->fetch();
-		$resultEnd = $dm::getList([
-			'order' => [$orderBy => $orderOrderRev],
-			'limit' => 1,
-			'select' => ['ID'],
-			'filter' => $filter,
-			'cache' => ['ttl' => $cacheTtl, "cache_joins" => true]
-		])->fetch();
-		$resultTotal = $dm::getList([
-			'select' => ['CNT'],
-			'runtime' => [
-				new ORM\Fields\ExpressionField('CNT', 'COUNT(*)')
-			],
-			'filter' => $filter
-		])->fetch();
+		[$resultStart, $resultEnd, $resultTotal] = HiBaseModel::getStatistic($orderBy, $orderOrder, $filter, $cacheTtl, $entityClass);
 
 		return Json::encode([
 			'START_ID'      => $resultStart['ID'],

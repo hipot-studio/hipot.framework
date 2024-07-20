@@ -6,9 +6,9 @@ function HiModel()
 	this.getAjaxData = function (method, dataSend, thenRun)
 	{
 		BX.ajax.runComponentAction('hipot:ajax', method, {
-			mode: 'ajax',
-			data: dataSend,
-			method: 'POST'
+			'mode'      : 'ajax',
+			'data'      : dataSend,
+			'method'    : 'POST'
 		}).then(function(response){
 			let responseData = {};
 			if (response.status === 'success') {

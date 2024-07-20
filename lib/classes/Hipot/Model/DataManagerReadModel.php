@@ -6,6 +6,8 @@
  */
 namespace Hipot\Model;
 
+use Bitrix\Main\ORM\Data\DataManager;
+
 class DataManagerReadModel
 {
 	private array $entityObject;
@@ -24,7 +26,7 @@ class DataManagerReadModel
 	}
 
 	/**
-	 * @param HiBaseModel $className
+	 * @param class-string<DataManager>|DataManager $className
 	 * @param int         $entityId
 	 *
 	 * @return self
@@ -34,27 +36,28 @@ class DataManagerReadModel
 	 */
 	public static function buildById($className, int $entityId): self
 	{
-		/**
-		 * @var HiBaseModel $className
-		 * @noinspection VirtualTypeCheckInspection
-		 */
-		$obj = $className::getById($entityId)->fetch();
-		if (method_exists($className, 'toReadModel')) {
-			$obj = $className::toReadModel($obj);
+		$classModelName = HiBaseModel::getModelClass($className);
+		$obj = $className::getByPrimary($entityId, ['filter' => self::getDefaultFilter($classModelName)])->fetch();
+		if (class_exists($classModelName) && method_exists($classModelName, 'toReadModel')) {
+			$obj = $classModelName::toReadModel($obj);
 		}
 		return new self($obj);
 	}
 
 	/**
-	 * @param HiBaseModel $className
+	 * Default filter used in actions
+	 *
+	 * @param class-string<HiBaseModelInterface>|HiBaseModelInterface $classModelName
+	 *
 	 * @return array
 	 */
-	public static function getDefaultFilter($className): array
+	public static function getDefaultFilter($classModelName): array
 	{
 		$filter = [];
-		if (method_exists($className, 'getDefaultFilter')) {
-			return $className::getDefaultFilter();
+		if (class_exists($classModelName) && method_exists($classModelName, 'getDefaultFilter')) {
+			return $classModelName::getDefaultFilter();
 		}
 		return $filter;
 	}
+
 }

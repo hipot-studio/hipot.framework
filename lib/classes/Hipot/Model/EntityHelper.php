@@ -1,8 +1,9 @@
 <?php
-
 namespace Hipot\Model;
 
-class EntityHelper
+use Bitrix\Highloadblock\DataManager;
+
+class EntityHelper extends DataManager
 {
 	use EO_Utils;
 }

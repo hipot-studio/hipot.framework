@@ -13,14 +13,16 @@ use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\DB;
 use Bitrix\Main\Entity\Query;
+use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\ORM\Fields\ScalarField;
+use Bitrix\Main\ORM;
 use Bitrix\Main\Result;
 use Hipot\Utils\UUtils;
 
+
 /**
  * Дополнительные утилиты для сущностей DataManager (для датамаппера)
- * @package Hipot\BitrixUtils
  */
 trait EO_Utils
 {
@@ -167,15 +169,18 @@ trait EO_Utils
 	 * @param array $order
 	 * @param array $select
 	 * @param array $filter
+	 * @param class-string<\Bitrix\Main\ORM\Data\DataManager> $dm
 	 *
 	 * @return array{'PREV':array{'ID':int}, 'NEXT':array{'ID':int}}
 	 */
-	public static function getNextPrevElementsById(int $id, array $order = [], array $select = ['ID'], array $filter = []): array
+	public static function getNextPrevElementsById(int $id, array $order = [], array $select = ['ID'], array $filter = [], $dm = null): array
 	{
+		$dm = $dm ?? static::class;
+
 		// find start pos
 		$connection = Main\Application::getConnection();
-		$tableName = static::getTableName();
-		$whereSql = Query::buildFilterSql(static::getEntity(), $filter);
+		$tableName = $dm::getTableName();
+		$whereSql = Query::buildFilterSql($dm::getEntity(), $filter);
 		if (empty($whereSql)) {
 			$whereSql = ' 1 ';
 		}
@@ -216,7 +221,7 @@ trait EO_Utils
 				'offset' => max($offset['rank'] - 2, 0),    // to select current and prev
 			];
 		}
-		$list = static::getList($getListParams);
+		$list = $dm::getList($getListParams);
 
 		$prev = $next = $iter = false;
 		$bPrev = false;
@@ -235,5 +240,49 @@ trait EO_Utils
 			'PREV' => $prev,
 			'NEXT' => $next,
 		];
+	}
+
+	/**
+	 * Description: Retrieves statistic information based on the provided parameters.
+	 *
+	 * @param string $orderBy The field to order the results by.
+	 * @param string $orderOrder The order of the results (ASC or DESC). Default is ASC.
+	 * @param array  $filter An array of conditions to filter the results by.
+	 * @param int    $cacheTtl The time-to-live (TTL) for caching the results. Default is 0 (no caching).
+	 * @param class-string<\Bitrix\Main\ORM\Data\DataManager> $dm
+	 *
+	 * @return array An array containing the start result, end result, and total result.
+	 */
+	public static function getStatistic(string $orderBy, string $orderOrder = 'ASC', array $filter = [], int $cacheTtl = 0, $dm = null): array
+	{
+		$orderOrderRev = 'DESC';
+		if (strtoupper($orderOrder) == 'DESC') {
+			$orderOrderRev = 'ASC';
+		}
+
+		$dm = $dm ?? static::class;
+
+		$resultStart = $dm::getList([
+			'order' => [$orderBy => $orderOrder],
+			'limit' => 1,
+			'select' => ['ID'],
+			'filter' => $filter,
+			"cache" => ["ttl" => $cacheTtl, "cache_joins" => true]
+		])->fetch();
+		$resultEnd = $dm::getList([
+			'order' => [$orderBy => $orderOrderRev],
+			'limit' => 1,
+			'select' => ['ID'],
+			'filter' => $filter,
+			'cache' => ['ttl' => $cacheTtl, "cache_joins" => true]
+		])->fetch();
+		$resultTotal = $dm::getList([
+			'select' => ['CNT'],
+			'runtime' => [
+				new ORM\Fields\ExpressionField('CNT', 'COUNT(*)')
+			],
+			'filter' => $filter
+		])->fetch();
+		return [$resultStart, $resultEnd, $resultTotal];
 	}
 }
