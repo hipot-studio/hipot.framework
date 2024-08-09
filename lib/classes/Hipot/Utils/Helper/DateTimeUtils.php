@@ -6,6 +6,8 @@
  */
 namespace Hipot\Utils\Helper;
 
+use Hipot\Utils\UUtils;
+
 trait DateTimeUtils
 {
 	/**
@@ -47,5 +49,74 @@ trait DateTimeUtils
 			return 'Summer';
 		}
 		return 'Fall';
+	}
+
+	/**
+	 * Утилитарная функция для красивого вывода периода (в секундах) в дни, часы, минуты и секунды
+	 *
+	 * @param integer $duration Длительность периода в секундах
+	 * @return string
+	 */
+	public static function secondsToTimeString($duration): string
+	{
+		$timeStrings = array();
+
+		$converted = [
+			'days'    => floor($duration / (3600 * 24)),
+			'hours'   => floor($duration / 3600),
+			'minutes' => floor(($duration / 60) % 60),
+			'seconds' => ($duration % 60)
+		];
+
+		if ($converted['days'] > 0) {
+			$timeStrings[] = $converted['days'] . ' ' . UUtils::Suffix($converted['days'], 'день|дня|дней');
+		}
+
+		if ($converted['hours'] > 0) {
+			$timeStrings[] = $converted['hours'] . ' ' . UUtils::Suffix($converted['hours'], 'час|часа|часов');
+		}
+		if ($converted['minutes'] > 0) {
+			$timeStrings[] = $converted['minutes'] . ' мин.';
+		}
+		if ($converted['seconds'] > 0) {
+			$timeStrings[] = $converted['seconds'] . ' сек.';
+		}
+
+		if(!empty($timeStrings)) {
+			return implode(' ', $timeStrings);
+		}
+
+		return ' 0 секунд';
+	}
+
+	/**
+	 * @param int $time seconds
+	 * @return string
+	 * @see https://en.wikipedia.org/wiki/ISO_8601#Durations
+	 */
+	public static function timeToIso8601Duration(int $time): string
+	{
+		$units = [
+			"Y" => 365*24*3600,
+			"D" =>     24*3600,
+			"H" =>        3600,
+			"M" =>          60,
+			"S" =>           1,
+		];
+		$str = "P";
+		$istime = false;
+		foreach ($units as $unitName => &$unit) {
+			$quot  = (int)($time / $unit);
+			$time -= $quot * $unit;
+			$unit  = $quot;
+			if ($unit > 0) {
+				if (!$istime && in_array($unitName, ["H", "M", "S"])) { // There may be a better way to do this
+					$str .= "T";
+					$istime = true;
+				}
+				$str .= $unit . $unitName;
+			}
+		}
+		return $str;
 	}
 }

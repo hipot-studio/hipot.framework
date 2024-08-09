@@ -9,6 +9,7 @@
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\Event;
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Composite\Page as CompositePage;
@@ -217,3 +218,23 @@ $eventManager->addEventHandler('', 'CustomSettingsOnAfterUpdate',   [HiBlockApps
 $eventManager->addEventHandler('', 'CustomSettingsOnAfterAdd',      [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
 $eventManager->addEventHandler('', 'CustomSettingsOnAfterDelete',   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
 
+// region очистка из корзины ненужных свойств (при добавлении товара из админки)
+$eventManager->addEventHandler("sale", "OnBasketAdd", static function ($ID, $arFields) {
+	Hipot\BitrixUtils\Sale::deleteUnUsedBasketProps($ID);
+});
+$eventManager->addEventHandler(
+	'sale',
+	'OnSaleOrderSaved',
+	static function (Event $event) {
+		/** @var \Bitrix\Sale\Order $order */
+		$order = $event->getParameter("ENTITY");
+
+		if (isset($GLOBALS['deletedOrderUnusedProps_' . $order->getId()])) {
+			return;
+		}
+
+		Hipot\BitrixUtils\Sale::deleteUnUsedBasketProps();
+		$GLOBALS['deletedOrderUnusedProps_' . $order->getId()] = true;
+	}
+);
+// endregion

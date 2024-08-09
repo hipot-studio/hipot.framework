@@ -241,4 +241,29 @@ final class Sale
 		}
 		return false;
 	}
+
+	/**
+	 * Deletes unused basket properties from the database (event handler)
+	 *
+	 * @param bool|int $basketId The ID of the basket to delete unused properties from. Optional, defaults to false.
+	 *
+	 * @return void
+	 */
+	public static function deleteUnUsedBasketProps($basketId = false): void
+	{
+		global $DB;
+
+		$nps = [];
+		foreach (\App::NEED_BASKET_PROPERTY as $np) {
+			$nps[] = "\"" . $np . "\"";
+		}
+
+		/** @noinspection SqlNoDataSourceInspection */
+		/** @noinspection SqlResolve */
+		$sqlDelUnusedProps =
+			'delete from b_sale_basket_props where ' .
+			//'delete from b_sale_basket_props WHERE BASKET_ID = ' . (int)$ID . ' AND ' .
+			'CODE NOT IN ('.implode(', ',$nps).')';
+		$DB->Query($sqlDelUnusedProps);
+	}
 }

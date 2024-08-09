@@ -117,7 +117,7 @@ class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_CODE#_#IBLOCK_ID# exten
 	 */
 	private string $oneRowPropertytemplate =
 		'	/**
-	 * #PROPERTY_TITLE#
+	 * #PROPERTY_TITLE# (ID: <b>#PROPERTY_ID#</b>) 
 	 * @var #PROPERTY_TYPE#
 	 */
 	public $#PROPERTY_CODE#;
@@ -133,7 +133,7 @@ class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_CODE#_#IBLOCK_ID# exten
 	 */
 	private string $multipleRowPropertyTemplate =
 		'	/**
-	 * #PROPERTY_TITLE#
+	 * #PROPERTY_TITLE# (ID: <b>#PROPERTY_ID#</b>)
 	 * @var array[#PROPERTY_TYPE#]
 	 * @var #PROPERTY_TYPE#[]
 	 */
@@ -557,8 +557,8 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 
 				$temp = ($prop['MULTIPLE'] != 'Y') ? $this->oneRowPropertytemplate : $this->multipleRowPropertyTemplate;
 				$outPropsIter .= str_replace(
-					['#PROPERTY_TITLE#', '#PROPERTY_CODE#', '#PROPERTY_TYPE#'],
-					[$prop['NAME'], $prop['CODE'], $propType],
+					['#PROPERTY_TITLE#', '#PROPERTY_CODE#', '#PROPERTY_ID#', '#PROPERTY_TYPE#'],
+					[$prop['NAME'], $prop['CODE'], $prop['ID'], $propType],
 					$temp
 				);
 			}
