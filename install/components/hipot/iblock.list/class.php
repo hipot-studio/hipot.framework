@@ -107,7 +107,8 @@ final class IblockList extends \CBitrixComponent
 				$arSelect = array_merge($arSelect, $arParams["SELECT"]);
 			}
 
-			$arResult["ITEMS"] = [];
+			$arResult["ITEMS"]     = [];
+			$arResult["CNT_ITEMS"] = 0;
 
 			// QUERY 1 MAIN
 			$rsItems = \CIBlockElement::GetList($arOrder, $arFilter, false, $arNavParams, $arSelect);
@@ -171,9 +172,11 @@ final class IblockList extends \CBitrixComponent
 						'CURRENT_PAGE_RECORDS_COUNT'	=> count($arResult["ITEMS"])	    // размер выборки текущей страницы
 					];
 				}
+				$arResult["CNT_ITEMS"] = count($arResult["ITEMS"]);
 
 				$this->setResultCacheKeys([
-					"NAV_RESULT"
+					'NAV_RESULT',
+					'CNT_ITEMS'
 				]);
 			} else {
 				if ($arParams["SET_404"] === "Y") {
