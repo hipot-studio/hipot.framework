@@ -227,22 +227,20 @@ if (! function_exists('bx_js_encode')) {
 }
 */
 
-if (! function_exists('str_contains')) {
+if (! function_exists('mailHideWithMailme')) {
 	/**
-	 * Php 7.4 rudiment
+	 * Преобразует предоставленный адрес электронной почты, заменяя символы @ и . на " AT " и " DOT " соответственно.
 	 *
-	 * @param $haystack
-	 * @param $needle
+	 * @param string $email Адрес электронной почты для преобразования.
 	 *
-	 * @return bool
-	 *
-	 * @todo use symfony/polyfill
-	 * @noinspection StrContainsCanBeUsedInspection
+	 * @return string Преобразованный адрес электронной почты.
 	 */
-	function str_contains($haystack, $needle): bool
+	function mailHideWithMailme(string $email): string
 	{
-		return $needle !== '' && mb_strpos($haystack, $needle) !== false;
+		return str_replace(['@', '.'], [' AT ', ' DOT '], $email);
 	}
 }
+
+
 
 // \/EOF

@@ -57,6 +57,10 @@ trait StringUtils
 			$tidy = new \tidy();
 			$value = $tidy->repairString($value, [
 				'show-body-only' => true,
+				'indent'         => true,
+				'indent-spaces'  => 4,
+				'vertical-space' => false,
+				'wrap'           => 400
 			]);
 		}
 		return $value;

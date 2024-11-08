@@ -150,6 +150,10 @@ $eventManager->addEventHandler('main', 'OnEpilog', static function () use ($requ
 	global $APPLICATION;
 	static $isRun = false;
 
+	if (IS_BETA_TESTER) {
+		$isRun = true;
+	}
+
 	// process 404 in content part
 	if ((!$isRun && defined('ERROR_404') && ERROR_404 === 'Y' && $APPLICATION->GetCurPage() != '/404.php')) {
 		$isRun = true;
@@ -162,7 +166,7 @@ $eventManager->addEventHandler('main', 'OnEpilog', static function () use ($requ
 			$content = is_file($contCacheFile) ? file_get_contents($contCacheFile) : '';
 			if (trim($content) === '') {
 				$el      = new HttpClient();
-				$content = $el->get(($request->isHttps() ? 'https://' : 'http://') . $request->getServer()->getHttpHost() . '/404.php');
+				$content = $el->get(($request->isHttps() ? 'https://' : 'http://') . $request->getServer()->getHttpHost() . '/404.php?last_page=' . urlencode($request->getRequestUri()));
 
 				file_put_contents($contCacheFile, $content, LOCK_EX);
 			}

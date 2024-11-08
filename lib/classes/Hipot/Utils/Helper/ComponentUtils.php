@@ -48,6 +48,7 @@ trait ComponentUtils
 		if (! BitrixEngine::getAppD0()->GetShowIncludeAreas()) {
 			return;
 		}
+		Loader::includeModule('iblock');
 		$arButtons = \CIBlock::GetPanelButtons(
 			(int)$arParams["IBLOCK_ID"],
 			(int)$arParams["ELEMENT_ID"],

@@ -54,10 +54,11 @@ trait DateTimeUtils
 	/**
 	 * Утилитарная функция для красивого вывода периода (в секундах) в дни, часы, минуты и секунды
 	 *
-	 * @param integer $duration Длительность периода в секундах
+	 * @param int|string $duration Длительность периода в секундах
+	 * @param bool $seconds = true
 	 * @return string
 	 */
-	public static function secondsToTimeString($duration): string
+	public static function secondsToTimeString(int|string $duration, bool $seconds = true): string
 	{
 		$timeStrings = array();
 
@@ -70,15 +71,17 @@ trait DateTimeUtils
 
 		if ($converted['days'] > 0) {
 			$timeStrings[] = $converted['days'] . ' ' . UUtils::Suffix($converted['days'], 'день|дня|дней');
+			$seconds = false;
 		}
 
 		if ($converted['hours'] > 0) {
 			$timeStrings[] = $converted['hours'] . ' ' . UUtils::Suffix($converted['hours'], 'час|часа|часов');
+			$seconds = false;
 		}
 		if ($converted['minutes'] > 0) {
 			$timeStrings[] = $converted['minutes'] . ' мин.';
 		}
-		if ($converted['seconds'] > 0) {
+		if ($converted['seconds'] > 0 && $seconds) {
 			$timeStrings[] = $converted['seconds'] . ' сек.';
 		}
 
