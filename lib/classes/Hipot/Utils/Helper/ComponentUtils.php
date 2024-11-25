@@ -1,6 +1,7 @@
 <?php
 namespace Hipot\Utils\Helper;
 
+use Bitrix\Main\Loader;
 use CBitrixComponent;
 use CBitrixComponentTemplate;
 use CIBlock;
@@ -162,6 +163,35 @@ trait ComponentUtils
 	 *
 	 * @return void
 	 */
+
+	/**
+	 * Возвращает коды, сгенерированный включаемыми областями директории (не рекурсивно)
+	 * @param string $includesDir Путь до директории с включаемыми областями
+	 * @param array $params Массив параметров для подключаемого файла
+	 * @param array $functionParams Массив настроек данного метода
+	 * @return array
+	 * @see \CMain::IncludeFile()
+	 */
+	public static function getIncludeAreas(string $includesDir, $params = [], $functionParams = []): array
+	{
+		$includes = [];
+		if (!is_dir($includesDir) && is_dir(Loader::getDocumentRoot() . $includesDir)) {
+			$includesDir = Loader::getDocumentRoot() . $includesDir;
+		}
+		if (!is_dir($includesDir)) {
+			return $includes;
+		}
+		foreach (new \DirectoryIterator($includesDir) as $file) {
+			/** @var $file \DirectoryIterator */
+			if ($file->isDot() || !$file->isFile()) {
+				continue;
+			}
+			$filename = str_replace(Loader::getDocumentRoot(), '', $file->getRealPath());
+			$includes[ $file->getBasename('.php') ] = self::getIncludeArea($filename, $params, $functionParams);
+		}
+		return $includes;
+	}
+
 	public static function insertVideoBxPlayer(string $videoFile, int $width = 800, int $height = 450, $component = null, bool $adaptiveFixs = true): void
 	{
 		global $APPLICATION;

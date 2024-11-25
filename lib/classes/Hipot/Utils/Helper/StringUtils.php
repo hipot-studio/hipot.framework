@@ -18,7 +18,7 @@ trait StringUtils
 	 * @param array|string $forms строка 'один|два|несколько' или 'слово|слова|слов' или массив с такой же историей
 	 * @see https://localization-guide.readthedocs.io/en/latest/l10n/pluralforms.html
 	 */
-	public static function Suffix($n, $forms): string
+	public static function Suffix(int|float|string $n, array|string $forms): string
 	{
 		if (is_string($forms)) {
 			$forms = explode('|', $forms);
@@ -30,7 +30,7 @@ trait StringUtils
 	 * Транслит в один вызов
 	 * @param mixed|string $text
 	 */
-	public static function TranslitText($text, string $lang = 'ru', int $maxLen = 200): string
+	public static function TranslitText(?string $text, string $lang = 'ru', int $maxLen = 200): string
 	{
 		return CUtil::translit(trim((string)$text), $lang, [
 			'max_len'               => $maxLen,
@@ -47,7 +47,10 @@ trait StringUtils
 	 * @param array $allowedTags
 	 * @return string
 	 */
-	public static function getClearHtmlValue($value, array $allowedTags = ['p', 'b', 'strong', 'em', 'i', 'br', 'a', 'ul', 'ol', 'li', 'span', 'img']): string
+	public static function getClearHtmlValue(
+		?string $value,
+		array $allowedTags = ['p', 'b', 'strong', 'em', 'i', 'br', 'a', 'ul', 'ol', 'li', 'span', 'img', 'div', 'h2', 'h3', 'table', 'thead', 'tbody', 'tr', 'td', 'th']
+	): string
 	{
 		if ($value === null) {
 			return '';
@@ -55,7 +58,7 @@ trait StringUtils
 		$value = strip_tags((string)$value, $allowedTags);
 		if (class_exists(\tidy::class)) {
 			$tidy = new \tidy();
-			$value = $tidy->repairString($value, [
+			$value = $tidy::repairString($value, [
 				'show-body-only' => true,
 				'indent'         => true,
 				'indent-spaces'  => 4,

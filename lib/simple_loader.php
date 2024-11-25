@@ -33,6 +33,34 @@ spl_autoload_register(static function ($className) {
 		$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/hipot.framework/lib'
 		// ...
 	];
+
+	// region bitrix self-hosted composer
+	/* @var SplFileInfo $fileinfo */
+	/* @var SplFileInfo $fileinfoInside */
+	/*
+	static $mainVendorSrcDirs = [], $isMainVendorLoaded = false;
+	if (! $isMainVendorLoaded) {
+		$baseMainVendorSrcDir = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/vendor';
+		$mainVendorSrcDirs[] = $baseMainVendorSrcDir;
+
+		$iter = new DirectoryIterator($baseMainVendorSrcDir);
+		foreach ($iter as $fileinfo) {
+			if (! $fileinfo->isDir()) {
+				continue;
+			}
+			$subDir = new DirectoryIterator($fileinfo->getRealPath());
+			foreach ($subDir as $fileinfoInside) {
+				if ($fileinfoInside->isDir() && is_dir($fileinfoInside->getRealPath() . '/src')) {
+					$mainVendorSrcDirs[] = $fileinfoInside->getRealPath() . '/src';
+				}
+			}
+		}
+		$isMainVendorLoaded = true;
+	}
+	$libDirs = [...$libDirs, ...$mainVendorSrcDirs];
+	*/
+	// endregion
+
 	foreach ($libDirs as $libDir) {
 		// to work with other frameworks (psr-4), case sensitive UNIX folders
 		$checkPaths = [
