@@ -205,6 +205,36 @@ $eventManager->addEventHandler('main', 'OnBeforeEndBufferContent', static functi
 	Application::getInstance()->getManagedCache()->cleanDir("user_option");
 });
 
+// delete system scripts (Use only when not needed composite dynamic blocks)
+$eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$cont) use ($request) {
+	if ($request === null || $request->isAdminSection()) {
+		return;
+	}
+	global $APPLICATION, $USER;
+
+	if (is_object($USER) && !$USER->IsAuthorized() && !$request->isPost() && $APPLICATION->GetProperty('JS_core_frame_cache_NEED') != 'Y') {
+		$toRemove = [
+			'#<script[^>]+src="/bitrix/js/ui/dexie/[^>]+></script>#',
+			'#<script[^>]+src="/bitrix/js/main/core/core_frame_cache[^>]+></script>#',
+			'#<link[^>]+href="/bitrix/js/ui/design-tokens/dist/ui.design-tokens.min.css\?\d+"[^>]+>#',
+			'#<link[^>]+href="/bitrix/panel/main/popup.min.css\?\d+"[^>]+>#',
+		];
+		$cont = preg_replace($toRemove, "", $cont);
+	}
+
+	$toInline = [
+		'#<script[^>]+src="(?<src>/bitrix/js/main/core/core.min.js)\?\d+"[^>]*></script>#',
+		'#<script[^>]+src="(?<src>/bitrix/js/main/core/core_ls.min.js)\?\d+"[^>]*></script>#',
+		'#<script[^>]+src="(?<src>/bitrix/cache/js/.*?\.js)\?\d+"[^>]*></script>#'
+	];
+	$cont = preg_replace_callback($toInline, static function ($matches) {
+		return '<script>'.file_get_contents(Loader::getDocumentRoot() . $matches['src']).'</script>';
+	}, $cont);
+
+	// validator.w3.org: The type attribute is unnecessary for JavaScript resources.
+	$cont = preg_replace('#<script([^>]*)type=[\'"]text/javascript[\'"]([^>]*)>#', '<script\\1\\2>', $cont);
+});
+
 // drop unused cache to per-product discount on cli run
 $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function (&$arResult) {
 	if (PHP_SAPI == 'cli') {

@@ -9,7 +9,9 @@ use Intervention\Image\ImageManagerStatic as iiImage,
 	CMainPage,
 	Bitrix\Main\IO,
 	RuntimeException,
-	Bitrix\Main\ArgumentException;
+	Bitrix\Main\ArgumentException,
+	Bitrix\Main\Request,
+	Hipot\Services\BitrixEngine;
 
 /**
  * Обработка изображений
@@ -21,10 +23,10 @@ use Intervention\Image\ImageManagerStatic as iiImage,
  * @see https://www.hipot-studio.com/Codex/cimg-constantly-integrable-modifier-of-graphics/
  *
  * @author		(c) hipot studio
- * @version		5.0.0, 2024
+ * @version		5.5.0, 2024
  *
  * @method static void setTag(string $tag) Установка тега, ставить тег перед каждой трансформацией. Для структурирования
- *     /upload/hiimg_cache/<$tagName>/aaa/aaaaaaaaaaaaaaaaaaa/... При этом можно удобно удалять кеш через удаление папки /upload/himg_cache/<$tagName>
+ *     /upload/himg_cache/<$tagName>/aaa/aaaaaaaaaaaaaaaaaaa/... При этом можно удобно удалять кеш через удаление папки /upload/himg_cache/<$tagName>
  * @method static void oneResizeParams(array $params = []) Установить предварительные настройки для ОДНОГО последующего вызова Resize() или ResizeOverlay()
  *     ['tag' => 'detail-pics', 'decodeToFormat'  => 'jpg', 'saveAlpha' => false, 'jpgQuality' => 95]
  */
@@ -44,6 +46,7 @@ final class Img
 	private const FILEPATH_BITRIX_ID = 'bxid';
 	private const FILEPATH_ABS_PATH = 'abs';
 	private const FILEPATH_REL_DOC_ROOT_PATH = 'rel';
+	private const FILEPATH_URI_PATH = 'uri';
 	private const OVERLAY_POSITION_TYPES = ['center', 'top-left', 'top', 'top-right', 'left', 'right', 'bottom-left', 'bottom', 'bottom-right'];
 	private const IMAGE_DECODE_FORMATS = ['webp', 'png', 'jpeg', 'jpg', 'gif'];
 
@@ -54,7 +57,7 @@ final class Img
 	 * Путь к изображению относительно корня сайта, либо относительно корня документов, либо битрикс ID
 	 * @var string = bxid|abs|rel
 	 */
-	#[ExpectedValues([Img::FILEPATH_BITRIX_ID, Img::FILEPATH_ABS_PATH, Img::FILEPATH_REL_DOC_ROOT_PATH])]
+	#[ExpectedValues([Img::FILEPATH_BITRIX_ID, Img::FILEPATH_ABS_PATH, Img::FILEPATH_REL_DOC_ROOT_PATH, Img::FILEPATH_URI_PATH])]
 	private string $path_type;
 
 	/**
@@ -86,6 +89,11 @@ final class Img
 	 * @var string
 	 */
 	private string $r_path;
+
+	/**
+	 * @var string
+	 */
+	private string $mimeType;
 
 	/**
 	 * Заполняется при любой трансформации - как идентификатор для кеша.
@@ -145,7 +153,8 @@ final class Img
 		 * @var array{'tag':string, 'decodeToFormat':string, 'saveAlpha': bool, 'jpgQuality': int}
 		 */
 		private ?array $config = [],
-		private bool $setSid = false
+		private bool $setSid = false,
+		private ?Request $request = null
 	)
 	{
 		// region dependencies
@@ -160,6 +169,8 @@ final class Img
 		$this->defaultJpgQuality = (int)Option::get('main', 'image_resize_quality', '95');
 
 		$this->setResizeParams($config);
+
+		$this->request = BitrixEngine::getInstance()->request;
 	}
 
 	/**
@@ -202,7 +213,7 @@ final class Img
 	/**
 	 * Загружает картинку
 	 * @param int|array|string $img Путь к картинке относительно корня сайта,<br>
-	 *        либо относительно корня диска, либо битрикс ID, либо массив из битрикс \CFile::GetByID()
+	 *        либо относительно корня диска, либо битрикс ID, либо массив из битрикс \CFile::GetByID(), либо урл до картики
 	 * @throws \RuntimeException
 	 * @throws \Bitrix\Main\IO\InvalidPathException
 	 */
@@ -212,7 +223,11 @@ final class Img
 		if (is_array($img) && isset($img["SRC"])) {
 			$img = $img["SRC"];
 		}
-		if (is_string($img)) {
+		// если передан урл сервера на себя
+		$img = str_replace('http' . ($this->request->isHttps() ? 's://' : '://') . $this->request->getServer()->getServerName(), '', $img);
+		$isUri = filter_var($img, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED) !== false;
+
+		if (is_string($img) && !$isUri) {
 			$img = $this->normalizePath($img);
 		}
 
@@ -231,15 +246,25 @@ final class Img
 				throw new RuntimeException('wrong_input_img_type');
 			}
 			$this->path_type		= self::FILEPATH_ABS_PATH;
-			$this->src				= $img;
 			$this->r_src			= str_replace(Loader::getDocumentRoot(), '', $this->src);
+			$this->src				= $img;
 		} elseif (is_file(Loader::getDocumentRoot() . $img)) {
 			// если входит путь к картинке относительно корня сайта
 			$this->path_type		= self::FILEPATH_REL_DOC_ROOT_PATH;
 			$this->r_src			= $img;
 			$this->src				= Loader::getDocumentRoot() . $this->r_src;
+		} elseif ($isUri) {
+			// если url
+			$this->path_type		= self::FILEPATH_URI_PATH;
+			$downloadedFile         = \CFile::MakeFileArray($img);
+			if ((int)$downloadedFile['size'] <= 0) {
+				throw new RuntimeException('wrong_input_img_type_cant_download');
+			}
+			$this->r_src			= $downloadedFile['name'];
+			$this->src				= $downloadedFile['tmp_name'];
+			$this->mimeType         = $downloadedFile['type'];
 		} else {
-			throw new RuntimeException('wrong_input_img_type');
+			throw new RuntimeException('wrong_input_img_type_cant_process');
 		}
 	}
 
@@ -263,6 +288,16 @@ final class Img
 
 	private function decodeFormat(): void
 	{
+		// uri with no-extension
+		$imgExtRegX = '#(png)|(gif)|(jpe?g)|(webp)$#i';
+		if (!empty($this->mimeType) && !preg_match($imgExtRegX, $this->r_path)) {
+			$ext = pathinfo($this->r_src, PATHINFO_EXTENSION);
+			if (! preg_match($imgExtRegX, $ext)) {
+				$this->r_path .= '.' . explode('/', $this->mimeType)[1];
+			} else {
+				$this->r_path = str_replace(basename($this->r_path), $this->r_src, $this->r_path);
+			}
+		}
 		if ($this->getParam('saveAlpha') && in_array($this->method, [self::M_FULL, self::M_FULL_S])) {
 			$this->r_path = preg_replace('#(jpe?g)|(gif)$#i', 'png', $this->r_path);
 		}
@@ -271,7 +306,7 @@ final class Img
 			$this->r_path = preg_replace('#gif$#i', 'png', $this->r_path);
 		}
 		if ($this->getParam('decodeToFormat')) {
-			$this->r_path = preg_replace('#(png)|(gif)|(jpe?g)$#i', $this->getParam('decodeToFormat'), $this->r_path);
+			$this->r_path = preg_replace($imgExtRegX, $this->getParam('decodeToFormat'), $this->r_path);
 		}
 	}
 

@@ -61,20 +61,28 @@ class AssetsContainer
 			return;
 		}
 
+		self::$CSS_INLINE = array_unique(self::$CSS_INLINE);
+		self::$CSS_DEFER  = array_unique(self::$CSS_DEFER);
+		self::$CSS        = array_unique(self::$CSS);
+
 		// region CSS_INLINE
 		ob_start();
 		if (count(self::$CSS_INLINE)) {
+			echo PHP_EOL;
 			echo '<style>';
 		}
+		$fileSize = 0;
 		foreach (self::$CSS_INLINE as $css) {
 			$testMinCss = str_replace('.css', '.min.css', $css);
 			if (is_file(Loader::getDocumentRoot() . $testMinCss)) {
 				$css = $testMinCss;
 			}
 			echo sprintf('/* __%s__ */ ', basename($css)) . str_replace(['url(../'], 'url(' . SITE_TEMPLATE_PATH . '/', file_get_contents(Loader::getDocumentRoot() . $css)) . PHP_EOL;
+			$fileSize += filesize(Loader::getDocumentRoot() . $css);
 		}
 		unset($testMinCss);
 		if (count(self::$CSS_INLINE)) {
+			echo '/* __CSS_INLINE_SIZE__ = ' . \CFile::FormatSize($fileSize) . ' */';
 			echo '</style>';
 		}
 		Asset::getInstance()?->addString(ob_get_clean(), true, AssetLocation::BEFORE_CSS);
@@ -82,6 +90,7 @@ class AssetsContainer
 
 		// region CSS Defer
 		ob_start();
+		$fileSize = 0;
 		foreach (self::$CSS_DEFER as $css) {
 			$testMinCss = str_replace('.css', '.min.css', $css);
 			if (is_file(Loader::getDocumentRoot() . $testMinCss)) {
@@ -91,7 +100,9 @@ class AssetsContainer
 			<link rel="preload" href="<?=\CUtil::GetAdditionalFileURL($css)?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
 			<noscript><link rel="stylesheet" href="<?=\CUtil::GetAdditionalFileURL($css)?>"></noscript>
 			<?
+			$fileSize += filesize(Loader::getDocumentRoot() . $css);
 		}
+		echo '<!-- __CSS_DEFER_SIZE__ = ' . \CFile::FormatSize($fileSize) . ' -->';
 		unset($testMinCss);
 		Asset::getInstance()?->addString(ob_get_clean(), true, AssetLocation::AFTER_CSS);
 		// endregion
