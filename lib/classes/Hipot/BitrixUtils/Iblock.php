@@ -350,7 +350,7 @@ class Iblock extends _CIBElement
 	 */
 	public static function selectElementsByFilterArray($arOrder, $arFilter, $arGroupBy = false, $arNavParams = false,
 	                                                   $arSelect = [], $SelectAllProps = false, $OnlyPropsValue = true,
-	                                                   $bSelectChains = false, $selectChainsDepth = 3)
+	                                                   $bSelectChains = false, $selectChainsDepth = 3, bool $returnOneIfOnlyOneSelected = true)
 	{
 		/** @noinspection TypeUnsafeArraySearchInspection */
 		if (! in_array('IBLOCK_ID', $arSelect)) {
@@ -384,7 +384,7 @@ class Iblock extends _CIBElement
 			}
 			$arResult[] = $arItem;
 		}
-		if (count($arResult) == 1) {
+		if ($returnOneIfOnlyOneSelected && count($arResult) == 1) {
 			$arResult = current($arResult);
 		}
 
