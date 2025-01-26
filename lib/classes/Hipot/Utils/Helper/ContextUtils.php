@@ -10,6 +10,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\HttpClient;
 use Hipot\Services\BitrixEngine;
+use Bitrix\Main\Composite\Page as CompositePage;
 
 trait ContextUtils
 {
@@ -290,5 +291,22 @@ trait ContextUtils
 			$bIsAjax = false;
 		}
 		return $bIsAjax;
+	}
+
+	/**
+	 * Clears the composite page cache for a specified URI.
+	 *
+	 * @param string $uri The URI of the composite page to be cleared.
+	 *
+	 * @return void
+	 */
+	public static function clearCompositePage(string $uri): void
+	{
+		$page = new CompositePage($uri);
+
+		/** @var \Bitrix\Main\Composite\Data\AbstractStorage $storage */
+		if ($storage = $page->getStorage()) {
+			$storage->delete();
+		}
 	}
 }
