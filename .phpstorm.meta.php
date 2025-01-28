@@ -28,4 +28,20 @@ namespace PHPSTORM_META
 		0,
 		argumentsSet('bitrix_components')
 	);
+
+	registerArgumentsSet('bitrix_page_properties',
+		'title', 'description', 'h1', 'robots', 'canonical', 'keywords', 'og:title', 'og:description', 'og:type', 'og:url', 'og:image', 'og:image:alt'
+	);
+
+	expectedArguments(
+		\CMain::SetPageProperty(),
+		0,
+		argumentsSet('bitrix_page_properties')
+	);
+
+	expectedArguments(
+		\CMain::GetPageProperty(),
+		0,
+		argumentsSet('bitrix_page_properties')
+	);
 }
