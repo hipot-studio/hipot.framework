@@ -309,4 +309,18 @@ trait ContextUtils
 			$storage->delete();
 		}
 	}
+
+	/**
+	 * Captures the output of a callable.
+	 *
+	 * @param callable $callback The function whose output needs to be captured.
+	 * @return string The output captured from the callable.
+	 */
+	private static function captureOutput(callable $callback): string
+	{
+		ob_start();
+		$callback();
+		return ob_get_clean();
+	}
+
 }

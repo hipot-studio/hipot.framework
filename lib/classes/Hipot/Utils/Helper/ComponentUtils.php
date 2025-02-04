@@ -130,10 +130,9 @@ trait ComponentUtils
 	 */
 	public static function getComponent($name, $template = '', $params = [], &$componentResult = null): string
 	{
-		/** @var $GLOBALS array{'DB':\CDatabase, 'APPLICATION':\CMain, 'USER':\CUser, 'USER_FIELD_MANAGER':\CUserTypeManager, 'CACHE_MANAGER':\CCacheManager, 'stackCacheManager':\CStackCacheManager} */
-		ob_start();
-		$componentResult = $GLOBALS['APPLICATION']->IncludeComponent($name, $template, $params, null, [], true);
-		return ob_get_clean();
+		return self::captureOutput(static function () use ($name, $template, $params, &$componentResult) {
+			$componentResult = BitrixEngine::getAppD0()->IncludeComponent($name, $template, $params, null, [], true);
+		});
 	}
 
 	/**
@@ -144,12 +143,11 @@ trait ComponentUtils
 	 * @return string
 	 * @see \CMain::IncludeFile()
 	 */
-	public static function getIncludeArea($path, $params = [], $functionParams = []): string
+	public static function getIncludeArea(string $path, array $params = [], array $functionParams = []): string
 	{
-		/** @var $GLOBALS array{'DB':\CDatabase, 'APPLICATION':\CMain, 'USER':\CUser, 'USER_FIELD_MANAGER':\CUserTypeManager, 'CACHE_MANAGER':\CCacheManager, 'stackCacheManager':\CStackCacheManager} */
-		ob_start();
-		$GLOBALS['APPLICATION']->IncludeFile($path, $params, $functionParams);
-		return ob_get_clean();
+		return self::captureOutput(static function () use ($path, $params, $functionParams) {
+			BitrixEngine::getAppD0()->IncludeFile($path, $params, $functionParams);
+		});
 	}
 
 	/**
