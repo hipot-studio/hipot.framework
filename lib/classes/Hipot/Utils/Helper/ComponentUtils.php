@@ -20,10 +20,13 @@ trait ComponentUtils
 	 */
 	public static function isComponentExists(string $componentName): bool
 	{
-		$component = new \CBitrixComponent();
-		ob_start();
-		$exists = $component->initComponent($componentName);
-		$response = ob_get_clean();
+		$exists = false;
+
+		self::captureOutput(static function () use ($componentName, &$exists) {
+			$component = new \CBitrixComponent();
+			$exists = $component->initComponent($componentName);
+		});
+
 		return $exists;
 	}
 
@@ -128,7 +131,7 @@ trait ComponentUtils
 	 * @return string
 	 * @see \CMain::IncludeComponent()
 	 */
-	public static function getComponent($name, $template = '', $params = [], &$componentResult = null): string
+	public static function getComponent(string $name, string $template = '', array $params = [], &$componentResult = null): string
 	{
 		return self::captureOutput(static function () use ($name, $template, $params, &$componentResult) {
 			$componentResult = BitrixEngine::getAppD0()->IncludeComponent($name, $template, $params, null, [], true);
@@ -192,8 +195,6 @@ trait ComponentUtils
 
 	public static function insertVideoBxPlayer(string $videoFile, int $width = 800, int $height = 450, $component = null, bool $adaptiveFixs = true): void
 	{
-		global $APPLICATION;
-
 		$videoId = 'video_' . md5($videoFile . randString());
 		if ($adaptiveFixs) {
 			?>
@@ -224,7 +225,7 @@ trait ComponentUtils
 			<?
 		}
 
-		$APPLICATION->IncludeComponent(
+		BitrixEngine::getAppD0()->IncludeComponent(
 			"bitrix:player",
 			"",
 			[
