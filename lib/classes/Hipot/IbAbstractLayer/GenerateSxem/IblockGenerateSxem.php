@@ -526,13 +526,13 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 						foreach ($arIblocks[$k]['PROPERTIES'] as $propIter) {
 							$byElemsPropByProp .= str_replace(
 								['#PROPERTY_LINK_CODE#', '#PROPERTY_TITLE#', '#PROPERTY_CODE#'],
-								[strtoupper($prop['CODE']), $propIter['NAME'], strtoupper($propIter['CODE'])],
+								[strtoupper($prop['CODE']), rtrim($propIter['NAME'] . ' ' . $propIter['HINT']), strtoupper($propIter['CODE'])],
 								($propIter['PROPERTY_TYPE'] == PropertyTable::TYPE_LIST) ? $this->propByElemFieldsPropsListTemplate : $this->propByElemFieldsPropsTemplate
 							);
 						}
 						$bySelectLinkedProps .= str_replace(
 							['#PROPERTY_TITLE#', '#PROPERTY_CODE#', '#LINK_IBLOCK_ELEM_NAME#', '#BY_ELEM_PROPS_BY_PROPS#'],
-							[$prop['NAME'], strtoupper($prop['CODE']), $linkIblockName, $byElemsPropByProp],
+							[rtrim($prop['NAME'] . ' ' . $prop['HINT']), strtoupper($prop['CODE']), $linkIblockName, $byElemsPropByProp],
 							$this->propByElemFiledsProps
 						);
 					} else {
@@ -551,14 +551,14 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 
 				$propByGetListSelect .= str_replace(
 					['#PROPERTY_TITLE#', '#PROPERTY_CODE#', '#BY_ELEM_PROPS_SELECT#'],
-					[$prop['NAME'], strtoupper($prop['CODE']), $bySelectLinkedProps],
+					[rtrim($prop['NAME'] . ' ' . $prop['HINT']), strtoupper($prop['CODE']), $bySelectLinkedProps],
 					($prop['PROPERTY_TYPE'] == PropertyTable::TYPE_LIST) ? $this->propByGetListSelectTypeListTemplate : $this->propByGetListSelectTemplate
 				);
 
 				$temp = ($prop['MULTIPLE'] != 'Y') ? $this->oneRowPropertytemplate : $this->multipleRowPropertyTemplate;
 				$outPropsIter .= str_replace(
 					['#PROPERTY_TITLE#', '#PROPERTY_CODE#', '#PROPERTY_ID#', '#PROPERTY_TYPE#'],
-					[$prop['NAME'], $prop['CODE'], $prop['ID'], $propType],
+					[rtrim($prop['NAME'] . ' ' . $prop['HINT']), $prop['CODE'], $prop['ID'], $propType],
 					$temp
 				);
 			}
