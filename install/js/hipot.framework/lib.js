@@ -29,6 +29,21 @@
 	};
 
 	/**
+	 * Плагин для сокрытия емейлов у ссылки
+	 * @memberOf JQuery
+	 */
+	$.fn.mailmea = function () {
+		let at = / AT /,
+			dot = / DOT /g;
+
+		return this.each(function () {
+			let text = $(this).data('mailme'),
+				addr = text.replace(at, '@').replace(dot, '.');
+			$(this).attr('href', 'mailto:' + addr);
+		});
+	};
+
+	/**
 	 * сериализует форму в объект JSON
 	 * @usage $('form').serializeJSON();
 	 * @memberOf jQuery
@@ -450,4 +465,50 @@ function requireJJs(libs, logik)
 		logik();
 	});
 	// console.info(libs);
+}
+
+/**
+ * Displays a confirmation dialog with specified text, an action to execute on confirmation, and customizable button text and color.
+ *
+ * @param {string} confirmTxt - The confirmation message to display in the dialog.
+ * @param {Function} action - The callback function to execute when the confirmation button is clicked.
+ * @param {string} btnOkTxt - The text to display on the confirmation button.
+ * @param {string} [btnOkColor] - The optional color for the confirmation button ex.: BX.UI.Button.Color.DANGER.
+ * @return {void}
+ */
+function confirmAndDoAction(confirmTxt, action, btnOkTxt, btnOkColor)
+{
+	if (typeof btnOkColor === 'undefined') {
+		btnOkColor = BX.UI.Button.Color.PRIMARY;
+	}
+
+	BX.UI.Dialogs.MessageBox.show({
+		message: confirmTxt,
+		title: "",
+		modal: true,
+		buttons: [
+			new BX.UI.Button(
+				{
+					color: btnOkColor,
+					text: btnOkTxt,
+					onclick: function(button, event) {
+						action();
+						button.context.close();
+					}
+				}
+			),
+			new BX.UI.CancelButton(
+				{
+					color: BX.UI.Button.Color.LINK,
+					onclick: function(button, event) {
+						button.context.close();
+					}
+				}
+			)
+		],
+	});
+	/*BX.UI.Dialogs.MessageBox.confirm(confirmTxt, '', (messageBox) => {
+		action();
+		messageBox.close();
+	}, btnOkTxt);*/
 }
