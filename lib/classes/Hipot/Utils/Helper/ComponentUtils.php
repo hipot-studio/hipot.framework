@@ -255,4 +255,27 @@ trait ComponentUtils
 			], $component, ["HIDE_ICONS" => "Y"]
 		);
 	}
+
+	/**
+	 * @param array{'SEF_FOLDER':string, 'SEF_URL_TEMPLATES':array, 'VARIABLE_ALIASES':array} $arParams структура входящего запроса
+	 * @param array $arComponentVariables ожидаемые алиасы из запроса
+	 *
+	 * @return array
+	 */
+	public static function getSefComponentVariables(array $arParams, array $arComponentVariables): array
+	{
+		$arVariables = [];
+		$arDefaultUrlTemplates404 = $arDefaultVariableAliases404 = [];
+
+		$arUrlTemplates = \CComponentEngine::MakeComponentUrlTemplates($arDefaultUrlTemplates404, $arParams["SEF_URL_TEMPLATES"]);
+		$arVariableAliases = \CComponentEngine::MakeComponentVariableAliases($arDefaultVariableAliases404, $arParams["VARIABLE_ALIASES"] ?? []);
+		$componentPage = \CComponentEngine::ParseComponentPath(
+			$arParams["SEF_FOLDER"],
+			$arUrlTemplates,
+			$arVariables
+		);
+
+		\CComponentEngine::InitComponentVariables($componentPage, $arComponentVariables, $arVariableAliases, $arVariables);
+		return $arVariables;
+	}
 }
