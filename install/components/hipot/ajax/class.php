@@ -132,16 +132,36 @@ class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Er
 
 	public function executeComponent()
 	{
-		// file with all client handlers
-		static $blockJsLoaderAdded = false;
-		if ($this->arParams['ADD_BLOCK_LOADER_JS'] == 'Y' && !$blockJsLoaderAdded) {
-			\CJSCore::Init(['ajax']);
-			Asset::getInstance()->addJs($this->getPath() . '/js/block_loader.js');
-			$blockJsLoaderAdded = true;
+		if ($this->arParams['ADD_BLOCK_LOADER_JS'] == 'Y') {
+			$this->addLoaderBlockJs();
 		}
 
 		// only to show html-templates
 		$this->includeComponentTemplate();
+	}
+
+	/**
+	 * <pre>
+	 * // block loader
+	 * CBitrixComponent::includeComponentClass("hipot:ajax");
+	 * if (class_exists(HipotAjaxComponent::class)) {
+	 *      (new HipotAjaxComponent)->addLoaderBlockJs();
+	 * }
+	 * </pre>
+	 * @return void
+	 */
+	public function addLoaderBlockJs(): void
+	{
+		// file with all client handlers
+		static $blockJsLoaderAdded = false;
+		if (!$blockJsLoaderAdded) {
+			\CJSCore::Init(['ajax']);
+			if ($this->getParent()) {
+				$this->getParent()->addChildJS($this->getPath() . '/js/block_loader.js');
+			}
+			Asset::getInstance()->addJs($this->getPath() . '/js/block_loader.js');
+			$blockJsLoaderAdded = true;
+		}
 	}
 
 	/**

@@ -19,14 +19,19 @@ namespace PHPSTORM_META
 		argumentsSet('module_include_const')
 	);
 
-	registerArgumentsSet('bitrix_components',
+	registerArgumentsSet('hipot_components',
 	'hipot:ajax', 'hipot:includer', 'hipot:iblock.list', 'hipot:iblock.section', 'hipot:iblock.menu_ext', 'hipot:iblock.menu_ext'
 	);
 
 	expectedArguments(
 		\CMain::IncludeComponent(),
 		0,
-		argumentsSet('bitrix_components')
+		argumentsSet('hipot_components')
+	);
+	expectedArguments(
+		\CBitrixComponent::includeComponentClass(),
+		0,
+		argumentsSet('hipot_components')
 	);
 
 	registerArgumentsSet('bitrix_page_properties',
