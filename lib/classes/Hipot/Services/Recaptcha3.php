@@ -250,7 +250,6 @@ final class Recaptcha3
 
 		// region grecaptcha-badge-custom
 
-		global $APPLICATION;
 		ob_start();
 		// see https://developers.google.com/recaptcha/docs/faq?hl=ru#id-like-to-hide-the-recaptcha-badge.-what-is-allowed
 		?>
@@ -258,7 +257,7 @@ final class Recaptcha3
 		<p class="grecaptcha-badge-custom">This site is protected by reCAPTCHA and the <a href="https://policies.google.com/privacy" rel="nofollow" target="_blank">Google Privacy Policy</a>.</p>
 		<!--/noindex-->
 		<?
-		$APPLICATION->AddViewContent('MISC_END_FOOTER_CONTENT', ob_get_clean());
+		BitrixEngine::getAppD0()->AddViewContent('MISC_END_FOOTER_CONTENT', ob_get_clean());
 
 		// endregion
 

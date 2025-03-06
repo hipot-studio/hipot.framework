@@ -206,7 +206,6 @@ trait ContextUtils
 	 */
 	public static function setUriToBitrixCurPage(string $uri): void
 	{
-		global $APPLICATION;
 		$oUri  = new \Bitrix\Main\Web\Uri($uri);
 		// to work with GetCurPageParam()
 		parse_str($oUri->getQuery(), $_GET);
@@ -214,7 +213,7 @@ trait ContextUtils
 		foreach ($_GET as $name => $value) {
 			$GLOBALS[$name] = $value;
 		}
-		$APPLICATION->SetCurPage($oUri->getPath(), $oUri->getQuery());
+		BitrixEngine::getAppD0()->SetCurPage(rtrim($oUri->getPath() . '?' . $oUri->getQuery(), '?'));
 	}
 
 	/**
@@ -231,7 +230,6 @@ trait ContextUtils
 	 */
 	public static function getBitrixCurPageParam(string $addParams = "", array $arParamKill = [], bool $get_index_page = false): string
 	{
-		global $APPLICATION;
 		$delParam = array_merge(
 			[
 				"PAGEN_1", "SIZEN_1", "SHOWALL_1",
@@ -243,7 +241,7 @@ trait ContextUtils
 			\Bitrix\Main\HttpRequest::getSystemParameters(),
 			$arParamKill
 		);
-		return $APPLICATION->GetCurPageParam($addParams, $delParam, $get_index_page);
+		return BitrixEngine::getAppD0()->GetCurPageParam($addParams, $delParam, $get_index_page);
 	}
 
 	/**

@@ -29,11 +29,10 @@ const CONTENT_MANAGER_G_CODE = 'content_editor';
 /**
  * Группа контент-редактора
  */
-define('CONTENT_MANAGER_GID', PhpCacher::cache('content_manager_gid', 3600 * 24,
-	static function () {
-		$groupId = is_numeric(CONTENT_MANAGER_G_CODE) ? CONTENT_MANAGER_G_CODE : \CGroup::GetIDByCode(CONTENT_MANAGER_G_CODE);
-		return $groupId;
-	})
+define('CONTENT_MANAGER_GID',
+	PhpCacher::cache('content_manager_gid', 3600 * 24,
+		static fn() => is_numeric(CONTENT_MANAGER_G_CODE) ? CONTENT_MANAGER_G_CODE : \CGroup::GetIDByCode(CONTENT_MANAGER_G_CODE)
+	)
 );
 
 /**
