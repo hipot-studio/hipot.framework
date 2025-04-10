@@ -4,14 +4,17 @@
  * error page with managed errors.
  * You can define your own function debug_string_backtrace() to generate stack-error-message
  *
- * @version 2.0
+ * @version 2.2
  * @author hipot-studio.com
  * @see \Bitrix\Main\Diag\HttpExceptionHandlerOutput::renderExceptionMessage()
  */
 defined('B_PROLOG_INCLUDED') || die();
+if (defined('ERROR_PAGE_OPENED') && ERROR_PAGE_OPENED === true) {
+	die();
+}
+const ERROR_PAGE_OPENED = true;
 
 /**  @var \Throwable $exception */
-
 use Bitrix\Main\Diag\ExceptionHandlerFormatter,
 	Bitrix\Main\Application,
 	Bitrix\Main\Engine\CurrentUser,
@@ -23,6 +26,9 @@ $request        = Application::getInstance()?->getContext()?->getRequest();
 
 // to copy and one-time-run in admin PHP Command line instrument...
 $installEmailType       = static function ($typeId = 'DEBUG_MESSAGE'): bool {
+	if (! Application::getConnection()->isConnected()) {
+		return false;
+	}
 	$arSites = SiteTable::getList([
 		'filter' => [],
 		'select' => ["LID", "NAME", "LANGUAGE_ID"],
@@ -94,18 +100,21 @@ $sendEmailToSupport     = static function () use ($exception, $developerEmail, $
 			: $request->getServer()->getServerName() . $request->getRequestUri() . ' IP:' . $request->getServer()->getRemoteAddr());
 	}
 
-	$installEmailType();
-	// use send() to may clear list of next erros by query "DELETE FROM b_event WHERE EVENT_NAME = 'EVENT_NAME'"
-	Event::send([
-		"EVENT_NAME" => "DEBUG_MESSAGE",
-		"LID" => defined('SITE_ID') ? SITE_ID : Application::getInstance()?->getContext()?->getLanguage(),
-		"DUPLICATE" => "N",
-		"C_FIELDS" => [
-			"EMAIL"         => $developerEmail,
-			"SUBJECT"       => trim($subject),
-			"HTML"          => $html
-		],
-	]);
+	if ($installEmailType()) {
+		// use send() to may clear list of next erros by query "DELETE FROM b_event WHERE EVENT_NAME = 'EVENT_NAME'"
+		Event::send([
+			"EVENT_NAME" => "DEBUG_MESSAGE",
+			"LID"        => defined('SITE_ID') ? SITE_ID : Application::getInstance()?->getContext()?->getLanguage(),
+			"DUPLICATE"  => "N",
+			"C_FIELDS"   => [
+				"EMAIL"   => $developerEmail,
+				"SUBJECT" => trim($subject),
+				"HTML"    => $html
+			],
+		]);
+	} else {
+		mail($developerEmail, $subject, $html, 'From: ' . $developerEmail);
+	}
 };
 $isAdmin                = static function (): bool {
 	/**
