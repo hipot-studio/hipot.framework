@@ -17,7 +17,7 @@ use function ShowError;
 /**
  * Уникальный компонент списка из Hl-блока
  */
-class HiBlockList extends \CBitrixComponent
+class HiblockList extends \CBitrixComponent
 {
 	public const CACHE_TTL = 3600 * 24;
 
