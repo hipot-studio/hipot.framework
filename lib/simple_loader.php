@@ -61,6 +61,10 @@ spl_autoload_register(static function ($className) {
 	*/
 	// endregion
 
+	// region hipot component classes
+	\Hipot\Utils\UUtils::loadHipotComponentClass($className);
+	// endregion
+
 	foreach ($libDirs as $libDir) {
 		// to work with other frameworks (psr-4), case sensitive UNIX folders
 		$checkPaths = [

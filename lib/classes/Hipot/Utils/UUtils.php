@@ -23,7 +23,7 @@ class UUtils
 	// environment utils
 	use ContextUtils;
 
-	// bx componets utils
+	// bx components utils
 	use ComponentUtils;
 
 	// calendar utils

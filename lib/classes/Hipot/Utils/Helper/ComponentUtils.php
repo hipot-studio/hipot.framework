@@ -2,6 +2,7 @@
 namespace Hipot\Utils\Helper;
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Text\StringHelper;
 use CBitrixComponent;
 use CBitrixComponentTemplate;
 use CIBlock;
@@ -28,6 +29,34 @@ trait ComponentUtils
 		});
 
 		return $exists;
+	}
+
+	/**
+	 * Loads a Hipot component class based on its fully qualified class name.
+	 *
+	 * This method checks if the provided class name matches the predefined pattern
+	 * corresponding to a Hipot component. If the class name is valid, the method
+	 * determines the corresponding component name, checks its existence, and includes
+	 * the component's class if it exists.
+	 *
+	 * @param string $className The fully qualified class name of the Hipot component to load.
+	 *
+	 * @return string|null The fully qualified class name of the included Hipot component,
+	 *                     or null if the class is not a valid Hipot component or does not exist.
+	 */
+	public static function loadHipotComponentClass(string $className): ?string
+	{
+		if (!str_contains($className, 'Hipot\\Components\\') && !preg_match('/^Hipot(.+?)Component$/', $className)) {
+			return null;
+		}
+		$onlyClassName = array_reverse(explode('\\', $className))[0];
+		$onlyClassName = str_replace(['Hipot', 'Component'], '', $onlyClassName);
+		$onlyClassName = StringHelper::camel2snake($onlyClassName);
+		$componentName = 'hipot:' . str_replace('_', '.', $onlyClassName);
+		if (self::isComponentExists($componentName)) {
+			return CBitrixComponent::includeComponentClass($componentName);
+		}
+		return null;
 	}
 
 	/**

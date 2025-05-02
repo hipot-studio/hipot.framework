@@ -916,10 +916,15 @@ class Iblock extends _CIBElement
 		if (!Loader::includeModule('search')) {
 			return $r;
 		}
+
+		// TODO Can't group on 'RANK' (400) bitrix
+		$query = str_replace(['"', '\''], '', $query);
+		$query = trim($query);
+
 		$obSearch = new \CSearch();
 		$obSearch->Search([
 			'QUERY'         => $query,
-			//'SITE_ID'       => SITE_ID,
+			//'SITE_ID'     => SITE_ID,
 			'MODULE_ID'     => 'iblock',
 		], ["RANK" => "DESC"], [
 			"=MODULE_ID" => "iblock",

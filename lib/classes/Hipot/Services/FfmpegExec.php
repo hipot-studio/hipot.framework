@@ -10,7 +10,8 @@ use Bitrix\Main\Web\Json;
 use Hipot\Utils\UUtils;
 
 /**
- * yum install ffmpeg
+ * sudo dnf install --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm -y
+ * sudo dnf install ffmpeg -y
  */
 class FfmpegExec
 {
