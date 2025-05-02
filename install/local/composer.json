@@ -1,6 +1,6 @@
 {
   "require": {
-    "php": ">=8.1.0",
+    "php": ">=8.3.0",
     "ext-gd": "*",
     "ext-fileinfo": "*",
     "ext-mbstring": "*",
@@ -9,11 +9,10 @@
     "ext-apcu": "*",
     "wikimedia/composer-merge-plugin": "dev-master",
     "intervention/image": "^2.7",
-    "opis/closure": "^3.5"
+    "opis/closure": "^4.3"
   },
   "require-dev": {
-    "larapack/dd": "^1.1",
-    "phpunit/phpunit": "10"
+    "larapack/dd": "^1.1"
   },
   "config": {
     "allow-plugins": true,
