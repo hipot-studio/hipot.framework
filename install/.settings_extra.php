@@ -14,6 +14,7 @@ use Bitrix\Main\DB\ConnectionException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\File\Image\Imagick as BitrixImagick;
+use Bitrix\Main\Application;
 
 $defaultSettings = require __DIR__ . '/.settings.php';
 $sid             = Loader::getDocumentRoot() . "#01";
@@ -25,7 +26,8 @@ return [
 			'type' => [
 				'class_name'    => CacheEngineFiles::class,
 			],
-			'sid' => $sid
+			'sid' => $sid,
+			'use_lock' => true
 		],
 		/*
 		'value' => [
@@ -201,10 +203,16 @@ return [
 						/** @noinspection MagicMethodsValidityInspection */
 						public function __construct(array $options = [])
 						{
-							$config = $this->configure($options);
+							/*$config = $this->configure($options);
 							$this->connect($config);
 							if (self::$isConnected === false) {
 								throw new ConnectionException('Cant connect to memcache');
+							}*/
+
+							if (self::$engine === null) {
+								/** @var MemcacheConnection $connection */
+								$connection = Application::getConnection('memcache');
+								self::$engine = $connection->getResource();
 							}
 						}
 					};
