@@ -586,17 +586,17 @@ class Iblock extends _CIBElement
 	 *
 	 * @return array
 	 */
-	public static function selectPropertyEnumArray($propCode, $arFilterEx = [], array $aSort = ["DEF" => "DESC", "SORT" => "ASC"], bool $indexed = true): array
+	public static function selectPropertyEnumArray(string|int $propCode, array $arFilterEx = [], array $aSort = ["DEF" => "DESC", "SORT" => "ASC"], bool $indexed = true): array
 	{
 		if (trim($propCode) == '') {
-			return false;
+			return [];
 		}
 
 		$arFilter = [];
 		if (is_numeric($propCode)) {
-			$arFilter['ID']		= (int)$propCode;
+			$arFilter['PROPERTY_ID']    = (int)$propCode;
 		} else {
-			$arFilter['CODE']	= $propCode;
+			$arFilter['PROPERTY_CODE']	= $propCode;
 		}
 		foreach ($arFilterEx as $f => $filter) {
 			$arFilter[ $f ] = $filter;

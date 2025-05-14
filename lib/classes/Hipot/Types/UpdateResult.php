@@ -13,8 +13,8 @@ namespace Hipot\Types;
  */
 final class UpdateResult extends ObjectArItem
 {
-	public const STATUS_OK         = 'OK';
-	public const STATUS_ERROR      = 'ERROR';
+	public const string STATUS_OK = 'OK';
+	public const string STATUS_ERROR = 'ERROR';
 
 	/**
 	 * идентификатор записи или текст ошибки

@@ -118,6 +118,7 @@ class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_CODE#_#IBLOCK_ID# exten
 	private string $oneRowPropertytemplate =
 		'	/**
 	 * #PROPERTY_TITLE# (ID: <b>#PROPERTY_ID#</b>) 
+	 * #PROPERTY_FULL_DESCRIPTION#
 	 * @var #PROPERTY_TYPE#
 	 */
 	public $#PROPERTY_CODE#;
@@ -135,6 +136,7 @@ class __IblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_CODE#_#IBLOCK_ID# exten
 		'	/**
 	 * #PROPERTY_TITLE# (ID: <b>#PROPERTY_ID#</b>)
 	 * @var array[#PROPERTY_TYPE#]
+	 * #PROPERTY_FULL_DESCRIPTION#
 	 * @var #PROPERTY_TYPE#[]
 	 */
 	public $#PROPERTY_CODE#;
@@ -467,8 +469,19 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 		$rs = $props::GetList(['IBLOCK_ID' => 'ASC', 'SORT' => 'ASC'], ['CHECK_PERMISSIONS' => 'N']);
 
 		$arReturn = [];
-		while ($ar = $rs->Fetch()) {
-			$arReturn[ $ar['IBLOCK_ID'] ][] = $ar;
+		while ($prop = $rs->Fetch()) {
+			if ($prop['PROPERTY_TYPE'] == PropertyTable::TYPE_LIST) {
+				$prop['VALUE_LIST'] = [];
+				$iterator = \Bitrix\Iblock\PropertyEnumerationTable::getList([
+					'filter' => ['=PROPERTY_ID' => $prop['ID']],
+					'select' => ['ID', 'XML_ID', 'VALUE'],
+					'order'  => ['SORT' => 'ASC', 'ID' => 'ASC'],
+				]);
+				while ($row = $iterator->fetch()) {
+					$prop['VALUE_LIST'][] = $row;
+				}
+			}
+			$arReturn[ $prop['IBLOCK_ID'] ][] = $prop;
 		}
 		return $arReturn;
 	}
@@ -555,10 +568,39 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 					($prop['PROPERTY_TYPE'] == PropertyTable::TYPE_LIST) ? $this->propByGetListSelectTypeListTemplate : $this->propByGetListSelectTemplate
 				);
 
+				$propFullDescription = '';
+				if ($prop['PROPERTY_TYPE'] == PropertyTable::TYPE_LIST) {
+					$propFullDescription = '<table>';
+					$propFullDescription .= '<tr><th>ID</th><th>XML_ID</th><th>VALUE</th></tr>';
+					foreach ($prop['VALUE_LIST'] as $value) {
+						$propFullDescription .= '<tr>';
+						foreach (['ID', 'XML_ID', 'VALUE'] as $key) {
+							$propFullDescription .= '<td>' . $value[$key] . '</td>';
+						}
+						$propFullDescription .= '</tr>';
+					}
+					$propFullDescription .= '</table>';
+				}
+				// TODO fill hl-list too
+				if ($prop['USER_TYPE'] == PropertyTable::USER_TYPE_DIRECTORY) {
+				}
+
 				$temp = ($prop['MULTIPLE'] != 'Y') ? $this->oneRowPropertytemplate : $this->multipleRowPropertyTemplate;
 				$outPropsIter .= str_replace(
-					['#PROPERTY_TITLE#', '#PROPERTY_CODE#', '#PROPERTY_ID#', '#PROPERTY_TYPE#'],
-					[rtrim($prop['NAME'] . ' ' . $prop['HINT']), $prop['CODE'], $prop['ID'], $propType],
+					[
+						'#PROPERTY_TITLE#',
+						'#PROPERTY_CODE#',
+						'#PROPERTY_ID#',
+						'#PROPERTY_TYPE#',
+						'#PROPERTY_FULL_DESCRIPTION#'
+					],
+					[
+						rtrim($prop['NAME'] . ' ' . $prop['HINT']),
+						$prop['CODE'],
+						$prop['ID'],
+						$propType,
+						$propFullDescription
+					],
 					$temp
 				);
 			}
