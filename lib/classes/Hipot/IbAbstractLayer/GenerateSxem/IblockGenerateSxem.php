@@ -228,7 +228,7 @@ class __IblockElementItemPropertyValueLinkElem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID
 	 * #BY_ELEM_PROPS_BY_PROPS# - свойства элементов, связанных с элементом
 	 * @var string
 	 */
-	private string $propByElemFiledsProps =
+	private string $propByElemFieldsProps =
 		'
 	/**
 	 * #PROPERTY_TITLE# - ID связанного элемента
@@ -546,7 +546,7 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 						$bySelectLinkedProps .= str_replace(
 							['#PROPERTY_TITLE#', '#PROPERTY_CODE#', '#LINK_IBLOCK_ELEM_NAME#', '#BY_ELEM_PROPS_BY_PROPS#'],
 							[rtrim($prop['NAME'] . ' ' . $prop['HINT']), strtoupper($prop['CODE']), $linkIblockName, $byElemsPropByProp],
-							$this->propByElemFiledsProps
+							$this->propByElemFieldsProps
 						);
 					} else {
 						$linkIblockName = 'Связь не указана';
@@ -598,6 +598,24 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 						rtrim($prop['NAME'] . ' ' . $prop['HINT']),
 						$prop['CODE'],
 						$prop['ID'],
+						$propType,
+						$propFullDescription
+					],
+					$temp
+				);
+				// to find property by its ID_
+				$outPropsIter .= str_replace(
+					[
+						'#PROPERTY_TITLE#',
+						'#PROPERTY_CODE#',
+						'#PROPERTY_ID#',
+						'#PROPERTY_TYPE#',
+						'#PROPERTY_FULL_DESCRIPTION#'
+					],
+					[
+						rtrim($prop['NAME'] . ' ' . $prop['HINT']),
+						'ID_' . $prop['ID'],
+						$prop['CODE'],
 						$propType,
 						$propFullDescription
 					],
