@@ -58,7 +58,7 @@ $oAdminList->addAdminContextMenuAndCheckXls();
 $APPLICATION->SetTitle(GetMessage("acrit_cleanmaster_PROFILES_LIST"));
 require $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php";
 
-if ($isDemo != 1) {
+if ($isDemo != MODULE_INSTALLED) {
 echo BeginNote();
 echo GetMessage("ACRIT_CLEANMASTER_IS_DEMO_MESSAGE");
 echo '<br /><br /><input type="button" value="'.GetMessage("ACRIT_CLEANMASTER_IS_DEMO_MESSAGE_BTN").'" onclick="location.href = \''
@@ -122,9 +122,9 @@ class ListWrapper
 		$arHeaders = [];
 		foreach ($this->arFields as $FIELD_NAME => $FIELD_TYPE) {
 			$arHeaders[$FIELD_NAME] = [
-				"id" => $FIELD_NAME,
-				"content" => $arFieldsEx[$FIELD_NAME]["title"] ? $arFieldsEx[$FIELD_NAME]["title"] : $FIELD_NAME,
-				"sort" => $arFieldsEx[$FIELD_NAME]["sortable"] ? $FIELD_NAME : "",
+				"id"      => $FIELD_NAME,
+				"content" => $arFieldsEx[$FIELD_NAME]["title"] ?: $FIELD_NAME,
+				"sort"    => $arFieldsEx[$FIELD_NAME]["sortable"] ? $FIELD_NAME : "",
 				"default" => true,
 			];
 			if ($FIELD_TYPE == "int" || $FIELD_TYPE == "datetime" || $FIELD_TYPE == "date" || $FIELD_TYPE == "double") {
@@ -147,6 +147,7 @@ class ListWrapper
 
 		return $navyParams;
 	}
+
 
 	/**
 	 * @param \CDBResult $rsDataOrm
@@ -288,7 +289,7 @@ class ListWrapper
 	}
 
 	/**
-	 * @param \Bitrix\Main\Entity\DataManager $ormDataClass
+	 * @param \Bitrix\Main\Entity\DataManager|class-string $ormDataClass
 	 */
 	public function postGroupActions($ormDataClass)
 	{
