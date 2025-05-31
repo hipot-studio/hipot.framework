@@ -10,12 +10,31 @@ namespace Hipot\Components;
 defined('B_PROLOG_INCLUDED') || die();
 
 use Bitrix\Highloadblock\HighloadBlockTable,
-	Bitrix\Main\Loader;
+	Bitrix\Main\Loader,
+	Hipot\Utils\UUtils;
 
 use function ShowError;
 
 /**
  * Уникальный компонент списка из Hl-блока
+ *
+ * <code>
+ *  HLBLOCK_ID int   or:
+ *  HLBLOCK_CODE string
+ *
+ *  ORDER DEF: ["ID" => "DESC"]
+ *  SELECT DEF: [ID, *]
+ *  FILTER
+ *  PAGESIZE DEF:10
+ *  NTOPCOUNT
+ *  GROUP_BY
+ *  NAV_SHOW_ALWAYS = Y/N DEF: N
+ *  NAV_TITLE
+ *  NAV_TEMPLATE
+ *  SET_CACHE_KEYS = []
+ *  SET_404 = Y/N DEF: N
+ *  ALWAYS_INCLUDE_TEMPLATE = Y/N DEF: N
+ *  </code>
  */
 class HiblockList extends \CBitrixComponent
 {
@@ -27,24 +46,6 @@ class HiblockList extends \CBitrixComponent
 	private ?string $entity_class;
 
 	/**
-	 * <pre>
-	 * HLBLOCK_ID int   or:
-	 * HLBLOCK_CODE string
-	 *
-	 * ORDER DEF: ["ID" => "DESC"]
-	 * SELECT DEF: [ID, *]
-	 * FILTER
-	 * PAGESIZE DEF:10
-	 * NTOPCOUNT
-	 * GROUP_BY
-	 * NAV_SHOW_ALWAYS = Y/N DEF: N
-	 * NAV_TITLE
-	 * NAV_TEMPLATE
-	 * SET_CACHE_KEYS = []
-	 * SET_404 = Y/N DEF: N
-	 * ALWAYS_INCLUDE_TEMPLATE = Y/N DEF: N
-	 * </pre>
-	 *
 	 * @param $arParams
 	 * @return array|void
 	 */
@@ -143,11 +144,12 @@ class HiblockList extends \CBitrixComponent
 			// endregion
 
 			$result = $entity_class::getList([
-				"order"     => $arOrder,
-				"select"    => $arSelect,
-				"filter"    => $arFilter,
-				"group"     => $arGroupBy,
-				"limit"     => $limit["nPageTop"] > 0 ? $limit["nPageTop"] : 0,
+				"order"  => $arOrder,
+				"select" => $arSelect,
+				"filter" => $arFilter,
+				"group"  => $arGroupBy,
+				"limit"  => ($limit["nPageTop"] > 0) ? $limit["nPageTop"] : 0,
+				// "cache"  => ["ttl" => self::CACHE_TTL, "cache_joins" => true]
 			]);
 
 			// region pager
@@ -204,7 +206,8 @@ class HiblockList extends \CBitrixComponent
 				$arResult["ITEMS"][] = $row;
 			}
 
-			if (count($arResult["ITEMS"]) > 0) {
+			$bHasItems = count($arResult["ITEMS"]) > 0;
+			if ($bHasItems) {
 				// добавили сохранение ключей по параметру
 				$arSetCacheKeys = [];
 				if (is_array($arParams['SET_CACHE_KEYS'])) {
@@ -213,12 +216,12 @@ class HiblockList extends \CBitrixComponent
 				$this->setResultCacheKeys($arSetCacheKeys);
 			} else {
 				if ($arParams["SET_404"] == "Y") {
-					include $_SERVER["DOCUMENT_ROOT"] . "/404_inc.php";
+					UUtils::setStatusNotFound(true);
 				}
 				$this->abortResultCache();
 			}
 
-			if (count($arResult["ITEMS"]) > 0 || $arParams["ALWAYS_INCLUDE_TEMPLATE"] == "Y") {
+			if ($arParams["ALWAYS_INCLUDE_TEMPLATE"] == "Y" || $bHasItems) {
 				$this->includeComponentTemplate();
 			}
 		}

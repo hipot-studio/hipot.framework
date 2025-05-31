@@ -182,7 +182,6 @@ final class IblockList extends \CBitrixComponent
 				if ($arParams["SET_404"] === "Y") {
 					UUtils::setStatusNotFound(true);
 				}
-
 				$this->abortResultCache();
 			}
 
