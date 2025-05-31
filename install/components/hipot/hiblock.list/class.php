@@ -100,7 +100,7 @@ class HiblockList extends \CBitrixComponent
 
 			if (! class_exists($entity_class)) {
 				if ($arParams["SET_404"] == "Y") {
-					include $_SERVER["DOCUMENT_ROOT"] . "/404_inc.php";
+					UUtils::setStatusNotFound(true);
 				}
 				ShowError('404 HighloadBlock not found');
 				return false;
