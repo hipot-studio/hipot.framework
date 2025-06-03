@@ -154,7 +154,23 @@ return [
 	'services' => [
 		'value' => [
 			'main.imageEngine' => [
-				'className' => BitrixImagick::class
+				'className' => BitrixImagick::class,
+				/* @see https://github.com/bitrix24/dev?tab=readme-ov-file#phpimagickimageengine */
+				'constructorParams' => [
+					null,
+					[
+						'allowAnimatedImages' => true,
+						'maxSize' => [
+							7000,
+							7000
+						],
+						'jpegLoadSize' => [
+							2000,
+							2000
+						],
+						// 'substImage' => $_SERVER['DOCUMENT_ROOT'].'/bitrix/images/image.png',
+					]
+				],
 			],
 			'Orhanerday.OpenAI' => [
 				'constructor' => static function () {
