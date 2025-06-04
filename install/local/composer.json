@@ -1,6 +1,6 @@
 {
   "require": {
-    "php": ">=8.3.0",
+    "php": ">=7.4.0",
     "ext-gd": "*",
     "ext-fileinfo": "*",
     "ext-mbstring": "*",
@@ -9,27 +9,17 @@
     "ext-apcu": "*",
     "wikimedia/composer-merge-plugin": "dev-master",
     "intervention/image": "^2.7",
-    "opis/closure": "^4.3"
+    "opis/closure": "^3.6.0"
   },
   "require-dev": {
-    "larapack/dd": "^1.1"
+    "larapack/dd": "^1.1",
+    "symfony/var-dumper": "4.*"
   },
   "config": {
     "allow-plugins": true,
     "vendor-dir": "../local/vendor",
     "optimize-autoloader": true,
     "apcu-autoloader": true
-  },
-  "autoload": {
-    "psr-4": {
-      "": [
-        "./../local/php_interface/lib/classes/",
-        "./../local/php_interface/include/lib/classes/"
-      ]
-    },
-    "files": [
-      "./../local/php_interface/lib/functions.php"
-    ]
   },
   "extra": {
     "merge-plugin": {

@@ -18,19 +18,19 @@ use Hipot\Utils\Helper\UserFieldUtils;
 class UUtils
 {
 	// text utils
-	use StringUtils;
+	// use StringUtils;
 
 	// environment utils
 	use ContextUtils;
 
-	// bx components utils
-	use ComponentUtils;
+	// bx componets utils
+	// use ComponentUtils;
 
 	// calendar utils
-	use DateTimeUtils;
+	// use DateTimeUtils;
 
 	// UF_-field utils
-	use UserFieldUtils;
+	// use UserFieldUtils;
 
 	/**
 	 * Добавить в модуль веб-формы в форму данные

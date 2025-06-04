@@ -76,8 +76,8 @@ final class PhpCacher
 	public static function cache(string $tagName, int $cacheTime, callable $callbackFunction, string $cacheServiceName = '', array $params = [])
 	{
 		$useCacheServiceName = (defined('PHPCACHER_DEFAULT_CACHE_SERVICE') && !empty(PHPCACHER_DEFAULT_CACHE_SERVICE))
-								? PHPCACHER_DEFAULT_CACHE_SERVICE
-								: $cacheServiceName;
+			? PHPCACHER_DEFAULT_CACHE_SERVICE
+			: $cacheServiceName;
 		return self::getInstance($useCacheServiceName)->cacheInternal($tagName, $cacheTime, $callbackFunction, $params);
 	}
 
@@ -219,7 +219,7 @@ final class PhpCacher
 		}
 		try {
 			return $this->user->isAdmin();
-		} catch (\Throwable) {
+		} catch (\Throwable $e) {
 			// anonymous user
 			return false;
 		}

@@ -19,30 +19,53 @@ final class BitrixEngine
 {
 	use Singleton;
 
-	public function __construct(
-		public ?Application                $app = null,
+		public ?Application                $app = null;
 		/**
 		 * @var \Bitrix\Main\Request|\Bitrix\Main\HttpRequest
 		 */
-		public ?Request                    $request = null,
-		public ?CurrentUser                $user = null,
-		public ?Cache                      $cache = null,
-		public ?TaggedCache                $taggedCache = null,
-		public ?Asset                      $asset = null,
-		public ?SessionInterface           $session = null,
-		public ?ServiceLocator             $serviceLocator = null,
-		public ?Connection                 $connection = null,
-		public ?EventManager               $eventManager = null,
-		public ?SessionLocalStorageManager $sessionLocalStorageManager = null,
+		public ?Request                    $request = null;
+		public ?CurrentUser                $user = null;
+		public ?Cache                      $cache = null;
+		public ?TaggedCache                $taggedCache = null;
+		public ?Asset                      $asset = null;
+		public ?SessionInterface           $session = null;
+		public ?ServiceLocator             $serviceLocator = null;
+		public ?Connection                 $connection = null;
+		public ?EventManager               $eventManager = null;
+		public ?SessionLocalStorageManager $sessionLocalStorageManager = null;
+
+	public function __construct(
+		Application $app,
+		Request $request,
+		?CurrentUser $user,
+		Cache $cache,
+		TaggedCache $taggedCache,
+		Asset $asset,
+		SessionInterface $session,
+		ServiceLocator $serviceLocator,
+		Connection $connection,
+		EventManager $eventManager,
+		SessionLocalStorageManager $sessionLocalStorageManager
 	)
 	{
+		$this->app = $app;
+		$this->request = $request;
+		$this->user = $user;
+		$this->cache = $cache;
+		$this->taggedCache = $taggedCache;
+		$this->asset = $asset;
+		$this->session = $session;
+		$this->serviceLocator = $serviceLocator;
+		$this->connection = $connection;
+		$this->eventManager = $eventManager;
+		$this->sessionLocalStorageManager = $sessionLocalStorageManager;
 	}
 
 	public static function initInstance(): self
 	{
 		return new self(
 			Application::getInstance(),
-			Application::getInstance()?->getContext()?->getRequest(),
+			Application::getInstance()->getContext()->getRequest(),
 			self::getCurrentUser(),
 			Cache::createInstance(['actual_data' => false]), // "locking mode" @see https://dev.1c-bitrix.ru/community/blogs/rns/interesnye-izmeneniya-v-main-2400.php
 			Application::getInstance()->getTaggedCache(),

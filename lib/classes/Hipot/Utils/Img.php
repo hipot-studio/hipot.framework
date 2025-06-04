@@ -3,7 +3,6 @@ namespace Hipot\Utils;
 
 use Intervention\Image\ImageManagerStatic as iiImage,
 	Opis\Closure\SerializableClosure,
-	JetBrains\PhpStorm\ExpectedValues,
 	Bitrix\Main\Loader,
 	Bitrix\Main\Config\Option,
 	CMainPage,
@@ -57,7 +56,7 @@ final class Img
 	 * Путь к изображению относительно корня сайта, либо относительно корня документов, либо битрикс ID
 	 * @var string = bxid|abs|rel
 	 */
-	#[ExpectedValues([Img::FILEPATH_BITRIX_ID, Img::FILEPATH_ABS_PATH, Img::FILEPATH_REL_DOC_ROOT_PATH, Img::FILEPATH_URI_PATH])]
+
 	private string $path_type;
 
 	/**
@@ -131,7 +130,7 @@ final class Img
 	 * @var bool|string
 	 * @internal
 	 */
-	public static bool|string $decodeToFormat = false;
+	public static $decodeToFormat = false;
 
 	/**
 	 * Качество jpeg сохранения изображения
@@ -143,6 +142,9 @@ final class Img
 	// endregion
 
 	// endregion
+	private ?array $config = [];
+	private bool $setSid = false;
+	private ?Request $request = null;
 
 	/**
 	 * @param array|null $config
@@ -152,11 +154,14 @@ final class Img
 		/**
 		 * @var array{'tag':string, 'decodeToFormat':string, 'saveAlpha': bool, 'jpgQuality': int}
 		 */
-		private ?array $config = [],
-		private bool $setSid = false,
-		private ?Request $request = null
+		?array $config = [],
+		bool $setSid = false,
+		?Request $request = null
 	)
 	{
+		$this->request = $request;
+		$this->setSid  = $setSid;
+		$this->config  = $config;
 		// region dependencies
 		if (class_exists('Imagick') && extension_loaded('imagick')) {
 			iiImage::configure(['driver' => 'imagick']);
@@ -240,7 +245,7 @@ final class Img
 			$this->path_type		= self::FILEPATH_BITRIX_ID;
 			$this->r_src			= \CFile::GetPath($img);
 			$this->src				= Loader::getDocumentRoot() . $this->r_src;
-		} elseif (str_contains($img, Loader::getDocumentRoot())) {
+		} elseif (strpos($img, Loader::getDocumentRoot()) !== false) {
 			// если входит абсолютный путь к картинке на диске
 			if (! is_file($img)) {
 				throw new RuntimeException('wrong_input_img_type');
@@ -406,7 +411,7 @@ final class Img
 	private function normalizePath(string $path): string
 	{
 		// on winnt all paths is windows-1251 encoding
-		if (constant('BX_UTF') === true && str_contains(strtolower(PHP_OS), 'win')) {
+		if (constant('BX_UTF') === true && strpos(strtolower(PHP_OS), 'win') !== false) {
 			$path = mb_convert_encoding($path, 'UTF-8', 'WINDOWS-1251');
 		}
 		return IO\Path::normalize($path) ?? $path;
@@ -513,8 +518,7 @@ final class Img
 	}
 
 	public function setDecodeToFormat(
-		#[ExpectedValues(Img::IMAGE_DECODE_FORMATS)]
-		bool|string $decodeToFormat = false
+		$decodeToFormat = false
 	): void
 	{
 		self::$decodeToFormat = $decodeToFormat;
@@ -553,7 +557,7 @@ final class Img
 	 *     картинке
 	 * @throws \Exception
 	 */
-	public function doResize($f, ?int $w = null, ?int $h = null, string $m = self::M_CROP, bool $retAr = false, ?callable $callbackMi = null): string|array
+	public function doResize($f, ?int $w = null, ?int $h = null, string $m = self::M_CROP, bool $retAr = false, ?callable $callbackMi = null)
 	{
 		$this->load($f);
 
@@ -599,7 +603,7 @@ final class Img
 	/**
 	 * @see self::doResize()
 	 */
-	public static function resize($f, ?int $w = null, ?int $h = null, string $m = self::M_CROP, bool $retAr = false, ?callable $callbackMi = null): string|array
+	public static function resize($f, ?int $w = null, ?int $h = null, string $m = self::M_CROP, bool $retAr = false, ?callable $callbackMi = null)
 	{
 		$mi = new self();
 		$return = $mi->doResize(...func_get_args());
@@ -625,11 +629,10 @@ final class Img
 	 * @throws \RuntimeException|\Exception
 	 */
 	public function doResizeOverlay($f, string $to,
-	                                #[ExpectedValues(Img::OVERLAY_POSITION_TYPES)]
 	                                string $pos = 'center',
-	                                ?int $w = null, ?int $h = null, string $m = self::M_PROPORTIONAL, bool $retAr = false): string|array
+	                                ?int $w = null, ?int $h = null, string $m = self::M_PROPORTIONAL, bool $retAr = false)
 	{
-		if (!str_contains($to, Loader::getDocumentRoot()) && is_file(Loader::getDocumentRoot() . $to)) {
+		if (strpos($to, Loader::getDocumentRoot()) === false && is_file(Loader::getDocumentRoot() . $to)) {
 			$to = Loader::getDocumentRoot() . $to;
 		}
 		if (! is_file($to)) {
@@ -643,7 +646,7 @@ final class Img
 	/**
 	 * @see self::doResizeOverlay()
 	 */
-	public static function resizeOverlay($f, string $to, string $pos = 'center', ?int $w = null, ?int $h = null, string $m = self::M_PROPORTIONAL, bool $retAr = false): string|array
+	public static function resizeOverlay($f, string $to, string $pos = 'center', ?int $w = null, ?int $h = null, string $m = self::M_PROPORTIONAL, bool $retAr = false)
 	{
 		return (new self())->doResizeOverlay(...func_get_args());
 	}
