@@ -236,5 +236,11 @@ return [
 			],
 		],
 		'readonly' => true
-	]
+	],
+
+	'analytics_counter' => [
+		'value' => [
+			'enabled' => false
+		],
+	],
 ];
