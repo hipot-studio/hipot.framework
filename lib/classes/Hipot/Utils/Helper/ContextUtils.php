@@ -321,4 +321,18 @@ trait ContextUtils
 		return ob_get_clean();
 	}
 
+	/**
+	 * Отключает вход в Битрикс по HTTP авторизации
+	 * @see CUser::LoginByHttpAuth()
+	 */
+	public static function disableHttpAuth(): void
+	{
+		BitrixEngine::getInstance()->eventManager->addEventHandlerCompatible(
+			'main',
+			'onBeforeUserLoginByHttpAuth',
+			static function (&$auth) {
+				return false;
+			}
+		);
+	}
 }

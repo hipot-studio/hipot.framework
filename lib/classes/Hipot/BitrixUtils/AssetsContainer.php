@@ -77,7 +77,10 @@ class AssetsContainer
 			if (is_file(Loader::getDocumentRoot() . $testMinCss)) {
 				$css = $testMinCss;
 			}
-			echo sprintf('/* __%s__ */ ', basename($css)) . str_replace(['url(../'], 'url(' . SITE_TEMPLATE_PATH . '/', file_get_contents(Loader::getDocumentRoot() . $css)) . PHP_EOL;
+			$content = file_get_contents(Loader::getDocumentRoot() . $css);
+			$content = str_replace(['url(../'], 'url(' . SITE_TEMPLATE_PATH . '/', $content);
+			$content = preg_replace('#url\([\'"]\.\./([^\'"]+)[\'"]\)#', 'url("' . SITE_TEMPLATE_PATH . '/\1")', $content);
+			echo sprintf('/* __%s__ */ ', basename($css)) . $content . PHP_EOL;
 			$fileSize += filesize(Loader::getDocumentRoot() . $css);
 		}
 		unset($testMinCss);

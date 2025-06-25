@@ -237,11 +237,18 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 
 // drop unused cache to per-product discount on cli run
 $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function (&$arResult) {
-	if (PHP_SAPI == 'cli') {
+	static $cnt = 0;
+	if (PHP_SAPI == 'cli' && (++$cnt % 200 == 0)) {
+		/*
+		$property = new \ReflectionProperty("CAllCatalogDiscount", "arCacheProduct");
+		$property->setAccessible(true);
+		$property->setValue("CAllCatalogDiscount", []);
+		*/
 		\CCatalogDiscount::ClearDiscountCache([
-			'PRODUCT'       => true,
-			/*'SECTIONS'      => true,
-			'PROPERTIES'    => true*/
+			'PRODUCT' => true,
+			/*'SECTIONS'        => true,
+			'PROPERTIES'        => true,
+			'SECTION_CHAINS'    => true*/
 		]);
 	}
 	return true;
@@ -272,3 +279,6 @@ $eventManager->addEventHandler(
 	}
 );
 // endregion
+
+// disable basic auth in bitrix admin
+UUtils::disableHttpAuth();

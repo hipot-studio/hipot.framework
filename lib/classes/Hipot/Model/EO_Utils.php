@@ -14,12 +14,15 @@ use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\DB;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Objectify\EntityObject;
 use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\ORM\Fields\ScalarField;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Result;
 use Hipot\Utils\UUtils;
-
+use Bitrix\Main\SystemException;
+use stdClass;
+use RuntimeException;
 
 /**
  * Дополнительные утилиты для сущностей DataManager (для датамаппера)
@@ -284,5 +287,30 @@ trait EO_Utils
 			'filter' => $filter
 		])->fetch();
 		return [$resultStart, $resultEnd, $resultTotal];
+	}
+
+	/**
+	 * Collects and transforms the values from an EntityObject into a standard object.
+	 * If the EntityObject contains nested EntityObjects, it recursively processes them.
+	 *
+	 * @param EntityObject $object The source entity object whose values are to be collected and transformed.
+	 *
+	 * @return object An object containing the collected values from the EntityObject.
+	 * @throws RuntimeException If a system exception occurs during value collection.
+	 */
+	public static function collectValuesFromEntityObject(EntityObject $object): object
+	{
+		try {
+			$item = new stdClass();
+			foreach ($object->collectValues() as $key => $value) {
+				if ($value instanceof EntityObject) {
+					$value = self::collectValuesFromEntityObject($value);
+				}
+				$item->{$key} = $value;
+			}
+			return $item;
+		} catch (SystemException $e) {
+			throw new RuntimeException($e->getMessage(), $e->getCode(), $e);
+		}
 	}
 }
