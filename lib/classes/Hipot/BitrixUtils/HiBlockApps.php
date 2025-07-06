@@ -5,10 +5,14 @@
  * Date: 14.04.2021 12:19
  * @version pre 1.0
  */
+
 namespace Hipot\BitrixUtils;
 
 use Bitrix\Main\Entity\Event;
+use Bitrix\Main\Composite\Data\MemcachedStorage;
+use Bitrix\Main\Composite\Page as CompositePage;
 use RuntimeException;
+
 
 /**
  * Реализованный различный функционал и интерфейсы (визуалки) на hi-блоках
@@ -18,22 +22,27 @@ final class HiBlockApps extends HiBlock
 	/**
 	 * тег сохранения настроек через PhpCacher
 	 */
-	public const CS_CACHE_TAG = 'hi_custom_settings';
+	public const string CS_CACHE_TAG = 'hi_custom_settings';
+	public const string CS_HIBLOCK_NAME = 'CustomSettings';
+	public const string CS_TABLE_NAME = 'hi_custom_settings';
+
+	public const string SUPPORT_POSTER_HIBLOCK_NAME = 'SupportPoster';
 
 	/**
 	 * Установить таблицу и HL-блок с произвольными настройками сайта
 	 *
 	 * @param string $tableName = 'we_custom_settings'
 	 * @param string $hiBlockName = 'CustomSettings'
+	 *
 	 * @return array
 	 *
 	 * @throws \RuntimeException ERROR - VOID tableName, ERROR - VOID hiBlockName
 	 * @uses $DB
 	 */
-	public static function installCustomSettingsHiBlock(string $tableName = 'hi_custom_settings', string $hiBlockName = 'CustomSettings'): array
+	public static function installCustomSettingsHiBlock(string $tableName = self::CS_TABLE_NAME, string $hiBlockName = self::CS_HIBLOCK_NAME): array
 	{
-		$tableName		= trim($tableName);
-		$hiBlockName	= trim($hiBlockName);
+		$tableName   = trim($tableName);
+		$hiBlockName = trim($hiBlockName);
 
 		if ($tableName == '') {
 			throw new RuntimeException('ERROR - VOID tableName');
@@ -43,7 +52,7 @@ final class HiBlockApps extends HiBlock
 			throw new RuntimeException('ERROR - VOID hiBlockName');
 		}
 
-		$result = self::addHiBlock($hiBlockName, $tableName);
+		$result     = self::addHiBlock($hiBlockName, $tableName);
 		$ID_hiBlock = $result->getId();
 
 		if ((int)$ID_hiBlock <= 0) {
@@ -52,16 +61,16 @@ final class HiBlockApps extends HiBlock
 
 		$arUfFields = [
 			[
-				'CODE' => 'NAME', 'SORT' => 100, 'NAME' => 'Имя параметра', 'HELP' => '',
+				'CODE'     => 'NAME', 'SORT' => 100, 'NAME' => 'Имя параметра', 'HELP' => '',
 				'SETTINGS' => ["SIZE" => 60, "ROWS" => 1], 'REQUIRED' => 'Y'
 			],
 			[
-				'CODE' => 'CODE', 'SORT' => 200,
-				'NAME' => 'Код параметра (не менять!)', 'HELP' => 'Используется для идентификации параметра',
+				'CODE'     => 'CODE', 'SORT' => 200,
+				'NAME'     => 'Код параметра (не менять!)', 'HELP' => 'Используется для идентификации параметра',
 				'SETTINGS' => ["SIZE" => 60, "ROWS" => 1], 'REQUIRED' => 'Y'
 			],
 			[
-				'CODE' => 'VALUE', 'SORT' => 300, 'NAME' => 'Значение параметра', 'HELP' => '',
+				'CODE'     => 'VALUE', 'SORT' => 300, 'NAME' => 'Значение параметра', 'HELP' => '',
 				'SETTINGS' => ["SIZE" => 60, "ROWS" => 3], 'REQUIRED' => 'N'
 			],
 		];
@@ -69,15 +78,15 @@ final class HiBlockApps extends HiBlock
 		$ID_props = [];
 
 		foreach ($arUfFields as $arFields) {
-			$ID_props[ $arFields['CODE'] ]	= self::addHiBlockField([
-				'HLBLOCK_ID'        => $ID_hiBlock,
-				'CODE'              => $arFields['CODE'],
-				'SORT'              => $arFields["SORT"],
-				'REQUIRED'          => $arFields["REQUIRED"],
-				'IS_SEARCHABLE'     => 'N',
-				'SETTINGS'          => $arFields['SETTINGS'],
-				'NAME'              => $arFields['NAME'],
-				'HELP'              => $arFields['HELP']
+			$ID_props[$arFields['CODE']] = self::addHiBlockField([
+				'HLBLOCK_ID'    => $ID_hiBlock,
+				'CODE'          => $arFields['CODE'],
+				'SORT'          => $arFields["SORT"],
+				'REQUIRED'      => $arFields["REQUIRED"],
+				'IS_SEARCHABLE' => 'N',
+				'SETTINGS'      => $arFields['SETTINGS'],
+				'NAME'          => $arFields['NAME'],
+				'HELP'          => $arFields['HELP']
 			]);
 		}
 
@@ -90,29 +99,25 @@ final class HiBlockApps extends HiBlock
 	 * @param string $hiBlockName = 'CustomSettings'
 	 *
 	 * @return boolean | array{CODE: 'VALUE'}
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 * @uses \Hipot\BitrixUtils\PhpCacher
 	 */
-	public static function getCustomSettingsList(string $hiBlockName = 'CustomSettings', $cacheTtl = false)
+	public static function getCustomSettingsList(string $hiBlockName = self::CS_HIBLOCK_NAME, $cacheTtl = false)
 	{
 		if ($cacheTtl === false) {
 			$cacheTtl = self::CACHE_TTL;
 		}
-		return PhpCacher::cache(self::CS_CACHE_TAG, $cacheTtl, static function() use ($hiBlockName) {
+		return PhpCacher::cache(self::CS_CACHE_TAG, $cacheTtl, static function () use ($hiBlockName) {
 			$arParams = [];
 
 			/* @var $dm \Bitrix\Main\Entity\DataManager */
-			$dm		= self::getDataManagerByHiCode($hiBlockName);
-			$res	= $dm::getList([
-				'select' 	=> ['UF_CODE', 'UF_VALUE'],
-				'order'		=> ['UF_CODE' => 'ASC']
+			$dm  = self::getDataManagerByHiCode($hiBlockName);
+			$res = $dm::getList([
+				'select' => ['UF_CODE', 'UF_VALUE'],
+				'order'  => ['UF_CODE' => 'ASC']
 			]);
 
 			while ($ar = $res->fetch()) {
-				$arParams[ $ar['UF_CODE'] ] = $ar['UF_VALUE'];
+				$arParams[$ar['UF_CODE']] = $ar['UF_VALUE'];
 			}
 			return $arParams;
 		});
@@ -120,21 +125,23 @@ final class HiBlockApps extends HiBlock
 
 	/**
 	 * Показать постер по активной дате UF_DATE_FROM до UF_DATE_TO
+	 *
 	 * @param string $hlBlockname = 'SupportPoster'
+	 *
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function ShowPostersHtml(string $hlBlockname = 'SupportPoster'): void
+	public static function ShowPostersHtml(string $hlBlockname = self::SUPPORT_POSTER_HIBLOCK_NAME): void
 	{
-		$dm			= self::getDataManagerByHiCode($hlBlockname);
-		$arPosters 	= $dm::getList([
-			'select' 	=> ['*'],
-			'filter' 	=> [
-				">=UF_DATE_TO" 				=> [date('d.m.Y H:i:s'), false],
-				"<=UF_DATE_FROM"			=> [date('d.m.Y H:i:s'), false]
+		$dm        = self::getDataManagerByHiCode($hlBlockname);
+		$arPosters = $dm::getList([
+			'select' => ['*'],
+			'filter' => [
+				">=UF_DATE_TO"   => [date('d.m.Y H:i:s'), false],
+				"<=UF_DATE_FROM" => [date('d.m.Y H:i:s'), false]
 			],
-			'order'		=> ['ID' => 'DESC'],
-			'limit'		=> 1
+			'order'  => ['ID' => 'DESC'],
+			'limit'  => 1
 		])->fetchAll();
 
 		if (count($arPosters) > 0) {
@@ -150,14 +157,17 @@ final class HiBlockApps extends HiBlock
 
 	/**
 	 * событие очистки, нужен обработчик на CustomSettingsOnAfterUpdate, CustomSettingsOnAfterAdd, CustomSettingsOnAfterDelete
+	 *
 	 * @param \Bitrix\Main\Entity\Event $event
 	 */
 	public static function clearCustomSettingsCacheHandler(Event $event): void
 	{
 		PhpCacher::clearDirByTag(self::CS_CACHE_TAG);
 
-		// clear composite (if its in memcache)
-		// \Bitrix\Main\Composite\Page::getInstance()->deleteAll();
+		// clear composite (if it's in the memcache)
+		if (is_a(CompositePage::getInstance()->getStorage(), MemcachedStorage::class)) {
+			CompositePage::getInstance()->deleteAll();
+		}
 
 		// clear component cache
 		\CBitrixComponent::clearComponentCache("hipot:hiblock.list");

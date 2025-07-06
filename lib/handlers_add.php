@@ -239,11 +239,8 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function (&$arResult) {
 	static $cnt = 0;
 	if (PHP_SAPI == 'cli' && (++$cnt % 200 == 0)) {
-		/*
-		$property = new \ReflectionProperty("CAllCatalogDiscount", "arCacheProduct");
-		$property->setAccessible(true);
-		$property->setValue("CAllCatalogDiscount", []);
-		*/
+		UUtils::setPrivateProperty(\CAllCatalogDiscount::class, 'arCacheProduct', []);
+
 		\CCatalogDiscount::ClearDiscountCache([
 			'PRODUCT' => true,
 			/*'SECTIONS'        => true,
@@ -254,10 +251,10 @@ $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function
 	return true;
 });
 
-// immediately drop custom setting hl-block cache
-$eventManager->addEventHandler('', 'CustomSettingsOnAfterUpdate',   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
-$eventManager->addEventHandler('', 'CustomSettingsOnAfterAdd',      [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
-$eventManager->addEventHandler('', 'CustomSettingsOnAfterDelete',   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
+// immediately drop the custom setting hl-block cache
+$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . 'OnAfterUpdate',   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
+$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . 'OnAfterAdd',      [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
+$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . 'OnAfterDelete',   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
 
 // region очистка из корзины ненужных свойств (при добавлении товара из админки)
 $eventManager->addEventHandler("sale", "OnBasketAdd", static function ($ID, $arFields) {

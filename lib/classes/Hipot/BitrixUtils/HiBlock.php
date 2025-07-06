@@ -1,4 +1,5 @@
 <?php
+
 namespace Hipot\BitrixUtils;
 
 use Bitrix\Main\Loader, CUserTypeEntity;
@@ -16,7 +17,7 @@ class HiBlock
 	 * @internal
 	 * @var int
 	 */
-	public const CACHE_TTL = 3600;
+	public const int CACHE_TTL = 3600;
 
 	/**
 	 * Получить HighloadBlockTable-строку хл-блока или обряд создания объекта для работы с HL-блоком
@@ -37,19 +38,19 @@ class HiBlock
 		$hlblock = null;
 
 		if ($hlblockId > 0) {
-			$hlblock   = HighloadBlockTable::getByPrimary($hlblockId, ['cache' => ["ttl" => self::CACHE_TTL]])->fetch();
+			$hlblock = HighloadBlockTable::getByPrimary($hlblockId, ['cache' => ["ttl" => self::CACHE_TTL]])->fetch();
 		} else if (trim($hiBlockName) != '') {
-			$hlblock	= HighloadBlockTable::getList([
-				'filter'    => ['=NAME' => $hiBlockName],
-				'cache'     => ["ttl" => self::CACHE_TTL]
+			$hlblock = HighloadBlockTable::getList([
+				'filter' => ['=NAME' => $hiBlockName],
+				'cache'  => ["ttl" => self::CACHE_TTL]
 			])->fetch();
 		}
 
-		if (! $returnEntityClass) {
+		if (!$returnEntityClass) {
 			return $hlblock;
 		}
 
-		$entity = HighloadBlockTable::compileEntity( $hlblock );
+		$entity = HighloadBlockTable::compileEntity($hlblock);
 		return $entity->getDataClass();
 	}
 
@@ -99,8 +100,8 @@ class HiBlock
 	public static function addHiBlock(string $hiBlockName, string $tableName, array $addField = []): AddResult
 	{
 		$flds = [
-			'NAME'			=> $hiBlockName,
-			'TABLE_NAME'	=> $tableName
+			'NAME'       => $hiBlockName,
+			'TABLE_NAME' => $tableName
 		];
 		foreach ($addField as $f => $v) {
 			$flds[$f] = $v;
@@ -125,7 +126,7 @@ class HiBlock
 	 */
 	public static function addHiBlockField($arFields)
 	{
-		if (! isset($arFields['SETTINGS'])) {
+		if (!isset($arFields['SETTINGS'])) {
 			$arFields['SETTINGS'] = ["SIZE" => 60, "ROWS" => 2];
 		}
 		if (trim($arFields['NAME']) == '') {
@@ -134,25 +135,25 @@ class HiBlock
 
 		$arFields['TYPE'] = 'string';
 
-		$obUserField 	= new CUserTypeEntity();
+		$obUserField = new CUserTypeEntity();
 		return $obUserField->Add([
-			"ENTITY_ID"			=> 'HLBLOCK_' . $arFields['HLBLOCK_ID'],
-			"FIELD_NAME"		=> 'UF_' . $arFields['CODE'],
-			"USER_TYPE_ID"		=> $arFields['TYPE'],
-			"XML_ID"			=> '',
-			"SORT"				=> $arFields["SORT"],
-			"MULTIPLE"			=> 'N',
-			"MANDATORY"			=> $arFields["REQUIRED"],
-			"SHOW_FILTER"		=> 'Y',
-			"SHOW_IN_LIST"		=> 'Y',
-			"EDIT_IN_LIST"		=> 'Y',
-			"IS_SEARCHABLE"		=> $arFields['IS_SEARCHABLE'],
-			"SETTINGS"			=> $arFields['SETTINGS'],
-			"EDIT_FORM_LABEL"	=> ["ru" => $arFields['NAME']],
+			"ENTITY_ID"         => 'HLBLOCK_' . $arFields['HLBLOCK_ID'],
+			"FIELD_NAME"        => 'UF_' . $arFields['CODE'],
+			"USER_TYPE_ID"      => $arFields['TYPE'],
+			"XML_ID"            => '',
+			"SORT"              => $arFields["SORT"],
+			"MULTIPLE"          => 'N',
+			"MANDATORY"         => $arFields["REQUIRED"],
+			"SHOW_FILTER"       => 'Y',
+			"SHOW_IN_LIST"      => 'Y',
+			"EDIT_IN_LIST"      => 'Y',
+			"IS_SEARCHABLE"     => $arFields['IS_SEARCHABLE'],
+			"SETTINGS"          => $arFields['SETTINGS'],
+			"EDIT_FORM_LABEL"   => ["ru" => $arFields['NAME']],
 			"LIST_COLUMN_LABEL" => ["ru" => $arFields['NAME']],
 			"LIST_FILTER_LABEL" => ["ru" => $arFields['NAME']],
-			"ERROR_MESSAGE"		=> ["ru" => $arFields['NAME']],
-			"HELP_MESSAGE"		=> ["ru" => $arFields['HELP']],
+			"ERROR_MESSAGE"     => ["ru" => $arFields['NAME']],
+			"HELP_MESSAGE"      => ["ru" => $arFields['HELP']],
 		]);
 	}
 

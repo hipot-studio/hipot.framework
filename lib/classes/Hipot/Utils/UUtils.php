@@ -4,6 +4,7 @@ namespace Hipot\Utils;
 use Bitrix\Main\Loader;
 use Hipot\Types\UpdateResult;
 use Hipot\Utils\Helper\ArrayTools;
+use Hipot\Utils\Helper\ObjectTools;
 use Hipot\Utils\Helper\StringUtils;
 use Hipot\Utils\Helper\ContextUtils;
 use Hipot\Utils\Helper\ComponentUtils;
@@ -35,6 +36,9 @@ class UUtils
 
 	// misc collection utils
 	use ArrayTools;
+
+	// misc object utils
+	use ObjectTools;
 
 	/**
 	 * Добавить в модуль веб-формы в форму данные
