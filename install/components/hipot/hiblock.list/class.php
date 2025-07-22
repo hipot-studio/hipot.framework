@@ -25,15 +25,17 @@ use function ShowError;
  *  ORDER DEF: ["ID" => "DESC"]
  *  SELECT DEF: [ID, *]
  *  FILTER
- *  PAGESIZE DEF:10
- *  NTOPCOUNT
+ *  PAGESIZE DEF:10 or
+ *  NTOPCOUNT (set both PAGESIZE and NTOPCOUNT has not sense)
  *  GROUP_BY
  *  NAV_SHOW_ALWAYS = Y/N DEF: N
  *  NAV_TITLE
  *  NAV_TEMPLATE
- *  SET_CACHE_KEYS = []
  *  SET_404 = Y/N DEF: N
  *  ALWAYS_INCLUDE_TEMPLATE = Y/N DEF: N
+ *  SET_CACHE_KEYS = []
+ *  CACHE_TIME (default component cache)
+ *  CACHE_ORM_TIME = 0 (use orm-getList cache)
  *  </code>
  */
 class HiblockList extends \CBitrixComponent
@@ -57,6 +59,7 @@ class HiblockList extends \CBitrixComponent
 		$arParams['SHOWALL_1']			    = (int)$_REQUEST['SHOWALL_1'];
 		$arParams['NAV_TEMPLATE']		    = (trim($arParams['NAV_TEMPLATE']) != '') ? $arParams['NAV_TEMPLATE'] : '';
 		$arParams['NAV_SHOW_ALWAYS']	    = (trim($arParams['NAV_SHOW_ALWAYS']) == 'Y') ? 'Y' : 'N';
+		$arParams['CACHE_ORM_TIME']         = (int)$arParams['CACHE_ORM_TIME'];
 
 		return $arParams;
 	}
@@ -83,11 +86,11 @@ class HiblockList extends \CBitrixComponent
 			$hlblock_code   = $arParams['HLBLOCK_CODE'];
 
 			if (is_numeric($hlblock_id)) {
-				$hlblock    = HighloadBlockTable::getByPrimary($hlblock_id, ['cache' => ["ttl" => self::CACHE_TTL]])->fetch();
+				$hlblock    = HighloadBlockTable::getByPrimary($hlblock_id, ['cache' => ["ttl" => self::CACHE_TTL, "cache_joins" => true]])->fetch();
 			} else if (trim($hlblock_code) != '') {
 				$hlblock	= HighloadBlockTable::getList([
 					'filter'    => ['NAME' => $hlblock_code],
-					'cache'     => ["ttl" => self::CACHE_TTL]
+					'cache'     => ["ttl" => self::CACHE_TTL, "cache_joins" => true]
 				])->fetch();
 			} else {
 				ShowError('cant init HL-block');
@@ -149,7 +152,7 @@ class HiblockList extends \CBitrixComponent
 				"filter" => $arFilter,
 				"group"  => $arGroupBy,
 				"limit"  => ($limit["nPageTop"] > 0) ? $limit["nPageTop"] : 0,
-				// "cache"  => ["ttl" => self::CACHE_TTL, "cache_joins" => true]
+				"cache"  => ["ttl" => $arParams['CACHE_ORM_TIME'], "cache_joins" => true]
 			]);
 
 			// region pager

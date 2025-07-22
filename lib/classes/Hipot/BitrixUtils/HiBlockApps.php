@@ -165,12 +165,28 @@ final class HiBlockApps extends HiBlock
 		PhpCacher::clearDirByTag(self::CS_CACHE_TAG);
 
 		// clear composite (if it's in the memcache)
-		if (is_a(CompositePage::getInstance()->getStorage(), MemcachedStorage::class)) {
+		if (is_a(CompositePage::getInstance()?->getStorage(), MemcachedStorage::class)) {
 			CompositePage::getInstance()->deleteAll();
 		}
 
 		// clear component cache
 		\CBitrixComponent::clearComponentCache("hipot:hiblock.list");
+
+		// clear entity cache
+		self::clearEntityOrmCacheHandler($event);
+	}
+
+	/**
+	 * Clears the ORM cache for the associated entity.
+	 *
+	 * @param Event $event The event object containing the entity to clean the cache for.
+	 * @return void
+	 */
+	public static function clearEntityOrmCacheHandler(Event $event): void
+	{
+		if (method_exists($event->getEntity(), 'cleanCache')) {
+			$event->getEntity()->cleanCache();
+		}
 	}
 
 } // end class

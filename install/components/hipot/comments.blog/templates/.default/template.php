@@ -2,18 +2,18 @@
 defined('B_PROLOG_INCLUDED') || die();
 // region var_templ
 /**
- * @var array $arParams
- * @var array $arResult
- * @global CMain $APPLICATION
- * @global CUser $USER
- * @global CDatabase $DB
+ * @var array                    $arParams
+ * @var array                    $arResult
+ * @global CMain                 $APPLICATION
+ * @global CUser                 $USER
+ * @global CDatabase             $DB
  * @var CBitrixComponentTemplate $this
- * @var string $componentPath
- * @var string $templateName
- * @var string $templateFile
- * @var string $templateFolder
- * @var array $templateData
- * @var CBitrixComponent $component
+ * @var string                   $componentPath
+ * @var string                   $templateName
+ * @var string                   $templateFile
+ * @var string                   $templateFolder
+ * @var array                    $templateData
+ * @var CBitrixComponent         $component
  */
 // endregion
 $this->setFrameMode(true);
@@ -31,6 +31,7 @@ $params = [
 	"EDITOR_CODE_DEFAULT"          => "N",
 	"PATH_TO_BLOG"                 => $arResult['IBLOCK_ELEMENT']['DETAIL_PAGE_URL'],
 	"PATH_TO_USER"                 => $arResult['IBLOCK_ELEMENT']['DETAIL_PAGE_URL'],
+	'PATH_TO_POST'                 => $arResult['IBLOCK_ELEMENT']['DETAIL_PAGE_URL'],
 	"CACHE_TYPE"                   => "A",
 	"CACHE_TIME"                   => $arParams["CACHE_TIME"],
 	"PATH_TO_SMILE"                => "",
