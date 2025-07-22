@@ -15,10 +15,12 @@ use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Composite\Page as CompositePage;
 use Bitrix\Main\Composite\Engine as CompositeEngine;
 use Bitrix\Main\Page\Asset;
+use Hipot\BitrixUtils\AssetsContainer;
 use Hipot\BitrixUtils\HiBlockApps;
 use Hipot\Services\BitrixEngine;
 use Hipot\Utils\UUtils;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\ORM\Data\DataManager;
 
 $eventManager = EventManager::getInstance();
 $request      = Application::getInstance()->getContext()->getRequest();
@@ -180,7 +182,7 @@ $eventManager->addEventHandler('main', 'OnEpilog', static function () use ($requ
 });
 
 // lazy loaded css, TOFUTURE: js and js-appConfig array
-$eventManager->addEventHandler('main', 'OnEpilog', [\Hipot\BitrixUtils\AssetsContainer::class, 'onEpilogSendAssets']);
+$eventManager->addEventHandler('main', 'OnEpilog', [AssetsContainer::class, 'onEpilogSendAssets']);
 
 // очищаем настройки формы по-умолчанию для всех админов
 // @see https://www.hipot-studio.com/Codex/form_iblock_element_settings/
@@ -252,9 +254,9 @@ $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function
 });
 
 // immediately drop the custom setting hl-block cache
-$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . 'OnAfterUpdate',   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
-$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . 'OnAfterAdd',      [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
-$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . 'OnAfterDelete',   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
+$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . DataManager::EVENT_ON_AFTER_UPDATE,   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
+$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . DataManager::EVENT_ON_AFTER_ADD,      [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
+$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . DataManager::EVENT_ON_AFTER_DELETE,   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
 
 // region очистка из корзины ненужных свойств (при добавлении товара из админки)
 $eventManager->addEventHandler("sale", "OnBasketAdd", static function ($ID, $arFields) {
