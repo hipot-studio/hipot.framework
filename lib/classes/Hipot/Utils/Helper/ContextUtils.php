@@ -11,6 +11,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Web\HttpClient;
 use Hipot\Services\BitrixEngine;
 use Bitrix\Main\Composite\Page as CompositePage;
+use Bitrix\Main\Service\GeoIp;
 
 trait ContextUtils
 {
@@ -68,6 +69,32 @@ trait ContextUtils
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Retrieves geographical data for a given IP address.
+	 *
+	 * @param string $ip The IP address
+	 * @return GeoIp\Data|null The geographical data associated with the IP or null if unavailable
+	 */
+	public static function getGeoIpDataByIp(string $ip): ?GeoIp\Data
+	{
+		try {
+			return GeoIp\Manager::getDataResult($ip, LANGUAGE_ID)?->getGeoData();
+		} catch (\Throwable $exception) {
+			self::logException($exception);
+			return null;
+		}
+	}
+
+	/**
+	 * Retrieves the country code associated with the provided IP address.
+	 * @param string $ip The IP address
+	 */
+	public static function getCountryByIp(string $ip): string
+	{
+		$data = self::getGeoIpDataByIp($ip);
+		return (string)$data?->countryCode;
 	}
 
 	/**
