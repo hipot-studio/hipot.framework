@@ -2,7 +2,8 @@
 
 namespace Hipot\BitrixUtils;
 
-use Bitrix\Main\Loader, CUserTypeEntity;
+use Bitrix\Main\Loader,
+	CUserTypeEntity;
 use Bitrix\Highloadblock\HighloadBlockTable;
 use Bitrix\Main\ORM\Data\AddResult;
 
@@ -25,13 +26,12 @@ class HiBlock
 	 * @param int     $hlblockId в приоритете
 	 * @param string  $hiBlockName иначе по строке
 	 * @param boolean $returnEntityClass = false Обряд создания до $hlblock = [] или до \Bitrix\Main\Entity\DataManager
-	 *
 	 * @return null | array | \Bitrix\Main\Entity\DataManager
 	 *
 	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
+	 * @see \Bitrix\Highloadblock\HighloadBlockTable::resolveHighloadblock()
 	 */
 	public static function getHightloadBlockTable(int $hlblockId, string $hiBlockName, bool $returnEntityClass = false)
 	{

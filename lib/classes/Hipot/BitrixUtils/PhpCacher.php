@@ -172,7 +172,7 @@ final class PhpCacher
 	 * Удаление кеша по тегам из управляемого кеша
 	 * @param string|array $tags
 	 */
-	public static function clearByManagedTags($tags): void
+	public static function clearByManagedTags(string|array $tags): void
 	{
 		if (! defined("BX_COMP_MANAGED_CACHE")) {
 			return;

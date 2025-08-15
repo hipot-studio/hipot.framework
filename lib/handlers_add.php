@@ -230,7 +230,17 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 		'#<script[^>]+src="(?<src>/bitrix/cache/js/.*?\.js)\?\d+"[^>]*></script>#'
 	];
 	$cont = preg_replace_callback($toInline, static function ($matches) {
-		return '<script>'.file_get_contents(Loader::getDocumentRoot() . $matches['src']).'</script>';
+		$content = file_get_contents(Loader::getDocumentRoot() . $matches['src']);
+		if (preg_match('#</head>#', $content)) {
+			return $matches[0];
+		}
+		$scriptHeader = '/////////////////////////////////////' . PHP_EOL
+				. '// Script: ' . $matches['src'] . PHP_EOL
+				. '/////////////////////////////////////' . PHP_EOL;
+		return '<script>' . PHP_EOL
+				. (IS_BETA_TESTER ? $scriptHeader : '')
+				. $content . PHP_EOL
+				. '</script>';
 	}, $cont);
 
 	// validator.w3.org: The type attribute is unnecessary for JavaScript resources.

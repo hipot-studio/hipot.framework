@@ -9,23 +9,27 @@ use Hipot\BitrixUtils\Iblock as IblockUtils;
 
 Loader::includeModule('catalog');
 
+/**
+ * Class Catalog
+ *
+ * This class provides utility methods for managing product-related tasks such as handling barcodes,
+ * unit of measurement ratios, discounts, and product updates in the catalog.
+ */
 final class Catalog
 {
 	/**
 	 * Retrieves the barcode for a given product.
-	 *
 	 * @param int $productId The ID of the product.
-	 *
-	 * @return string|null The barcode for the product, or null if no barcode is found.
+	 * @return string The barcode for the product, or null if no barcode is found.
 	 */
-	public static function getProductBarCode(int $productId)
+	public static function getProductBarCode(int $productId): string
 	{
 		if ($productId <= 0) {
 			return false;
 		}
-		$dbBarCode = \CCatalogStoreBarCode::getList([], ["PRODUCT_ID" => $productId]);
+		$dbBarCode = \CCatalogStoreBarCode::getList([], ["PRODUCT_ID" => $productId], false, false, ["ID", "BARCODE", 'PRODUCT_ID']);
 		$arBarCode = $dbBarCode->GetNext();
-		return $arBarCode['BARCODE'];
+		return $arBarCode['BARCODE'] ?? '';
 	}
 
 	/**
@@ -37,15 +41,15 @@ final class Catalog
 	 *
 	 * @return bool
 	 */
-	public static function setProductBarCode(int $productId, string $barcode, int $userId)
+	public static function setProductBarCode(int $productId, string $barcode, int $userId): bool
 	{
 		if ($productId <= 0) {
 			return false;
 		}
 
-		$dbBarCode = \CCatalogStoreBarCode::getList([], ["PRODUCT_ID" => $productId]);
+		$dbBarCode = \CCatalogStoreBarCode::getList([], ["PRODUCT_ID" => $productId], false, false, ["ID", "BARCODE", 'PRODUCT_ID']);
 		$arBarCode = $dbBarCode->GetNext();
-		if ($arBarCode === false) {
+		if (!$arBarCode) {
 			$dbBarCode = \CCatalogStoreBarCode::Add(["PRODUCT_ID" => $productId, "BARCODE" => $barcode, "CREATED_BY" => $userId]);
 		} elseif ($arBarCode["ID"]["BARCODE"] != $barcode) {
 			$dbBarCode = \CCatalogStoreBarCode::Update($arBarCode["ID"], ["BARCODE" => $barcode, "MODIFIED_BY" => $userId]);
@@ -93,7 +97,8 @@ final class Catalog
 			$siteList = [];
 			$iterator = Iblock\IblockSiteTable::getList([
 				'select' => ['SITE_ID'],
-				'filter' => ['=IBLOCK_ID' => $iblockId]
+				'filter' => ['=IBLOCK_ID' => $iblockId],
+				'cache'  => ['ttl' => 3600 * 24 * 7, 'cache_joins' => true]
 			]);
 			while ($row = $iterator->fetch()) {
 				$siteList[] = $row['SITE_ID'];
@@ -135,7 +140,7 @@ final class Catalog
 	 *
 	 * @return \Bitrix\Main\ORM\Data\Result
 	 */
-	public static function updateProduct(int $productId, array $arItemProduct = [])
+	public static function updateProduct(int $productId, array $arItemProduct = []): \Bitrix\Main\ORM\Data\Result
 	{
 		// Create the product
 		$res = ProductTable::getList([

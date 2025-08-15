@@ -13,7 +13,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
   - класс для работы с инфоблоками <code>Hipot\BitrixUtils\Iblock (aka IblockUtils)</code>
   - класс для работы с hightload-блоками <code>Hipot\BitrixUtils\HiBlock</code> и приложение реестра настроек на его основе <code>Hipot\BitrixUtils\HiBlockApps</code>
   - readModel из наследников битрикс DataManager'a: абстрактная заготовка <code>Hipot\Model\HiBaseModel</code> для наследования от нее конкретной hightload-сущности и декоратор <code>Hipot\Model\DataManagerReadModel</code> для создания read-моделей наследников HiBaseModel
-  - api для трансформации изображений и наложения водных знаков <code>Hipot\Utils\Img</code>
+  - api для трансформации изображений и наложения водных знаков [<code>Hipot\Utils\Img</code>](docs/img.md)
   - класс для работы с кешированием [<code>Hipot\BitrixUtils\PhpCacher</code>](docs/cacher.md)
     ```php
     /** @global $USER \CUser */

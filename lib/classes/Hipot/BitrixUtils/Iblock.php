@@ -465,19 +465,7 @@ class Iblock extends _CIBElement
 	 */
 	public static function getElementIblockId(int $elementId): int
 	{
-		global $DB;
-
-		if ($elementId <= 0) {
-			return 0;
-		}
-
-		/** @noinspection SqlNoDataSourceInspection */
-		/** @noinspection SqlResolve */
-		$rs = $DB->Query("SELECT IBLOCK_ID FROM b_iblock_element WHERE ID=" . $elementId);
-		if ($ar = $rs->Fetch()) {
-			return (int)$ar["IBLOCK_ID"];
-		}
-		return 0;
+		return (int)CIBlockElement::GetIBlockByID($elementId);
 	}
 
 	/**

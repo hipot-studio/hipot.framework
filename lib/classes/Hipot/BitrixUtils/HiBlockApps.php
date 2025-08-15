@@ -97,15 +97,12 @@ final class HiBlockApps extends HiBlock
 	 * Получить список произвольных настроек
 	 *
 	 * @param string $hiBlockName = 'CustomSettings'
-	 *
+	 * @param int $cacheTtl = self::CACHE_TTL
 	 * @return boolean | array{CODE: 'VALUE'}
 	 * @uses \Hipot\BitrixUtils\PhpCacher
 	 */
-	public static function getCustomSettingsList(string $hiBlockName = self::CS_HIBLOCK_NAME, $cacheTtl = false)
+	public static function getCustomSettingsList(string $hiBlockName = self::CS_HIBLOCK_NAME, int $cacheTtl = self::CACHE_TTL): bool|array
 	{
-		if ($cacheTtl === false) {
-			$cacheTtl = self::CACHE_TTL;
-		}
 		return PhpCacher::cache(self::CS_CACHE_TAG, $cacheTtl, static function () use ($hiBlockName) {
 			$arParams = [];
 
@@ -124,6 +121,40 @@ final class HiBlockApps extends HiBlock
 	}
 
 	/**
+	 * событие очистки, нужен обработчик на CustomSettingsOnAfterUpdate, CustomSettingsOnAfterAdd, CustomSettingsOnAfterDelete
+	 *
+	 * @param \Bitrix\Main\Entity\Event $event
+	 */
+	public static function clearCustomSettingsCacheHandler(Event $event): void
+	{
+		PhpCacher::clearDirByTag(self::CS_CACHE_TAG);
+
+		// clear composite (if it's in the memcache)
+		if (is_a(CompositePage::getInstance()?->getStorage(), MemcachedStorage::class)) {
+			CompositePage::getInstance()?->deleteAll();
+		}
+
+		// clear component cache
+		\CBitrixComponent::clearComponentCache("hipot:hiblock.list");
+
+		// clear entity cache
+		self::clearEntityOrmCacheHandler($event);
+	}
+
+	/**
+	 * Clears the ORM cache for the associated entity.
+	 *
+	 * @param Event $event The event object containing the entity to clean the cache for.
+	 * @return void
+	 */
+	public static function clearEntityOrmCacheHandler(Event $event): void
+	{
+		if (method_exists($event->getEntity(), 'cleanCache')) {
+			$event->getEntity()->cleanCache();
+		}
+	}
+
+	/**
 	 * Показать постер по активной дате UF_DATE_FROM до UF_DATE_TO
 	 *
 	 * @param string $hlBlockname = 'SupportPoster'
@@ -131,7 +162,7 @@ final class HiBlockApps extends HiBlock
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function ShowPostersHtml(string $hlBlockname = self::SUPPORT_POSTER_HIBLOCK_NAME): void
+	public static function showPostersHtml(string $hlBlockname = self::SUPPORT_POSTER_HIBLOCK_NAME): void
 	{
 		$dm        = self::getDataManagerByHiCode($hlBlockname);
 		$arPosters = $dm::getList([
@@ -152,40 +183,6 @@ final class HiBlockApps extends HiBlock
 		}
 		if (count($arPosters) > 0) {
 			echo '</div>';
-		}
-	}
-
-	/**
-	 * событие очистки, нужен обработчик на CustomSettingsOnAfterUpdate, CustomSettingsOnAfterAdd, CustomSettingsOnAfterDelete
-	 *
-	 * @param \Bitrix\Main\Entity\Event $event
-	 */
-	public static function clearCustomSettingsCacheHandler(Event $event): void
-	{
-		PhpCacher::clearDirByTag(self::CS_CACHE_TAG);
-
-		// clear composite (if it's in the memcache)
-		if (is_a(CompositePage::getInstance()?->getStorage(), MemcachedStorage::class)) {
-			CompositePage::getInstance()->deleteAll();
-		}
-
-		// clear component cache
-		\CBitrixComponent::clearComponentCache("hipot:hiblock.list");
-
-		// clear entity cache
-		self::clearEntityOrmCacheHandler($event);
-	}
-
-	/**
-	 * Clears the ORM cache for the associated entity.
-	 *
-	 * @param Event $event The event object containing the entity to clean the cache for.
-	 * @return void
-	 */
-	public static function clearEntityOrmCacheHandler(Event $event): void
-	{
-		if (method_exists($event->getEntity(), 'cleanCache')) {
-			$event->getEntity()->cleanCache();
 		}
 	}
 
