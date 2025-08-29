@@ -1,6 +1,6 @@
 ## Специальные базовые типы фреймворка
 
-![](docs/img/Types.png)
+![](img/Types.png)
 
 1/ Примитивная структура хранения ObjectArItem по подобию индексированного массива
 
@@ -16,4 +16,4 @@
 
 5/ Обертка Proxy для этого Singleton'а
 
-![](docs/img/Types-2.png)
+![](img/Types-2.png)
