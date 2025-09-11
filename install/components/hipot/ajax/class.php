@@ -32,7 +32,7 @@ class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Er
 {
 	protected ErrorCollection $errorCollection;
 
-	// region actions fields
+	// region fields to ajax-actions
 	public const IBLOCK_IDS = [
 		// @todo need add parameters
 		'blog_ru' => 11
@@ -101,8 +101,7 @@ class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Er
 	public function setCookieWarningReadAction($value = 'Y', $lang = LANGUAGE_ID): ?string
 	{
 		if ($value == 'Y') {
-			global $APPLICATION;
-			$APPLICATION->set_cookie("COOKIE_WARNING_READ", $value, time() + 60*60*24*350, '/', $_SERVER['HTTP_HOST'], true);
+			BitrixEngine::getAppD0()->set_cookie("COOKIE_WARNING_READ", $value, time() + 60*60*24*350, '/', $_SERVER['HTTP_HOST'], true);
 		} else {
 			$this->errorCollection[] = new Error("Wrong value to set");
 			return null;
