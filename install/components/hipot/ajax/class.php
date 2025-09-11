@@ -20,6 +20,7 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\IO\Directory;
 use Hipot\BitrixUtils\Iblock as IblockUtils;
 use Bitrix\Main\ORM\Data\DataManager;
+use Hipot\Services\BitrixEngine;
 
 Loc::loadMessages(__FILE__);
 
@@ -30,6 +31,14 @@ Loc::loadMessages(__FILE__);
 class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Errorable
 {
 	protected ErrorCollection $errorCollection;
+
+	// region actions fields
+	public const IBLOCK_IDS = [
+		// @todo need add parameters
+		'blog_ru' => 11
+	];
+	public const IBLOCK_LIKE_PROP_CODE = 'POST_LIKED_CNT';
+	// endregion
 
 	public function configureActions(): array
 	{
@@ -44,6 +53,24 @@ class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Er
 				'postfilters' => []
 			],
 			'loadDynamicBlock' => [
+				'prefilters' => [
+					new ActionFilter\HttpMethod(
+						[ActionFilter\HttpMethod::METHOD_POST]
+					),
+					new ActionFilter\Csrf(),
+				],
+				'postfilters' => []
+			],
+			'loadIblockLikeTemplates' => [
+				'prefilters' => [
+					new ActionFilter\HttpMethod(
+						[ActionFilter\HttpMethod::METHOD_POST]
+					),
+					//new ActionFilter\Csrf(),
+				],
+				'postfilters' => []
+			],
+			'saveIblockLike' => [
 				'prefilters' => [
 					new ActionFilter\HttpMethod(
 						[ActionFilter\HttpMethod::METHOD_POST]
@@ -118,7 +145,7 @@ class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Er
 
 		$response = [];
 		ob_start();
-		$APPLICATION->IncludeComponent('hipot:ajax', $blockName, [
+		$APPLICATION->IncludeComponent($this->getName(), $blockName, [
 			'IS_AJAX' => 'Y',
 			'PARAMS' => $this->arParams['PARAMS']       // Pass here params like curDir
 		], null, ['HIDE_ICONS' => 'Y']);
@@ -127,6 +154,76 @@ class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Er
 		return $response;
 	}
 
+	// region iblock_like template
+
+	public function loadIblockLikeTemplatesAction($ids, $type, $lang = LANGUAGE_ID): ?array
+	{
+		$ids = array_filter($ids);
+		if (count($ids) <= 0) {
+			$this->errorCollection[] = new Error("No items passed");
+			return null;
+		}
+		if (!isset(self::IBLOCK_IDS[$type])) {
+			$this->errorCollection[] = new Error("Wrong type");
+			return null;
+		}
+		$r = [];
+
+		Loader::includeModule('iblock');
+		$rs = CIBlockElement::GetList(['ID' => $ids], ['ID' => $ids, 'IBLOCK_ID' => self::IBLOCK_IDS[$type]], false, false, [
+			'ID', 'IBLOCK_ID', 'NAME', 'DETAIL_PAGE_URL', 'PROPERTY_' . self::IBLOCK_LIKE_PROP_CODE
+		]);
+		while ($item = $rs->GetNext()) {
+			$item['DETAIL_PAGE_URL'] = 'https://' . BitrixEngine::getInstance()->request->getServer()->getServerName() . $item['DETAIL_PAGE_URL'];
+			$item["DETAIL_PAGE_URL"] = htmlspecialcharsbx($item["DETAIL_PAGE_URL"]);
+			$item["NAME"]            = $item["~NAME"];
+
+			ob_start();
+			BitrixEngine::getAppD0()->IncludeComponent($this->getName(), 'iblock_like', [
+				'ITEM'  => $item,
+				'MODE'  => 'load'
+			], false, ["HIDE_ICONS" => "Y"]);
+			$html = ob_get_clean();
+
+			$r[ $item['ID'] ] = [
+				'CNT_P'   => (int)$item['PROPERTY_' . self::IBLOCK_LIKE_PROP_CODE . '_VALUE'],
+				'HTML'    => $html
+			];
+		}
+		return $r;
+	}
+
+	/** @noinspection GlobalVariableUsageInspection */
+	public function saveIblockLikeAction($id, $type, $value = '+', $lang = LANGUAGE_ID): ?array
+	{
+		$id = (int)$id;
+		if ($id <= 0) {
+			$this->errorCollection[] = new Error("No item passed");
+			return null;
+		}
+		if (!isset(self::IBLOCK_IDS[$type])) {
+			$this->errorCollection[] = new Error("Wrong type");
+			return null;
+		}
+		if (!isset($_SESSION['saveIblockLikeAction'][$id])) {
+			$prop = CIBlockElement::GetProperty(self::IBLOCK_IDS[$type], $id, 'sort', 'asc', ['CODE'  => self::IBLOCK_LIKE_PROP_CODE])->Fetch();
+			$v = (int)$prop['VALUE'];
+			// to_future
+			if ($value == '+') {
+				$v++;
+			}
+			CIBlockElement::SetPropertyValuesEx($id, self::IBLOCK_IDS[$type], [
+				self::IBLOCK_LIKE_PROP_CODE => $v
+			]);
+
+			$_SESSION['saveIblockLikeAction'][$id] = $v;
+		}
+		return [
+			'CNT_P' => (int)$_SESSION['saveIblockLikeAction'][$id]
+		];
+	}
+
+	// endregion
 
 	///// endregion
 
