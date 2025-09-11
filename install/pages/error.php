@@ -24,7 +24,7 @@ use Bitrix\Main\Diag\ExceptionHandlerFormatter,
 $developerEmail = 'info@hipot-studio.com';
 $request        = Application::getInstance()?->getContext()?->getRequest();
 
-// to copy and one-time-run in admin PHP Command line instrument...
+// to copy and one-time-run in the admin PHP Command line instrument...
 $installEmailType       = static function ($typeId = 'DEBUG_MESSAGE'): bool {
 	if (! Application::getConnection()->isConnected()) {
 		return false;
@@ -141,7 +141,7 @@ $getExceptionStack      = static function (bool $htmlMode = false) use ($excepti
 };
 
 $isAjaxRequest = (defined('IS_AJAX') && IS_AJAX === true) || $request?->isAjaxRequest();
-$isCliTun = (PHP_SAPI == 'cli');
+$isCliTun = (PHP_SAPI === 'cli');
 $isNotBetaTester = (!defined('IS_BETA_TESTER') || (defined('IS_BETA_TESTER') && IS_BETA_TESTER === false));
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

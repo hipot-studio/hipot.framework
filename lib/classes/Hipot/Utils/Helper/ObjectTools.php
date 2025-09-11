@@ -27,7 +27,7 @@ trait ObjectTools
 	 */
 	public static function getPrivateProperty(object|string $target, string $propertyName): mixed
 	{
-		return self::getReflectionProperty($target, $propertyName)->getValue();
+		return self::getReflectionProperty($target, $propertyName)->getValue($target);
 	}
 
 	/**
@@ -35,7 +35,15 @@ trait ObjectTools
 	 */
 	private static function getReflectionProperty(object|string $target, string $propertyName): \ReflectionProperty
 	{
-		$property = new \ReflectionProperty($target, $propertyName);
+		$ref = new \ReflectionClass($target);
+		// Walk up the class hierarchy to find the property.
+		while (! $ref->hasProperty($propertyName)) {
+			$ref = $ref->getParentClass();
+			if ($ref === false) {
+				throw new \RuntimeException("The property '{$propertyName}' was not found.");
+			}
+		}
+		$property = $ref->getProperty($propertyName);
 		$property->setAccessible(true);
 		return $property;
 	}
