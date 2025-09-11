@@ -27,7 +27,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
   - для отложенного подключения ресурсов <code>Hipot\Utils\AssetsContainer</code>
   - различные сервисы в пространстве имен <code>Hipot\Services</code>: не используем global's, используем DTO <code>Hipot\Services\BitrixEngine</code>,
   а для проброса данных между элементами приложения используем <code>Hipot\Services\Registry</code>
-  - различные базовые типы в пространстве имен <code>Hipot\Types</code>  
+  - различные базовые типы в пространстве имен <code>[Hipot\Types](docs/types.md)</code>  
 
 - автозагрузчик к классам <code>lib/simple_loader.php</code> для копирования в <code>/local/php_interface/lib/simple_loader.php</code><br>
 В современных реалиях лучше для этого использовать [composer](install/local/composer.json)
