@@ -17,16 +17,16 @@ final class UpdateResult extends ObjectArItem
 	public const string STATUS_ERROR = 'ERROR';
 
 	/**
-	 * идентификатор записи или текст ошибки
+	 * Идентификатор записи или текст ошибки
 	 * @var int|string
 	 */
-	public $RESULT;
+	public int|string $RESULT;
 
 	/**
 	 * OK | ERROR успешно, либо ошибка
 	 * @var mixed|string
 	 */
-	public $STATUS;
+	public mixed $STATUS;
 
 	/**
 	 * Создание объекта из массива

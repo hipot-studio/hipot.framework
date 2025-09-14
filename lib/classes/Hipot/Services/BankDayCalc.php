@@ -30,7 +30,7 @@ class BankDayCalc
 	 *
 	 * @var array
 	 */
-	static $def_holidays = ['01-01', '01-02', '01-03', '01-04', '01-05', '01-07', '02-23', '03-08', '05-01', '05-09', '06-12', '11-04'];
+	public static $def_holidays = ['01-01', '01-02', '01-03', '01-04', '01-05', '01-07', '02-23', '03-08', '05-01', '05-09', '06-12', '11-04'];
 
 	/**
 	 * Выходные в неделе
@@ -39,7 +39,7 @@ class BankDayCalc
 	 *
 	 * @var array
 	 */
-	static $def_weekends = [0, 6];
+	public static $def_weekends = [0, 6];
 
 	/**
 	 * массив рабочих выходных (исключения, формат Y-m-d)
@@ -66,7 +66,7 @@ class BankDayCalc
 	 * @param array $holidays массив выходных, если false, то берется из $def_holidays
 	 * @param array $work_exceptions массив рабочих дней (исключения)
 	 */
-	function __construct($holidays = false, $work_exceptions = [])
+	public function __construct($holidays = false, $work_exceptions = [])
 	{
 		if ($holidays === false) {
 			$this->holidays = self::$def_holidays;
@@ -85,7 +85,7 @@ class BankDayCalc
 	 * @return integer
 	 * @throws \Exception
 	 */
-	function prepareDate($s)
+	public function prepareDate($s)
 	{
 		if ($s !== null && !is_int($s)) {
 			$ts = strtotime($s);
@@ -105,7 +105,7 @@ class BankDayCalc
 	 * @return boolean
 	 * @throws \Exception
 	 */
-	function isWeekend($date)
+	public function isWeekend($date)
 	{
 		$ts = $this->prepareDate($date);
 		return in_array(date('w', $ts), $this->weekends) && !in_array(date('Y-m-d', $ts), $this->work_exceptions);
@@ -117,7 +117,7 @@ class BankDayCalc
 	 * @return boolean
 	 * @throws \Exception
 	 */
-	function isHoliday($date)
+	public function isHoliday($date)
 	{
 		$ts = $this->prepareDate($date);
 		return in_array(date('m-d', $ts), $this->holidays);
@@ -129,7 +129,7 @@ class BankDayCalc
 	 * @return boolean
 	 * @throws \Exception
 	 */
-	function isWorkDay($date)
+	public function isWorkDay($date)
 	{
 		$ts = $this->prepareDate($date);
 		$holidays = $this->getHolidays($ts);
@@ -144,7 +144,7 @@ class BankDayCalc
 	 * @return array
 	 * @throws \Exception
 	 */
-	function getHolidays($date, $interval = 30)
+	public function getHolidays($date, $interval = 30)
 	{
 		$ts = $this->prepareDate($date);
 		$holidays = [];
@@ -178,7 +178,7 @@ class BankDayCalc
 	 * @return integer|string
 	 * @throws \Exception
 	 */
-	function getEndDate($start, $days, $format = null)
+	public function getEndDate($start, $days, $format = null)
 	{
 		$ts = $this->prepareDate($start);
 		$holidays = $this->getHolidays($start);
@@ -205,7 +205,7 @@ class BankDayCalc
 	 * @return integer
 	 * @throws \Exception
 	 */
-	function getNumDays($start_in, $end_in)
+	public function getNumDays($start_in, $end_in)
 	{
 		$start = $this->prepareDate($start_in);
 		$end = $this->prepareDate($end_in);

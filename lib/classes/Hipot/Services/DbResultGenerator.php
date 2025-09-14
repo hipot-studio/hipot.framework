@@ -4,12 +4,17 @@
  * Created 30.11.2022 04:05
  * @version pre 1.0
  */
-namespace Hipot\Types;
+namespace Hipot\Services;
 
-use IteratorAggregate,
-	CDBResult,
-	Bitrix\Main\ORM\Query\Result;
+use Bitrix\Main\ORM\Query\Result;
+use CDBResult;
+use Hipot\Types\ObjectArItem;
+use IteratorAggregate;
 
+/**
+ * Provides an iterator for database result sets, allowing iteration
+ * over data rows with optional transformations and additional information.
+ */
 class DbResultGenerator implements IteratorAggregate
 {
 	/**

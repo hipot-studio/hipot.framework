@@ -1,8 +1,6 @@
 <?
 namespace Hipot\Types;
 
-use Hipot\Types\Container;
-
 /**
  * Мини-объект, для работы с объектом как с массивом (предпочтительно для хранения одного элемента)
  * Похож на SPL ArrayObject, только со своими нюансами
@@ -34,7 +32,7 @@ class ObjectArItem implements \ArrayAccess, \Countable, \IteratorAggregate
 	 * @param object|array|mixed $obj объект для преобразования
 	 * @return array|mixed
 	 */
-	public static function toArr($obj): array
+	public static function toArr($obj): mixed
 	{
 		if (!is_object($obj) && !is_array($obj)) {
 			return $obj;

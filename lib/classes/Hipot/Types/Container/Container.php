@@ -11,7 +11,6 @@ trait Container
 	 */
 	protected $container = [];
 
-
 	/**
 	 * Set key/value pair
 	 *

@@ -25,13 +25,7 @@ trait ArrayAccess
 		$this->doSetContainer($offset, $value);
 	}
 
-	/**
-	 * Offset to retrieve
-	 *
-	 * @param  mixed $offset
-	 *
-	 * @return mixed
-	 */
+	#[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
 		return $this->doGetContainer($offset);
