@@ -9,6 +9,21 @@ use Hipot\Services\BitrixEngine;
 if (! BitrixEngine::getCurrentUser()->isAdmin()) {
     die('Need admin access');
 }
+
+BitrixEngine::getAppD0()->setPageProperty('title', 'Hello world');
+BitrixEngine::getCurrentUserD0()->IsAdmin();
+BitrixEngine::getInstance()->app->addBackgroundJob();
+BitrixEngine::getInstance()->request->isAjaxRequest();
+BitrixEngine::getInstance()->eventManager->addEventHandler();
+BitrixEngine::getInstance()->connection->query('SELECT * FROM some_table'); // or
+BitrixEngine::getInstance()->getConnection()->query('SELECT * FROM some_table');
+BitrixEngine::getInstance()->session->set('key', 'value');
+BitrixEngine::getInstance()->asset->addCss('/file.css');
+BitrixEngine::getInstance()->cache->startDataCache(3600);
+BitrixEngine::getInstance()->taggedCache->registerTag('tag');
+BitrixEngine::getInstance()->serviceLocator->get('someService'); // or
+BitrixEngine::getInstance()->getService('someService');
+BitrixEngine::getInstance()->sessionLocalStorageManager->get('key');
 ```
 
 2/ Итератор над результатами-выборками в битриксе
