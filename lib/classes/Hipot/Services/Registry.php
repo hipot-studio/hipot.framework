@@ -13,7 +13,7 @@ use Hipot\Types\Registry as Instance;
  *     use Hipot\Services\Registry;
  *
  *     Registry::set('key', 'value');
- *     Registry::get('key');
+ *     $value = Registry::get('key');
  * </code>
  *
  * @method   static Instance getInstance()
