@@ -13,6 +13,7 @@ use Bitrix\Main\Session\SessionInterface;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Data\LocalStorage\SessionLocalStorageManager;
+use Bitrix\Main\SiteTable;
 use Hipot\Types\Singleton;
 
 final class BitrixEngine
@@ -124,5 +125,20 @@ final class BitrixEngine
 			$APPLICATION = new \CMain();
 		}
 		return $APPLICATION;
+	}
+
+	/**
+	 * Retrieves the site identifier based on the current request context.
+	 * @return string The site ID determined from the admin section or application context.
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function getSiteId(): string
+	{
+		if ($this->request->isAdminSection()) {
+			$site = SiteTable::getByDomain($this->request->getHttpHost(), $this->request->getRequestedPageDirectory());
+			return SiteTable::wakeUpObject($site)->getLid();
+		}
+		return $this->app->getContext()->getSite();
 	}
 }
