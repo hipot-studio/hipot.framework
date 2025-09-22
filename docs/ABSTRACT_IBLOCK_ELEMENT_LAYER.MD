@@ -1,27 +1,27 @@
-k #Abstract Iblock Elements Layer
+# Abstract Iblock Elements Layer
 
- ## Подсказки на выборки CIBlockElement::GetList() на базе компонента hipot:iblock.list
+## Подсказки на выборки CIBlockElement::GetList() на базе компонента hipot:iblock.list
 
- ### ЗАЧЕМ ЭТО НУЖНО?
- * Удобное использование классов в шаблонах компонент, все поля подсказываются
- * Удобная выборка связанных полей связанных элементов в качестве неограниченной вложенности,
- естественно, тоже с подсказками по связанным элементам
+### ЗАЧЕМ ЭТО НУЖНО?
+* Удобное использование классов в шаблонах компонент, все поля подсказываются
+* Удобная выборка связанных полей связанных элементов в качестве неограниченной вложенности,
+  естественно, тоже с подсказками по связанным элементам
 
-![](https://scontent.fkiv6-1.fna.fbcdn.net/v/t1.0-9/78401415_741880406313360_5240495133509550080_n.jpg?_nc_cat=111&_nc_ohc=C7eLlmuC1HAAQksv5B_lvd7BGoR4TOf_whDOa7d5FIIpIbQ7lfY4OBXgA&_nc_ht=scontent.fkiv6-1.fna&oh=2c09b4f4e4689d0d7038bcab20f6cce0&oe=5EA0044D)
+![](img/2020-10-15_19-16-26.png)
 
-![](https://scontent.fkiv6-1.fna.fbcdn.net/v/t1.0-9/73504662_741880556313345_8864736740015865856_n.jpg?_nc_cat=104&_nc_ohc=oaW6mnwI16YAQmbm4DTZVSeHgN1IfUzt0qBPeIch35fSpfJwuTXlfsDmA&_nc_ht=scontent.fkiv6-1.fna&oh=ccbea221ea20908435cdba284f2e9fd1&oe=5E9B8626)
+![](img/2020-10-15_19-17-28.png)
 
-![](https://scontent.fkiv6-1.fna.fbcdn.net/v/t1.0-9/77107997_741880622980005_4024262980576215040_n.jpg?_nc_cat=109&_nc_ohc=yyz8JMQDkrYAQmtHiyP05Lg4HCx8NK_wzXycBewU177vFH1pHU-m3QddA&_nc_ht=scontent.fkiv6-1.fna&oh=c1d774bcb02762abf32a6879b007d9b2&oe=5E681A07)
+![](img/2020-10-15_19-16-57.png)
 
- #### Ниже описано старое использование библиотеки. Сейчас все подключение происходит автоматически.
- 
- ### ИСПОЛЬЗОВАНИЕ:
- 1/ Выяснить соль, либо переопределить ее в dbconn.php
- 
-  ```define('ABSTRACT_LAYER_SAULT', 'MY_SITE_RU');```
- 
-  Для удобства использования в нескольких проектах следует указать соль, используемая в имени генерированных классов, напр. подключить так
-  
+#### Ниже описано старое использование библиотеки. Сейчас все подключение происходит автоматически.
+
+### ИСПОЛЬЗОВАНИЕ:
+1/ Выяснить соль, либо переопределить ее в dbconn.php
+
+```define('ABSTRACT_LAYER_SAULT', 'MY_SITE_RU');```
+
+Для удобства использования в нескольких проектах следует указать соль, используемая в имени генерированных классов, напр. подключить так
+
   ```php
   // напр. для сайта www.mysite.ru следует указать (разрешены только символы по маске: [0-9a-zA-Z_])
   define('ABSTRACT_LAYER_SAULT', 'MY_SITE_RU');
@@ -31,17 +31,17 @@ k #Abstract Iblock Elements Layer
   * Напр. www.good-site.wexpert.ru --> GOOD_SITE_WEXPERT_RU
   */
   ```
- 
- 2/ Имя класса пишется следующим образом: ```__hiIblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID#```
- ```#ABSTRACT_LAYER_SAULT#``` - соль заданная либо по домену
- ```#IBLOCK_ID#``` - номер инфоблока, итерацию по которому мы в данный момент делаем, см. 4.1.
-  
- ``` /** @var __WeIblockElementItem_MY_SITE_RU_10 $oItem * / ```
 
- 3/ ВНИМАНИЕ!!! Естественно, чтобы вся эта система работала, у имен свойств нужно задавать корректные
-     символьные имена (шаблон [A-Za-z0-9_]+), т.к. символьные коды свойств превращаются в поля объектов 
+2/ Имя класса пишется следующим образом: ```__hiIblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID#```
+```#ABSTRACT_LAYER_SAULT#``` - соль заданная либо по домену
+```#IBLOCK_ID#``` - номер инфоблока, итерацию по которому мы в данный момент делаем, см. 4.1.
 
- 4.1/ В шаблоне компонента hipot:iblock.list можем писать:
+``` /** @var ____hiIblockElementItem_MY_SITE_RU_10 $oItem * / ```
+
+3/ ВНИМАНИЕ!!! Естественно, чтобы вся эта система работала, у имен свойств нужно задавать корректные
+символьные имена (шаблон [A-Za-z0-9_]+), т.к. символьные коды свойств превращаются в поля объектов
+
+4.1/ В шаблоне компонента <code>hipot:iblock.list</code> можем писать:
 ```php 
  //template.php
  use Hipot\IbAbstractLayer\Types\IblockElementItem;
@@ -75,8 +75,8 @@ k #Abstract Iblock Elements Layer
     echo $oItem->PROPERTIES->file->FILE_PARAMS->SRC;
  }
 ```
- 
- 4.2/ Выборка цепочек с кешем
+
+4.2/ Выборка цепочек с кешем
 
 ```php 
  // component.php
@@ -144,15 +144,83 @@ k #Abstract Iblock Elements Layer
 ```
 
 5/ За заполненностью полей, естественно, должен следить сам разработчик, т.к. схема предоставляет
- просто удобный способ написания кода с автокомплитом. Т.е. класс - это абстрактный уровень
- для результатов работы компонента iblock.list
+просто удобный способ написания кода с автокомплитом. Т.е. класс - это абстрактный уровень
+для результатов работы компонента iblock.list
 
 6/ Для обновления файла с классами нужно просто удалить файл
- ```$_SERVER['DOCUMENT_ROOT'] . '/bitrix/cahce/generated_sxem.php'```
- открыть сайт, чтобы файл сгенерировался и открыть его в eclipse, чтобы проиндексировались классы
- При изменении структуры инфоблоков схема также обновляется.
+```$_SERVER['DOCUMENT_ROOT'] . '/bitrix/cahce/generated_sxem.php'```
+открыть сайт, чтобы файл сгенерировался и открыть его в eclipse, чтобы проиндексировались классы
+При изменении структуры инфоблоков схема также обновляется.
 
- 7/ В случае свойств привязок к инфоблокам, обязательно должно быть указано, к какому инфоблоку 
+7/ В случае свойств привязок к инфоблокам, обязательно должно быть указано, к какому инфоблоку
 привязано свойство элемента, иначе как построить схему привязок?
+
+8/ Более "прокачанный" пример использования:
+```php
+use Hipot\IbAbstractLayer\Types\IblockElementItemPropertyValue;
+use Hipot\IbAbstractLayer\Types\IblockElementItemPropertyValueLinkElem;
+use Hipot\IbAbstractLayer\Types\IblockElementItemPropertyValueFile;
+use \Hipot\IbAbstractLayer\IblockElemLinkedChains as hiIblockElemLinkedChains;
+
+d(\CFile::FormatSize(memory_get_usage(true)));
+
+$resultChains = hiIblockElemLinkedChains::getList(
+    ['ID' => 'ASC'],
+    ['IBLOCK_ID' => 3, '>=ID' => 232],
+    false, ['nTopCount' => 1],
+    ['ID', 'NAME', 'TIMESTAMP_X', 'ACTIVE', 'PROPERTY_CML2_LINK', 'PROPERTY_CML2_LINK.PROPERTY_NEWPRODUCT']
+);
+
+// see iblock 3 properties to use in getList:
+foreach ($resultChains as $ibItem) {
+    /* @var $ibItem \__IblockElementItem_BX_LAST_ClothesOffers_3 */
+
+    // link element params
+    d($ibItem->PROPERTIES->CML2_LINK->CHAIN->PROPERTIES->MANUFACTURER->NAME);
+    // link element params via getList
+    d($ibItem->PROPERTY_CML2_LINK_PROPERTY_NEWPRODUCT_ENUM_ID);
+    // file params
+    $f = $ibItem->PROPERTIES->MORE_PHOTO[0]->FILE_PARAMS->SRC;
+    // has functional of Container
+    d($ibItem->PROPERTIES->count(), $ibItem->PROPERTIES->CML2_LINK->CHAIN->toArray());
+
+    // standard element fields
+    d($ibItem->ID . '::' . $ibItem->NAME . '::');
+
+    // iterator to main good props
+    foreach ($ibItem->PROPERTIES->CML2_LINK->CHAIN->PROPERTIES as $propCode => $prop) {
+
+        $getPropValue = static function ($prop) {
+            if ($prop->isFile()) {
+                /** @var IblockElementItemPropertyValueFile $prop */
+                $value = $prop->FILE_PARAMS->SRC;
+            } else if ($prop->isLinkElem()) {
+                /** @var IblockElementItemPropertyValueLinkElem $prop */
+                $value = $prop->CHAIN->NAME;
+            } else {
+                $value = $prop->VALUE;
+            }
+            return $value;
+        };
+
+        /** @var IblockElementItemPropertyValue | IblockElementItemPropertyValue[] $prop */
+
+        // multiple props - is array of objects
+        if (is_array($prop)) {
+            $values = [];
+            foreach ($prop as $propValue) {
+                /** @var IblockElementItemPropertyValue $propValue */
+                $values[] = $getPropValue($propValue);
+            }
+            $value = implode(', ', $values);
+        } else {
+            $value = $getPropValue($prop);
+        }
+        d($propCode . ' --> ' . $value);
+    }
+}
+
+dd(\CFile::FormatSize(memory_get_usage(true)));
+```
 
 [CHANGELOG](ABSTRACT_IBLOCK_ELEMENT_LAYER_CHANGELOG.MD)
