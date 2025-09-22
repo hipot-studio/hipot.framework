@@ -2,8 +2,8 @@
 /**
  * Very tiny simple autoloader with support of classes
  *
- * @author hipot, 2022
- * @version 2.6
+ * @author hipot, 2025
+ * @version 3.0
  *
  * HELP:
  * <classes root> is:
@@ -23,6 +23,21 @@
  */
 spl_autoload_register(static function ($className) {
 	//echo $className; die();
+
+	// region apcu-cache like in composer
+	$apcuPrefix = function_exists('apcu_fetch') && filter_var(ini_get('apc.enabled'), FILTER_VALIDATE_BOOLEAN)
+		? md5(__FILE__) : null;
+
+	if (null !== $apcuPrefix) {
+		$classFile = apcu_fetch($apcuPrefix . $className, $hit);
+		if ($hit) {
+			/** @noinspection PhpIncludeInspection */
+			require $classFile;
+			return;
+		}
+	}
+	// endregion
+
 	/** @noinspection GlobalVariableUsageInspection */
 	$libDirs = [
 		__DIR__ . '/classes',
@@ -85,6 +100,12 @@ spl_autoload_register(static function ($className) {
 			if (file_exists($classFile) && is_readable($classFile)) {
 				/** @noinspection PhpIncludeInspection */
 				require $classFile;
+
+				// region apcu-cache like in composer
+				if (null !== $apcuPrefix) {
+					apcu_add($apcuPrefix . $className, $classFile);
+				}
+				// endregion
 				return;
 			}
 		}
