@@ -3,7 +3,7 @@
  * Very tiny simple autoloader with support of classes
  *
  * @author hipot, 2022
- * @version 2.5
+ * @version 2.6
  *
  * HELP:
  * <classes root> is:
@@ -23,6 +23,7 @@
  */
 spl_autoload_register(static function ($className) {
 	//echo $className; die();
+	/** @noinspection GlobalVariableUsageInspection */
 	$libDirs = [
 		__DIR__ . '/classes',
 		$_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/include/lib/classes',
@@ -69,6 +70,9 @@ spl_autoload_register(static function ($className) {
 	// endregion
 
 	foreach ($libDirs as $libDir) {
+		if (! is_dir($libDir)) {
+			continue;
+		}
 		// to work with other frameworks (psr-4), case-sensitive UNIX folders
 		$checkPaths = [
 			$libDir . '/' . str_replace('\\', '/', $className) . '.php',
