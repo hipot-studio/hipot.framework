@@ -1,15 +1,15 @@
 <?php
 /**
- * hipot studio source file
- * User: <hipot AT ya DOT ru>
- * Date: 01.01.2023 21:01
- * @version pre 2.0
- * @deprecated
+ * Abstract Iblock Elements Layer
+ *
+ * User: <info AT hipot-studio DOT com>
+ * @version 4.0
+ * @see https://github.com/hipot-studio/hipot.framework/blob/master/docs/ABSTRACT_IBLOCK_ELEMENT_LAYER.MD
  */
 
 use Bitrix\Main\Loader,
 	Bitrix\Main\Application;
-use Hipot\IbAbstractLayer\GenerateSxem\IblockGenerateSxemManager;
+use Hipot\IbAbstractLayer\GenerateScheme\IblockGenerateSchemeManager;
 
 // configs:
 // const ABSTRACT_LAYER_SAULT = 'SUPER_SITE';
@@ -43,10 +43,10 @@ if (! defined('ABSTRACT_LAYER_ANNOTATIONS_FILE')) {
 
 $fileToGenerateSchema = Loader::getDocumentRoot() . ABSTRACT_LAYER_ANNOTATIONS_FILE;
 if (! file_exists($fileToGenerateSchema)) {
-	IblockGenerateSxemManager::updateSchema($fileToGenerateSchema);
+	IblockGenerateSchemeManager::updateSchema($fileToGenerateSchema);
 }
 // устанавливаем обработку событий
-IblockGenerateSxemManager::setUpdateHandlers($fileToGenerateSchema);
+IblockGenerateSchemeManager::setUpdateHandlers($fileToGenerateSchema);
 unset($serverName, $dir, $fileToGenerateSchema);
 
 // endregion

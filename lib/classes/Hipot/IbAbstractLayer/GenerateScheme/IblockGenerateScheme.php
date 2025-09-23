@@ -1,12 +1,11 @@
 <?
 /**
- * Abstract Layer
- * Подсказки на выборки CIBlockElement::GetList
+ * Abstract Iblock Elements Layer
  *
- * @version 3.2 beta
- * @author hipot <hipot at wexpert dot ru>
+ * @version 4.0
+ * @author hipot <info at hipot-studio dot com>
  */
-namespace Hipot\IbAbstractLayer\GenerateSxem;
+namespace Hipot\IbAbstractLayer\GenerateScheme;
 
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\Loader;
@@ -15,8 +14,10 @@ use Hipot\IbAbstractLayer\Types\IblockElementItem;
 /**
  * Класс генерации схемы инфоблоков
  */
-final class IblockGenerateSxem
+final class IblockGenerateScheme
 {
+	// region php-templates
+
 	/**
 	 * Шаблон генерации инфоблока со свойствами
 	 * Шаблоны генерации, placeholders:
@@ -421,8 +422,10 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 	 * #ENTITY_ID#_#FIELD_NAME# - #NAME#
 	 * @var string
 	 */
-	public const string #ENTITY_ID#___#FIELD_NAME# = "#NAME#";
+	public const #ENTITY_ID#___#FIELD_NAME# = "#NAME#";
 ';
+
+	// endregion
 
 	public function __construct(
 		/**
@@ -581,9 +584,11 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 					}
 					$propFullDescription .= '</table>';
 				}
+				/*
 				// TODO fill hl-list too
 				if ($prop['USER_TYPE'] == PropertyTable::USER_TYPE_DIRECTORY) {
 				}
+				*/
 
 				$temp = ($prop['MULTIPLE'] != 'Y') ? $this->oneRowPropertytemplate : $this->multipleRowPropertyTemplate;
 				$outPropsIter .= str_replace(
@@ -596,7 +601,7 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 					],
 					[
 						rtrim($prop['NAME'] . ' ' . $prop['HINT']),
-						$prop['CODE'],
+						empty($prop['CODE']) ? 'EMPTY_CODE_PROP_ID_' . $prop['ID'] : $prop['CODE'],
 						$prop['ID'],
 						$propType,
 						$propFullDescription
@@ -615,7 +620,7 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 					[
 						rtrim($prop['NAME'] . ' ' . $prop['HINT']),
 						'ID_' . $prop['ID'],
-						$prop['CODE'],
+						empty($prop['CODE']) ? 'EMPTY_CODE_PROP_ID_' . $prop['ID'] : $prop['CODE'],
 						$propType,
 						$propFullDescription
 					],
@@ -630,6 +635,7 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 					break;
 				}
 			}
+			$iblockCode = str_replace(['-'], ['_'], $iblockCode);
 
 			$out .= str_replace([
 				'#IBLOCK_ID#',
@@ -663,7 +669,7 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 			], [
 				$ufField['ENTITY_ID'],
 				$ufField['FIELD_NAME'],
-				$ufField['EDIT_FORM_LABEL'] ?? $ufField['FIELD_NAME'],
+				addslashes($ufField['EDIT_FORM_LABEL'] ?? $ufField['FIELD_NAME']),
 				ABSTRACT_LAYER_SAULT
 			], $this->ufFieldsListItem);
 		}

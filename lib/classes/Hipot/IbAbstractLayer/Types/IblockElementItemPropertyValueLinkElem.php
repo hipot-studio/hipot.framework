@@ -1,4 +1,4 @@
-<?
+<?php
 namespace Hipot\IbAbstractLayer\Types;
 
 /**
