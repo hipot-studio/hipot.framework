@@ -105,6 +105,18 @@ final class IblockGenerateSchemeManager
 		self::deleteScheme(self::getLastScheme());
 	}
 
+	public static function OnAfterUserTypeAddHandler($arFields)
+	{
+		if ((int)$arFields['ID'] > 0) {
+			self::deleteScheme(self::getLastScheme());
+		}
+	}
+
+	public static function OnAfterUserTypeUpdateHandler($arFields, $ID)
+	{
+		self::deleteScheme(self::getLastScheme());
+	}
+
 	/**
 	 * Установка событий обновления схемы
 	 */
@@ -112,13 +124,20 @@ final class IblockGenerateSchemeManager
 	{
 		self::setLastScheme($fileToGenerateSxema);
 
-		$events = [
-			"OnAfterIBlockAdd", "OnAfterIBlockUpdate", "OnIBlockDelete",
-			"OnAfterIBlockPropertyAdd", "OnAfterIBlockPropertyUpdate", "OnIBlockPropertyDelete"
+		$arEvents = [
+			'iblock' => [
+				"OnAfterIBlockAdd", "OnAfterIBlockUpdate", "OnIBlockDelete",
+				"OnAfterIBlockPropertyAdd", "OnAfterIBlockPropertyUpdate", "OnIBlockPropertyDelete"
+			],
+			'main' => [
+				'OnAfterUserTypeAdd', 'OnAfterUserTypeUpdate'
+			]
 		];
-		foreach ($events as $e) {
-			if (is_callable([__CLASS__, $e . 'Handler'])) {
-				EventManager::getInstance()->addEventHandler("iblock", $e, [__CLASS__, $e . 'Handler']);
+		foreach ($arEvents as $module => $events) {
+			foreach ($events as $e) {
+				if (is_callable([__CLASS__, $e . 'Handler'])) {
+					EventManager::getInstance()->addEventHandler($module, $e, [__CLASS__, $e . 'Handler']);
+				}
 			}
 		}
 	}
