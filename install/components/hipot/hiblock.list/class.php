@@ -19,7 +19,7 @@ use function ShowError;
  * Уникальный компонент списка из Hl-блока
  *
  * <code>
- *  HLBLOCK_ID int   or:
+ *  HLBLOCK_ID int  OR:
  *  HLBLOCK_CODE string
  *
  *  ORDER DEF: ["ID" => "DESC"]
@@ -35,7 +35,7 @@ use function ShowError;
  *  ALWAYS_INCLUDE_TEMPLATE = Y/N DEF: N
  *  SET_CACHE_KEYS = []
  *  CACHE_TIME (default component cache)
- *  CACHE_ORM_TIME = 0 (use orm-getList cache)
+ *  CACHE_TIME_ORM = 0 (use orm-getList cache)
  *  </code>
  */
 class HiblockList extends \CBitrixComponent
@@ -59,7 +59,7 @@ class HiblockList extends \CBitrixComponent
 		$arParams['SHOWALL_1']			    = (int)$_REQUEST['SHOWALL_1'];
 		$arParams['NAV_TEMPLATE']		    = (trim($arParams['NAV_TEMPLATE']) != '') ? $arParams['NAV_TEMPLATE'] : '';
 		$arParams['NAV_SHOW_ALWAYS']	    = (trim($arParams['NAV_SHOW_ALWAYS']) == 'Y') ? 'Y' : 'N';
-		$arParams['CACHE_ORM_TIME']         = (int)$arParams['CACHE_ORM_TIME'];
+		$arParams['CACHE_TIME_ORM']         = (int)$arParams['CACHE_TIME_ORM'];
 
 		return $arParams;
 	}
@@ -152,7 +152,7 @@ class HiblockList extends \CBitrixComponent
 				"filter" => $arFilter,
 				"group"  => $arGroupBy,
 				"limit"  => ($limit["nPageTop"] > 0) ? $limit["nPageTop"] : 0,
-				"cache"  => ["ttl" => $arParams['CACHE_ORM_TIME'], "cache_joins" => true]
+				"cache"  => ["ttl" => $arParams['CACHE_TIME_ORM'], "cache_joins" => true]
 			]);
 
 			// region pager

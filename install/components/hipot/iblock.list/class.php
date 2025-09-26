@@ -22,11 +22,11 @@ use Hipot\Utils\UUtils;
  *  Основные параметры:
  *
  *  IBLOCK_ID / конечно же указать инфоблок
- *  ORDER / если нужна иная сортировка, по-умолчанию array("SORT" => "ASC")
+ *  ORDER / если нужна иная сортировка, по-умолчанию ["SORT" => "ASC"]
  *  FILTER / если нужна еще какая-то фильтрация
  *  NTOPCOUNT / ограничение количества элементов (имеет более высокий приоритет над PAGESIZE)
  *  PAGESIZE / сколько элементов на странице, при постраничной навигации
- *  SELECT / какие еще поля могут понадобится по-умолчанию array("ID", "CODE", "DETAIL_PAGE_URL", "NAME")
+ *  SELECT / какие еще поля могут понадобиться по-умолчанию ["ID", "CODE", "DETAIL_PAGE_URL", "NAME"]
  *  GET_PROPERTY / Y – вывести все свойства
  *  CACHE_TIME / время кеша
  *  CACHE_GROUPS / N - кешировать ли группы пользователей (для интерфейса эрмитаж)
@@ -43,10 +43,10 @@ use Hipot\Utils\UUtils;
  *  SELECT_CHAINS_DEPTH / глубина выбираемых элементов (по умолчанию 3)
  * </code>
  *
- * @version 5.x, см. CHANGELOG.TXT
- * @copyright 2023, hipot studio
+ * @version 6.x, см. CHANGELOG.TXT
+ * @copyright 2025, hipot studio
  */
-final class IblockList extends \CBitrixComponent
+class IblockList extends \CBitrixComponent
 {
 	private const LINKED_CHAINS_CLASS = IblockElemLinkedChains::class;
 
