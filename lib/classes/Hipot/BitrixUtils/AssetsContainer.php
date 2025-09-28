@@ -31,7 +31,7 @@ class AssetsContainer
 
 	public static function addJsConfig(array $config, bool $rewrite = false): void
 	{
-		if (!is_array(self::$siteJsConfigs)) {
+		if (!is_array(self::$siteJsConfigs) || count(self::$siteJsConfigs) == 0) {
 			$initJsConfigs = [
 				'SITE_TEMPLATE_PATH' => SITE_TEMPLATE_PATH,
 				'IS_DEV'             => IS_BETA_TESTER,
