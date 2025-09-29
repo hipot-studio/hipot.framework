@@ -45,6 +45,9 @@ foreach (new DbResultGenerator($rs, returnObjects: true) as $ar) {
     CIBlockElement::SetPropertyValuesEx($ar['ID'], $ar['IBLOCK_ID'], ['TYPE_EL' => 209887]); // Articles
     d( $ar );
 }
+
+// old d0-CDBResult get all items like in new d7 way
+$allList = (new DbResultGenerator($rs, returnObjects: true))->fetchAll();
 ```
 
 3/ Класс для удобства взаимодействия с файловой системой 
