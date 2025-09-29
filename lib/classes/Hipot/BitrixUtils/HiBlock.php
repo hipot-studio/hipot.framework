@@ -5,7 +5,9 @@ namespace Hipot\BitrixUtils;
 use Bitrix\Main\Loader,
 	CUserTypeEntity;
 use Bitrix\Highloadblock\HighloadBlockTable;
+use Bitrix\Highloadblock\HighloadBlockLangTable;
 use Bitrix\Main\ORM\Data\AddResult;
+use Hipot\Services\DbResultGenerator;
 
 Loader::includeModule('highloadblock');
 
@@ -149,12 +151,84 @@ class HiBlock
 			"EDIT_IN_LIST"      => 'Y',
 			"IS_SEARCHABLE"     => $arFields['IS_SEARCHABLE'],
 			"SETTINGS"          => $arFields['SETTINGS'],
-			"EDIT_FORM_LABEL"   => ["ru" => $arFields['NAME']],
-			"LIST_COLUMN_LABEL" => ["ru" => $arFields['NAME']],
-			"LIST_FILTER_LABEL" => ["ru" => $arFields['NAME']],
-			"ERROR_MESSAGE"     => ["ru" => $arFields['NAME']],
-			"HELP_MESSAGE"      => ["ru" => $arFields['HELP']],
+			"EDIT_FORM_LABEL"   => [self::getLanguageId() => $arFields['NAME']],
+			"LIST_COLUMN_LABEL" => [self::getLanguageId() => $arFields['NAME']],
+			"LIST_FILTER_LABEL" => [self::getLanguageId() => $arFields['NAME']],
+			"ERROR_MESSAGE"     => [self::getLanguageId() => $arFields['NAME']],
+			"HELP_MESSAGE"      => [self::getLanguageId() => $arFields['HELP']],
 		]);
+	}
+
+	/**
+	 * Retrieves a list of highload block entities with optional filtering, selection, property fetching, and caching.
+	 *
+	 * @param array $filter Optional array of filtering conditions for highload blocks.
+	 * @param array $select Optional array of fields to select. Default selects all fields ['*'].
+	 * @param bool  $getProps Determines whether to fetch associated properties for each highload block. Default is true.
+	 * @param bool  $useCache Indicates whether to use caching for the query. Default is false.
+	 *
+	 * @return array{array{'ID':int, 'LOC':{array{'NAME'}}, 'PROPERTIES':array{'ID':int, 'FIELD_NAME':string, 'VALUE_LIST':array{'ID':int, 'VALUE':string}}}} Returns an array of
+	 *     highload block entities. If $getProps is true, each entity includes its associated properties.
+	 */
+	public static function getList(array $filter = [], array $select = ['*'], bool $getProps = true, bool $useCache = false): array
+	{
+		$cache = $useCache ? ["ttl" => self::CACHE_TTL] : [];
+
+		$hlblockList = HighloadBlockTable::getList([
+			'order'  => ['ID' => 'ASC'],
+			'filter' => $filter,
+			'select' => $select,
+			'cache'  => $cache,
+		])->fetchAll();
+
+		// localization
+		$localization = [];
+		$res = HighloadBlockLangTable::getList([
+			'filter' => ['ID' => array_column($hlblockList, 'ID'), 'LID' => self::getLanguageId()],
+			'select' => ['*'],
+			'cache'  => $cache,
+		]);
+		while ($row = $res->fetch()) {
+			$localization[ $row['ID'] ] = $row;
+		}
+		foreach ($hlblockList as &$hlblock) {
+			$hlblock['LOC'] = $localization[ $hlblock['ID'] ] ?? ['NAME' => $hlblock['NAME']];
+			if ($getProps) {
+				$props = [];
+				$rs    = \CAllUserTypeEntity::GetList(['SORT' => 'ASC', 'FIELD_NAME' => 'ASC'], ['%ENTITY_ID' => 'HLBLOCK_', 'LANG' => self::getLanguageId()]);
+				while ($prop = $rs->Fetch()) {
+					if ($prop['USER_TYPE_ID'] === 'enumeration') {
+						$prop['VALUE_LIST'] = self::getEnumPropertyValues($prop['ID']);
+					}
+					$props[$prop['ENTITY_ID']][] = $prop;
+				}
+				$hlblock['PROPERTIES'] = $props['HLBLOCK_' . $hlblock['ID']] ?? [];
+			}
+		}
+		unset($hlblock, $localization);
+
+		return $hlblockList;
+	}
+
+	/**
+	 * Получить значения списка для перечислимого свойства пользовательского поля.
+	 *
+	 * @param int $ufPropertyId Идентификатор пользовательского свойства.
+	 * @return array Массив значений перечислимого свойства.
+	 */
+	public static function getEnumPropertyValues(int $ufPropertyId): array
+	{
+		$result = \CUserFieldEnum::GetList(['VALUE' => 'ASC'], ['USER_FIELD_ID' => $ufPropertyId]);
+		return (new DbResultGenerator($result, false, false))->fetchAll();
+	}
+
+	/**
+	 * @internal
+	 * @return string
+	 */
+	public static function getLanguageId(): string
+	{
+		return LANGUAGE_ID;
 	}
 
 } // end class

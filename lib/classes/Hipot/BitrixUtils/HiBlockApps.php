@@ -11,7 +11,9 @@ namespace Hipot\BitrixUtils;
 use Bitrix\Main\Entity\Event;
 use Bitrix\Main\Composite\Data\MemcachedStorage;
 use Bitrix\Main\Composite\Page as CompositePage;
+use Bitrix\Main\EventResult;
 use RuntimeException;
+use Bitrix\Highloadblock\HighloadBlockLangTable;
 
 
 /**
@@ -34,10 +36,8 @@ final class HiBlockApps extends HiBlock
 	 * @param string $tableName = 'we_custom_settings'
 	 * @param string $hiBlockName = 'CustomSettings'
 	 *
-	 * @return array
-	 *
+	 * @return array Результаты добавления свойств в HL-блок
 	 * @throws \RuntimeException ERROR - VOID tableName, ERROR - VOID hiBlockName
-	 * @uses $DB
 	 */
 	public static function installCustomSettingsHiBlock(string $tableName = self::CS_TABLE_NAME, string $hiBlockName = self::CS_HIBLOCK_NAME): array
 	{
@@ -58,6 +58,12 @@ final class HiBlockApps extends HiBlock
 		if ((int)$ID_hiBlock <= 0) {
 			throw new RuntimeException('ERROR - CREATE hiBlockName');
 		}
+
+		$result = HighloadBlockLangTable::add([
+			'ID'   => $ID_hiBlock,
+			'LID'  => HiBlock::getLanguageId(),
+			'NAME' => 'Различные настройки сайта'
+		]);
 
 		$arUfFields = [
 			[
@@ -127,6 +133,12 @@ final class HiBlockApps extends HiBlock
 	 */
 	public static function clearCustomSettingsCacheHandler(Event $event): void
 	{
+		foreach ($event->getResults() as $eventResult) {
+			if ($eventResult->getType() !== EventResult::SUCCESS) {
+				return;
+			}
+		}
+
 		PhpCacher::clearDirByTag(self::CS_CACHE_TAG);
 
 		// clear composite (if it's in the memcache)

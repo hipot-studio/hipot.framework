@@ -25,10 +25,12 @@ class DbResultGenerator implements IteratorAggregate
 	private bool $returnObjects;
 
 	/** @noinspection MissingParameterTypeDeclarationInspection */
-	public function __construct($result, bool $returnObjects = false, bool $getExtra = false)
+	public function __construct(object $result, bool $returnObjects = false, bool $getExtra = false)
 	{
-		if (!is_subclass_of($result, CDBResult::class) && !is_subclass_of($result, IteratorAggregate::class)) {
-			throw new \InvalidArgumentException('Wrong type of $result');
+		if (!is_a($result, CDBResult::class) && !is_subclass_of($result, CDBResult::class)
+			&& !is_subclass_of($result, IteratorAggregate::class)
+		) {
+			throw new \InvalidArgumentException('Wrong type of $result :: ' . get_class($result));
 		}
 		$this->result        = $result;
 		$this->getExtra      = $getExtra;
@@ -76,5 +78,41 @@ class DbResultGenerator implements IteratorAggregate
 			return ObjectArItem::fromArr($item);
 		}
 		return $item;
+	}
+
+	/**
+	 * Возвращает все записи выборки как массив.
+	 * Если включён returnObjects, элементы будут объектами ObjectArItem.
+	 * Для ORM-результатов (IteratorAggregate) будет выполнен полный проход по итератору.
+	 * @return array
+	 */
+	public function fetchAll(): array
+	{
+		$all = [];
+
+		// ORM-результат Bitrix (IteratorAggregate)
+		if (is_subclass_of($this->result, IteratorAggregate::class)) {
+			foreach ($this->result as $item) {
+				if (is_array($item)) {
+					$all[] = $this->makeItem($item);
+				} else {
+					$all[] = $this->makeItem( ObjectArItem::toArr($item) );
+				}
+			}
+			return $all;
+		}
+
+		// Обычный CDBResult
+		if ($this->getExtra) {
+			while ($item = $this->result->GetNext(true, true)) {
+				$all[] = $this->makeItem($item);
+			}
+		} else {
+			while ($item = $this->result->Fetch()) {
+				$all[] = $this->makeItem($item);
+			}
+		}
+
+		return $all;
 	}
 }

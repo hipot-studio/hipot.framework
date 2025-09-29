@@ -9,6 +9,7 @@ namespace Hipot\IbAbstractLayer\GenerateScheme;
 
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\Loader;
+use Hipot\BitrixUtils\HiBlock;
 use Hipot\IbAbstractLayer\Types\IblockElementItem;
 
 /**
@@ -425,6 +426,44 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 	public const #ENTITY_ID#___#FIELD_NAME# = "#NAME#";
 ';
 
+	/**
+	 * Шаблон генерации HL-блока со свойствами
+	 * @var string
+	 */
+	private string $__hiBlockTemplate =
+		'
+/**
+ * Свойства hl-блока #HIBLOCK_NAME# [<b>#HIBLOCK_ID#</b>]
+ * Имя сущности: <b>#HIBLOCK_CODE#</b>, Таблица: <b>#HIBLOCK_TABLE_NAME#</b>
+ * @author info@hipot-studio.com
+ * @version 0.x
+ */
+class __HiblockItem_#ABSTRACT_LAYER_SAULT#_#HIBLOCK_CODE#
+{
+#PROPERTIES#
+}
+
+/**
+ * Свойства hl-блока #HIBLOCK_NAME# [<b>#HIBLOCK_ID#</b>]
+ * Имя сущности: <b>#HIBLOCK_CODE#</b>, Таблица: <b>#HIBLOCK_TABLE_NAME#</b>
+ * @author info@hipot-studio.com
+ * @version 0.x
+ */
+class __HiblockItem_#ABSTRACT_LAYER_SAULT#_#HIBLOCK_ID#
+{
+#PROPERTIES#
+}
+';
+
+	private string $__hiBlockPropertyTemplate =
+		'
+	/**
+	 * #DESCRIPTION#
+	 * @var string
+	 */
+	public const #FIELD_NAME# = "#NAME#";
+';
+
 	// endregion
 
 	public function __construct(
@@ -499,6 +538,7 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 			return false;
 		}
 		$arIblocks = $this->getIblockList();
+		$arHiblocks = HiBlock::getList();
 
 		$arIblocksIdsIndex = [];
 		foreach ($arIblocks as $k => $arIblock) {
@@ -513,6 +553,7 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 	Hipot\IbAbstractLayer\Types\IblockElementItemPropertyValueLinkElem;
 ';
 
+		// region iblock list
 		foreach ($arIblocks as $arIblock) {
 			// накопление всех свойств
 			$outPropsIter = '';
@@ -573,16 +614,7 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 
 				$propFullDescription = '';
 				if ($prop['PROPERTY_TYPE'] == PropertyTable::TYPE_LIST) {
-					$propFullDescription = '<table>';
-					$propFullDescription .= '<tr><th>ID</th><th>XML_ID</th><th>VALUE</th></tr>';
-					foreach ($prop['VALUE_LIST'] as $value) {
-						$propFullDescription .= '<tr>';
-						foreach (['ID', 'XML_ID', 'VALUE'] as $key) {
-							$propFullDescription .= '<td>' . $value[$key] . '</td>';
-						}
-						$propFullDescription .= '</tr>';
-					}
-					$propFullDescription .= '</table>';
+					$propFullDescription = $this->getListDescription($prop['VALUE_LIST']);
 				}
 				/*
 				// TODO fill hl-list too
@@ -657,7 +689,44 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 				(count($arIblock['PROPERTIES']) > 0) ? $this->__iblockTemplate : $this->__iblockTemplateNoProps
 			);
 		}
+		// endregion
 
+		// region hl-list
+		foreach ($arHiblocks as $arHiblock) {
+			$hiProps = '';
+			foreach ($arHiblock['PROPERTIES'] as $prop) {
+				$name = $prop['EDIT_FORM_LABEL'] ?? $prop['NAME'];
+
+				$propFullDescription = $this->getListDescription($prop['VALUE_LIST']);
+				$hiProps .= str_replace([
+					'#FIELD_NAME#',
+					'#DESCRIPTION#',
+					'#NAME#'
+				], [
+					$prop['FIELD_NAME'],
+					addslashes($name . ' ' . $propFullDescription),
+					addslashes($name)
+				], $this->__hiBlockPropertyTemplate);
+			}
+			$out .= str_replace([
+				'#HIBLOCK_ID#',
+				'#HIBLOCK_CODE#',
+				'#HIBLOCK_TABLE_NAME#',
+				'#HIBLOCK_NAME#',
+				'#PROPERTIES#',
+				'#ABSTRACT_LAYER_SAULT#'
+			], [
+				$arHiblock['ID'],
+				$arHiblock['NAME'],
+				$arHiblock['TABLE_NAME'],
+				'"' . $arHiblock['LOC']['NAME'] . '"',
+				$hiProps,
+				ABSTRACT_LAYER_SAULT
+			], $this->__hiBlockTemplate);
+		}
+		// endregion
+
+		// region UF-fields
 		$ufRs = \CUserTypeEntity::GetList(['ENTITY_ID' => 'ASC', 'SORT' => 'ASC', 'FIELD_NAME' => 'ASC'], ['LANG' => LANGUAGE_ID]);
 		$outUfs = '';
 		while ($ufField = $ufRs->Fetch()) {
@@ -681,12 +750,36 @@ class __UfFieldsList_#ABSTRACT_LAYER_SAULT#
 			ABSTRACT_LAYER_SAULT
 		], $this->ufFieldsList);
 		unset($outUfs);
+		// endregion
 
 		return file_put_contents($this->fileGenerate,
 			'<?php /** @noinspection PhpMissingParamTypeInspection */ 
 /** @noinspection PhpUnused */ 
 /** @noinspection PhpMissingFieldTypeInspection */' . PHP_EOL . $out, LOCK_EX
 		);
+	}
+
+	/**
+	 * @param $VALUE_LIST
+	 *
+	 * @return string
+	 */
+	private function getListDescription($VALUE_LIST): string
+	{
+		$propFullDescription = '';
+		if (is_array($VALUE_LIST)) {
+			$propFullDescription = '<table>';
+			$propFullDescription .= '<tr><th>ID</th><th>XML_ID</th><th>VALUE</th></tr>';
+			foreach ($VALUE_LIST as $value) {
+				$propFullDescription .= '<tr>';
+				foreach (['ID', 'XML_ID', 'VALUE'] as $key) {
+					$propFullDescription .= '<td>' . $value[$key] . '</td>';
+				}
+				$propFullDescription .= '</tr>';
+			}
+			$propFullDescription .= '</table>';
+		}
+		return $propFullDescription;
 	}
 }
 
