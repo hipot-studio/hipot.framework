@@ -183,15 +183,21 @@ class HiblockList extends \CBitrixComponent
 					}
 					$arUserField = $fields[$k];
 
-					/* @see https://dev.1c-bitrix.ru/api_help/iblock/classes/user_properties/GetAdminListViewHTML.php */
-					$html = call_user_func(
-						[$arUserField["USER_TYPE"]["CLASS_NAME"], "GetAdminListViewHTML"],
-						$arUserField,
-						[
-							"NAME"      => "FIELDS[" . $row['ID'] . "][" . $arUserField["FIELD_NAME"] . "]",
-							"VALUE"     => htmlspecialcharsbx($v)
-						]
-					);
+					$html = '';
+					/** @see https://dev.1c-bitrix.ru/api_help/iblock/classes/user_properties/GetAdminListViewHTML.php */
+					/** @see https://dev.1c-bitrix.ru/api_d7/bitrix/main/userfield/uf-fieldcomponent.php */
+					/** @see \Bitrix\Main\UserField\Types\BaseType::getHtml() */
+					/** @var \Bitrix\Main\UserField\Types\BaseType $className */
+					$className = $arUserField["USER_TYPE"]["CLASS_NAME"];
+					if (is_callable([$className, "GetAdminListViewHTML"])) {
+						$html = $className::GetAdminListViewHTML(
+							$arUserField,
+							[
+								"NAME"      => "FIELDS[" . $row['ID'] . "][" . $arUserField["FIELD_NAME"] . "]",
+								"VALUE"     => htmlspecialcharsbx($v)
+							]
+						);
+					}
 					if ($html == '') {
 						$html = '&nbsp;';
 					}
