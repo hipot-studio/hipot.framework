@@ -244,7 +244,7 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 	}, $cont);
 
 	// validator.w3.org: The type attribute is unnecessary for JavaScript resources.
-	$cont = preg_replace('#<script([^>]*)type=[\'"]text/javascript[\'"]([^>]*)>#', '<script\\1\\2>', $cont);
+	$cont = preg_replace(['#<script([^>]*)type=[\'"]text/javascript[\'"]([^>]*)>#', '#<br\s*/>#i'], ['<script\\1\\2>', '<br>'], $cont);
 });
 
 // drop unused cache to per-product discount on cli run
@@ -264,9 +264,9 @@ $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function
 });
 
 // immediately drop the custom setting hl-block cache
-$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . DataManager::EVENT_ON_AFTER_UPDATE,   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
-$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . DataManager::EVENT_ON_AFTER_ADD,      [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
-$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . DataManager::EVENT_ON_AFTER_DELETE,   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
+foreach ([DataManager::EVENT_ON_AFTER_UPDATE, DataManager::EVENT_ON_AFTER_ADD, DataManager::EVENT_ON_AFTER_DELETE] as $event) {
+	$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . $event,   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
+}
 
 // region очистка из корзины ненужных свойств (при добавлении товара из админки)
 $eventManager->addEventHandler("sale", "OnBasketAdd", static function ($ID, $arFields) {
