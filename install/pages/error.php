@@ -74,7 +74,9 @@ $installEmailType       = static function ($typeId = 'DEBUG_MESSAGE'): bool {
 	return false;
 };
 $sendEmailToSupport     = static function () use ($exception, $developerEmail, $request, $argv, $installEmailType) {
-	$html = 'Данные об ошибке:' . "\n";
+	$dateStr = date('d.m.Y H:i:s');
+
+	$html = sprintf('Данные об ошибке <code>[%s]</code>:', $dateStr) . "\n";
 	$html .= ExceptionHandlerFormatter::format($exception, true);
 	if (function_exists('debug_string_backtrace')) {
 		$html .= '<pre>'. debug_string_backtrace() . "</pre>\n";
@@ -99,6 +101,7 @@ $sendEmailToSupport     = static function () use ($exception, $developerEmail, $
 		$subject .= (is_null($request) ? $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'] . ' IP:' . $_SERVER['REMOTE_ADDR']
 			: $request->getServer()->getServerName() . $request->getRequestUri() . ' IP:' . $request->getServer()->getRemoteAddr());
 	}
+	$subject .= sprintf(' [%s]', $dateStr);
 
 	if ($installEmailType()) {
 		// use send() to may clear list of next erros by query "DELETE FROM b_event WHERE EVENT_NAME = 'EVENT_NAME'"
