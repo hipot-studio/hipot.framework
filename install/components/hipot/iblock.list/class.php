@@ -1,9 +1,7 @@
 <?php
 /**
  * hipot studio source file
- * User: <hipot AT ya DOT ru>
- * Date: 2022
- * @version 2.0
+ * User: <info AT hipot-studio.com>
  */
 /** @noinspection AutoloadingIssuesInspection */
 
@@ -65,7 +63,12 @@ class IblockList extends \CBitrixComponent
 		$arParams['NAV_SHOW_ALWAYS']	    = (trim($arParams['NAV_SHOW_ALWAYS']) == 'Y') ? 'Y' : 'N';
 		$arParams['SELECT_CHAINS']          = (trim($arParams['SELECT_CHAINS']) == 'Y') ? 'Y' : 'N';
 		$arParams['SELECT_CHAINS_DEPTH']    = (int)$arParams['SELECT_CHAINS_DEPTH'] > 0 ? (int)$arParams['SELECT_CHAINS_DEPTH'] : 3;
-
+		if (!is_array($arParams["FILTER"])) {
+			$arParams["FILTER"] = $arParams["~FILTER"] = [];
+		}
+		if (!is_array($arParams["SELECT"])) {
+			$arParams["SELECT"] = $arParams["~SELECT"] = [];
+		}
 		if ($arParams['SELECT_CHAINS'] === 'Y' && !class_exists(self::LINKED_CHAINS_CLASS)) {
 			$arParams['SELECT_CHAINS'] = 'N';
 		}
@@ -103,7 +106,7 @@ class IblockList extends \CBitrixComponent
 			}
 
 			$arSelect = ["ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME", "TIMESTAMP_X"];
-			if ($arParams["SELECT"]) {
+			if (count($arParams["SELECT"]) > 0) {
 				$arSelect = array_merge($arSelect, $arParams["SELECT"]);
 			}
 
