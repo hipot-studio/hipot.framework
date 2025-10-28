@@ -39,6 +39,37 @@ use Hipot\Utils\UUtils;
  *  ALWAYS_INCLUDE_TEMPLATE / Y|N подключать ли шаблон компонента в случае пустой выборки (по-умолчанию N)
  *  SELECT_CHAINS / Y|N выбирать ли цепочки связанных элементов
  *  SELECT_CHAINS_DEPTH / глубина выбираемых элементов (по умолчанию 3)
+ *
+ * Произвольные параметры (указывать после остальных, предварив их комментарием //CUSTOM:)
+ * 'VERSION' / напр. '1.0.0' - версия шаблона компонента, нужно для быстрого сброса кеша при изменении шаблона (просто наростить версию)
+ *
+ * Пример вызова:
+ * // new class extends Hipot\Components\IblockList {};
+ * $result = $APPLICATION->IncludeComponent('hipot:iblock.list', '', [
+ * 'IBLOCK_ID'    => 0,
+ * 'ORDER'        => ['SORT' => 'ASC', 'NAME' => 'ASC'],
+ * 'FILTER'       => [],
+ * 'SELECT'       => [],
+ * 'GET_PROPERTY' => 'Y',
+ * 'CACHE_TIME'   => 3600 * 3,
+ * 'CACHE_GROUPS' => 'N',
+ *
+ * 'NTOPCOUNT'               => 0,
+ * 'PAGESIZE'                => 0,
+ * 'NAV_TEMPLATE'            => '.default',
+ * 'NAV_SHOW_ALWAYS'         => 'N',
+ * 'NAV_SHOW_ALL'            => 'N',
+ * 'NAV_PAGEWINDOW'          => 3,
+ * 'SET_404'                 => 'Y',
+ * 'ALWAYS_INCLUDE_TEMPLATE' => 'Y',
+ * 'SELECT_CHAINS'           => 'N',
+ * 'SELECT_CHAINS_DEPTH'     => 3,
+ * // CUSTOM:
+ * 'VERSION'                 => '2.0',
+ * 'IS_BETA_TESTER'          => IS_BETA_TESTER,
+ * 'IS_CONTENT_MANAGER'      => IS_CONTENT_MANAGER,
+ * 'IS_AJAX'                 => defined('IS_AJAX') && IS_AJAX ? 'Y' : 'N',
+ * ]);
  * </code>
  *
  * @version 6.x, см. CHANGELOG.TXT
@@ -139,7 +170,8 @@ class IblockList extends \CBitrixComponent
 				/*
 				 * TOFUTURE Всяческие довыборки на каждый элемент $arItem по произвольному
 				 * параметру $arParams писать тут
-				 * оставить комментарий по параметру, где этот параметр используется
+				 * оставить комментарий по параметру, где этот параметр используется.
+				 * Предпочтительнее это делать в result_modifier.php
 				 */
 
 				$arResult["ITEMS"][] = $arItem;
@@ -152,7 +184,8 @@ class IblockList extends \CBitrixComponent
 
 			/*
 			 * TOFUTURE Всяческие довыборки на произвольный параметр $arParams писать тут
-			 * оставить комментарий по параметру, где этот параметр используется
+			 * оставить комментарий по параметру, где этот параметр используется.
+			 * Предпочтительнее это делать в result_modifier.php
 			 */
 
 			if (is_countable($arResult["ITEMS"]) && count($arResult["ITEMS"]) > 0) {
