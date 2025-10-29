@@ -19,7 +19,7 @@ use Hipot\Types\Singleton;
 final class BitrixEngine
 {
 	use Singleton;
-
+	
 	public function __construct(
 		public ?Application                $app = null,
 		/**
@@ -38,7 +38,7 @@ final class BitrixEngine
 	)
 	{
 	}
-
+	
 	public static function initInstance(): self
 	{
 		return new self(
@@ -55,7 +55,7 @@ final class BitrixEngine
 			Application::getInstance()->getSessionLocalStorageManager()
 		);
 	}
-
+	
 	/**
 	 * CurrentUser::get()->isAdmin() вызывает ошибку Uncaught Error: Call to a member function isAdmin() on null, когда нет $USER
 	 * (везде в порядке выполнения страницы https://dev.1c-bitrix.ru/api_help/main/general/pageplan.php до п.1.9) и агентах.<br><br>
@@ -76,7 +76,7 @@ final class BitrixEngine
 			})->bindTo(CurrentUser::get(), CurrentUser::get()) )() !== null;
 		return $bInternalUserExists ? CurrentUser::get() : null;
 	}
-
+	
 	/**
 	 * Retrieves the current user from the global $USER variable.
 	 *
@@ -90,29 +90,18 @@ final class BitrixEngine
 		}
 		return $USER;
 	}
-
+	
 	/**
-	 * Retrieves a service by its name from the service locator.
-	 *
-	 * @param string $serviceName The name of the service to retrieve
-	 * @return mixed|null The retrieved service if found, null otherwise.
+	 * Retrieves the global user field manager instance.
+	 * @return \CUserTypeManager The user field manager instance.
+	 * @global \CUserTypeManager $USER_FIELD_MANAGER The global user field manager instance.
 	 */
-	public function getService(string $serviceName)
+	public static function getUserFieldManager(): \CUserTypeManager
 	{
-		return $this->serviceLocator->has($serviceName) ? $this->serviceLocator->get($serviceName) : null;
+		/** @noinspection GlobalVariableUsageInspection */
+		return $GLOBALS['USER_FIELD_MANAGER'];
 	}
-
-	/**
-	 * Static method returns database connection for the specified name.
-	 * If name is empty - default connection is returned.
-	 * @param string $name Name of database connection. If empty - default connection.
-	 * @return \Bitrix\Main\Data\Connection|\Bitrix\Main\DB\Connection|null
-	 */
-	public function getConnection(string $name = "")
-	{
-		return $this->app->getConnectionPool()->getConnection($name);
-	}
-
+	
 	/**
 	 * Retrieves the main application object on global $APPLICATION variable
 	 *
@@ -126,7 +115,29 @@ final class BitrixEngine
 		}
 		return $APPLICATION;
 	}
-
+	
+	/**
+	 * Retrieves a service by its name from the service locator.
+	 *
+	 * @param string $serviceName The name of the service to retrieve
+	 * @return mixed|null The retrieved service if found, null otherwise.
+	 */
+	public function getService(string $serviceName)
+	{
+		return $this->serviceLocator->has($serviceName) ? $this->serviceLocator->get($serviceName) : null;
+	}
+	
+	/**
+	 * Static method returns database connection for the specified name.
+	 * If name is empty - default connection is returned.
+	 * @param string $name Name of database connection. If empty - default connection.
+	 * @return \Bitrix\Main\Data\Connection|\Bitrix\Main\DB\Connection|null
+	 */
+	public function getConnection(string $name = "")
+	{
+		return $this->app->getConnectionPool()->getConnection($name);
+	}
+	
 	/**
 	 * Retrieves the site identifier based on the current request context.
 	 * @return string The site ID determined from the admin section or application context.
