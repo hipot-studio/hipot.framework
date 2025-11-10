@@ -71,19 +71,19 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 	BitrixEngine::resetInstance();
 
 	foreach (
-		[
-			__DIR__ . '/constants.php',
-			__DIR__ . '/lib/constants.php',     // handler in init.php
-			Loader::getDocumentRoot() . '/local/php_interface/include/constants.php',
-			Loader::getDocumentRoot() . '/local/php_interface/include/lib/constants.php',
-			Loader::getDocumentRoot() . '/bitrix/php_interface/include/constants.php',
-			Loader::getDocumentRoot() . '/bitrix/php_interface/include/lib/constants.php'
-		] as $constFile) {
-			if (is_file($constFile)) {
-				include $constFile;
-				break;
-			}
+			[
+					__DIR__ . '/constants.php',
+					__DIR__ . '/lib/constants.php',     // handler in init.php
+					Loader::getDocumentRoot() . '/local/php_interface/include/constants.php',
+					Loader::getDocumentRoot() . '/local/php_interface/include/lib/constants.php',
+					Loader::getDocumentRoot() . '/bitrix/php_interface/include/constants.php',
+					Loader::getDocumentRoot() . '/bitrix/php_interface/include/lib/constants.php'
+			] as $constFile) {
+		if (is_file($constFile)) {
+			include $constFile;
+			break;
 		}
+	}
 
 	// create user-d0 to work in agents
 	if ($USER === null) {
@@ -121,27 +121,27 @@ $eventManager->addEventHandler('main', 'OnAdminTabControlBegin', static function
 
 // draw user picture after login and top pagenav
 $eventManager->addEventHandler(	"main", "OnAdminListDisplay",
-	/** @param CAdminUiList $this_al */
-	static function (&$this_al) {
-		if ($this_al->table_id == "tbl_user" || str_contains($this_al->table_id, 'iblock')) {
-			echo $this_al->sNavText;
-			?>
-			<style>
-				.adm-workarea > .main-ui-pagination {padding:10px 0;}
-			</style>
-			<?
-		}
-		if ($this_al->table_id == "tbl_user") {
-			foreach ($this_al->aRows as &$row) {
-				$userId = (int)$row->arRes['ID'];
-				$picPath = CFile::GetPath( (CUser::GetByID($userId)->Fetch())["PERSONAL_PHOTO"] );
-				if (trim($picPath) != '') {
-					$row->aFields["LOGIN"]["view"]["value"] .= ' <br><a target="_blank" href="' . $picPath . '">'
-						. '<img style="max-width:200px;" alt="" loading="lazy" src="' . $picPath  . '"></a>';
+		/** @param CAdminUiList $this_al */
+		static function (&$this_al) {
+			if ($this_al->table_id == "tbl_user" || str_contains($this_al->table_id, 'iblock') || str_starts_with($this_al->table_id, 'tbl_hi')) {
+				echo $this_al->sNavText;
+				BitrixEngine::getInstance()->asset->addString('
+				<style>
+					.adm-workarea > .main-ui-pagination {padding:10px 0;}
+				</style>
+			');
+			}
+			if ($this_al->table_id == "tbl_user") {
+				foreach ($this_al->aRows as &$row) {
+					$userId = (int)$row->arRes['ID'];
+					$picPath = CFile::GetPath( (CUser::GetByID($userId)->Fetch())["PERSONAL_PHOTO"] );
+					if (trim($picPath) != '') {
+						$row->aFields["LOGIN"]["view"]["value"] .= ' <br><a target="_blank" href="' . $picPath . '">'
+								. '<img style="max-width:200px;" alt="" loading="lazy" src="' . $picPath  . '"></a>';
+					}
 				}
 			}
 		}
-	}
 );
 
 // отрисовка 404 страницы с прерыванием текущего буфера и замены его на содержимое 404
@@ -159,10 +159,15 @@ $eventManager->addEventHandler('main', 'OnEpilog', static function () use ($requ
 	// process 404 in content part
 	if ((!$isRun && defined('ERROR_404') && ERROR_404 === 'Y' && $APPLICATION->GetCurPage() != '/404.php')) {
 		$isRun = true;
+		\CHTTP::setStatus('404 Not Found');
+
+		CompositePage::getInstance()?->markNonCacheable();
+		CompositeEngine::setEnable(false);
+
 		// region re-get one time 404 page
 		$eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$content) use ($request) {
 			$contCacheFile = Loader::getDocumentRoot() . sprintf('/upload/404_%s_cache.html', Application::getInstance()?->getContext()?->getSite());
-			if (is_file($contCacheFile) && ((time() - filemtime($contCacheFile)) > 3600)) {
+			if (is_file($contCacheFile) && ((time() - filemtime($contCacheFile)) > 3600 * 24 * 7)) {
 				unlink($contCacheFile);
 			}
 			$content = is_file($contCacheFile) ? file_get_contents($contCacheFile) : '';
@@ -172,10 +177,6 @@ $eventManager->addEventHandler('main', 'OnEpilog', static function () use ($requ
 
 				file_put_contents($contCacheFile, $content, LOCK_EX);
 			}
-			\CHTTP::setStatus('404 Not Found');
-
-			CompositePage::getInstance()?->markNonCacheable();
-			CompositeEngine::setEnable(false);
 		});
 		// endregion
 	}
@@ -196,8 +197,8 @@ $eventManager->addEventHandler('main', 'OnBeforeEndBufferContent', static functi
 
 	$pCfg = array_shift($p);
 	if ($APPLICATION->GetCurPage() != '/bitrix/admin/user_options.php'
-		|| $pCfg['c'] != 'form' || $pCfg['d'] != 'Y'
-		|| !preg_match('#^form_((section)|(element))_\d+$#', $pCfg['n'])
+			|| $pCfg['c'] != 'form' || $pCfg['d'] != 'Y'
+			|| !preg_match('#^form_((section)|(element))_\d+$#', $pCfg['n'])
 	) {
 		return;
 	}
@@ -216,18 +217,18 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 
 	if (is_object($USER) && !$USER->IsAuthorized() && !$request->isPost() && $APPLICATION->GetProperty('JS_core_frame_cache_NEED') != 'Y') {
 		$toRemove = [
-			'#<script[^>]+src="/bitrix/js/ui/dexie/[^>]+></script>#',
-			'#<script[^>]+src="/bitrix/js/main/core/core_frame_cache[^>]+></script>#',
-			'#<link[^>]+href="/bitrix/js/ui/design-tokens/dist/ui.design-tokens.min.css\?\d+"[^>]+>#',
-			'#<link[^>]+href="/bitrix/panel/main/popup.min.css\?\d+"[^>]+>#',
+				'#<script[^>]+src="/bitrix/js/ui/dexie/[^>]+></script>#',
+				'#<script[^>]+src="/bitrix/js/main/core/core_frame_cache[^>]+></script>#',
+				'#<link[^>]+href="/bitrix/js/ui/design-tokens/dist/ui.design-tokens.min.css\?\d+"[^>]+>#',
+				'#<link[^>]+href="/bitrix/panel/main/popup.min.css\?\d+"[^>]+>#',
 		];
 		$cont = preg_replace($toRemove, "", $cont);
 	}
 
 	$toInline = [
-		'#<script[^>]+src="(?<src>/bitrix/js/main/core/core.min.js)\?\d+"[^>]*></script>#',
-		'#<script[^>]+src="(?<src>/bitrix/js/main/core/core_ls.min.js)\?\d+"[^>]*></script>#',
-		'#<script[^>]+src="(?<src>/bitrix/cache/js/.*?\.js)\?\d+"[^>]*></script>#'
+			'#<script[^>]+src="(?<src>/bitrix/js/main/core/core.min.js)\?\d+"[^>]*></script>#',
+			'#<script[^>]+src="(?<src>/bitrix/js/main/core/core_ls.min.js)\?\d+"[^>]*></script>#',
+			'#<script[^>]+src="(?<src>/bitrix/cache/js/.*?\.js)\?\d+"[^>]*></script>#'
 	];
 	$cont = preg_replace_callback($toInline, static function ($matches) {
 		$content = file_get_contents(Loader::getDocumentRoot() . $matches['src']);
@@ -254,10 +255,10 @@ $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function
 		UUtils::setPrivateProperty(\CAllCatalogDiscount::class, 'arCacheProduct', []);
 
 		\CCatalogDiscount::ClearDiscountCache([
-			'PRODUCT' => true,
-			/*'SECTIONS'        => true,
-			'PROPERTIES'        => true,
-			'SECTION_CHAINS'    => true*/
+				'PRODUCT' => true,
+				/*'SECTIONS'        => true,
+				'PROPERTIES'        => true,
+				'SECTION_CHAINS'    => true*/
 		]);
 	}
 	return true;
@@ -273,19 +274,19 @@ $eventManager->addEventHandler("sale", "OnBasketAdd", static function ($ID, $arF
 	Hipot\BitrixUtils\Sale::deleteUnUsedBasketProps($ID);
 });
 $eventManager->addEventHandler(
-	'sale',
-	'OnSaleOrderSaved',
-	static function (Event $event) {
-		/** @var \Bitrix\Sale\Order $order */
-		$order = $event->getParameter("ENTITY");
+		'sale',
+		'OnSaleOrderSaved',
+		static function (Event $event) {
+			/** @var \Bitrix\Sale\Order $order */
+			$order = $event->getParameter("ENTITY");
 
-		if (isset($GLOBALS['deletedOrderUnusedProps_' . $order->getId()])) {
-			return;
+			if (isset($GLOBALS['deletedOrderUnusedProps_' . $order->getId()])) {
+				return;
+			}
+
+			Hipot\BitrixUtils\Sale::deleteUnUsedBasketProps();
+			$GLOBALS['deletedOrderUnusedProps_' . $order->getId()] = true;
 		}
-
-		Hipot\BitrixUtils\Sale::deleteUnUsedBasketProps();
-		$GLOBALS['deletedOrderUnusedProps_' . $order->getId()] = true;
-	}
 );
 // endregion
 
