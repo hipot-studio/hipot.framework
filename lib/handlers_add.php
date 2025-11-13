@@ -121,27 +121,27 @@ $eventManager->addEventHandler('main', 'OnAdminTabControlBegin', static function
 
 // draw user picture after login and top pagenav
 $eventManager->addEventHandler(	"main", "OnAdminListDisplay",
-		/** @param CAdminUiList $this_al */
-		static function (&$this_al) {
-			if ($this_al->table_id == "tbl_user" || str_contains($this_al->table_id, 'iblock') || str_starts_with($this_al->table_id, 'tbl_hi')) {
-				echo $this_al->sNavText;
-				BitrixEngine::getInstance()->asset->addString('
-				<style>
-					.adm-workarea > .main-ui-pagination {padding:10px 0;}
-				</style>
-			');
-			}
-			if ($this_al->table_id == "tbl_user") {
-				foreach ($this_al->aRows as &$row) {
-					$userId = (int)$row->arRes['ID'];
-					$picPath = CFile::GetPath( (CUser::GetByID($userId)->Fetch())["PERSONAL_PHOTO"] );
-					if (trim($picPath) != '') {
-						$row->aFields["LOGIN"]["view"]["value"] .= ' <br><a target="_blank" href="' . $picPath . '">'
-								. '<img style="max-width:200px;" alt="" loading="lazy" src="' . $picPath  . '"></a>';
-					}
+	/** @param CAdminUiList $this_al */
+	static function (&$this_al) {
+		if ($this_al->table_id == "tbl_user" || str_contains($this_al->table_id, 'iblock') || str_starts_with($this_al->table_id, 'tbl_hi')) {
+			echo $this_al->sNavText;
+			BitrixEngine::getInstance()->asset->addString('
+			<style>
+				.adm-workarea > .main-ui-pagination {padding:10px 0;}
+			</style>
+		');
+		}
+		if ($this_al->table_id == "tbl_user") {
+			foreach ($this_al->aRows as &$row) {
+				$userId = (int)$row->arRes['ID'];
+				$picPath = CFile::GetPath( (CUser::GetByID($userId)->Fetch())["PERSONAL_PHOTO"] );
+				if (trim($picPath) != '') {
+					$row->aFields["LOGIN"]["view"]["value"] .= ' <br><a target="_blank" href="' . $picPath . '">'
+							. '<img style="max-width:200px;" alt="" loading="lazy" src="' . $picPath  . '"></a>';
 				}
 			}
 		}
+	}
 );
 
 // отрисовка 404 страницы с прерыванием текущего буфера и замены его на содержимое 404
