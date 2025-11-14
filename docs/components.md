@@ -32,3 +32,6 @@ $APPLICATION->SetTitle("Expand Your Reach with <br/> Reliable <span class=\"red-
 
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
 ```
+
+## hipot:ajax
+Пример создания [лайков для элементов инфоблока](hipot_ajax_likes.md)
