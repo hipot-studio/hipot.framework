@@ -204,19 +204,22 @@ class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Er
 			$this->errorCollection[] = new Error("Wrong type");
 			return null;
 		}
-		if (!isset($_SESSION['saveIblockLikeAction'][$id])) {
-			$prop = CIBlockElement::GetProperty(self::IBLOCK_IDS[$type], $id, 'sort', 'asc', ['CODE'  => self::IBLOCK_LIKE_PROP_CODE])->Fetch();
-			$v = (int)$prop['VALUE'];
-			// to_future
-			if ($value == '+') {
-				$v++;
-			}
-			CIBlockElement::SetPropertyValuesEx($id, self::IBLOCK_IDS[$type], [
-				self::IBLOCK_LIKE_PROP_CODE => $v
-			]);
 
-			$_SESSION['saveIblockLikeAction'][$id] = $v;
+		$prop = CIBlockElement::GetProperty(self::IBLOCK_IDS[$type], $id, 'sort', 'asc', ['CODE'  => self::IBLOCK_LIKE_PROP_CODE])->Fetch();
+		$v = (int)$prop['VALUE'];
+
+		if ($value === '+') {
+			$v++;
+		} else if ($value === '-') {
+			$v--;
 		}
+
+		CIBlockElement::SetPropertyValuesEx($id, self::IBLOCK_IDS[$type], [
+			self::IBLOCK_LIKE_PROP_CODE => $v
+		]);
+
+		$_SESSION['saveIblockLikeAction'][$id] = $v;
+
 		return [
 			'CNT_P' => (int)$_SESSION['saveIblockLikeAction'][$id]
 		];
