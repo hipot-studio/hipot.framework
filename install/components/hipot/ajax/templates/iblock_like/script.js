@@ -36,11 +36,7 @@ $(function () {
                         _block.replaceWith(response.data[id].HTML);
 
                         if (BX.localStorage.get("like-pt-" + id) == 1) {
-                            $(
-                                `.blog-section_inner_grid_item_info_favorite[data-id="${id}"]`
-                            ).addClass(
-                                "blog-section_inner_grid_item_info_favorite--added"
-                            );
+                            $(`.blog-section_inner_grid_item_info_favorite[data-id="${id}"]`).addClass("blog-section_inner_grid_item_info_favorite--added");
                         }
                     }
                 });
@@ -50,35 +46,27 @@ $(function () {
         });
 
     // actions on interface
-    $(document).on(
-        "click",
-        ".blog-section_inner_grid_item_info_favorite",
-        function () {
-            let _block = $(this),
-                id = $(_block).data("id"),
-                type = $(_block).data("type"),
-                lang = $(_block).data("lang"),
-                isLiked = BX.localStorage.get("like-pt-" + id) == 1;
+    $(document).on("click", ".blog-section_inner_grid_item_info_favorite", function () {
+        let _block = $(this),
+            id = $(_block).data("id"),
+            type = $(_block).data("type"),
+            lang = $(_block).data("lang"),
+            isLiked = BX.localStorage.get("like-pt-" + id) == 1;
 
-            const likeAction = isLiked ? "-" : "+";
+        const likeAction = isLiked ? "-" : "+";
 
-            if (isLiked) {
-                _block.removeClass(
-                    "blog-section_inner_grid_item_info_favorite--added"
-                );
-                like({ id, type, lang, value: likeAction }, _block);
-                BX.localStorage.remove("like-pt-" + id);
-
-                return;
-            }
-
-            _block.addClass(
-                "blog-section_inner_grid_item_info_favorite--added"
-            );
+        if (isLiked) {
+            _block.removeClass("blog-section_inner_grid_item_info_favorite--added");
             like({ id, type, lang, value: likeAction }, _block);
-            BX.localStorage.set("like-pt-" + id, 1, 3600 * 24 * 356);
+            BX.localStorage.remove("like-pt-" + id);
+
+            return;
         }
-    );
+
+        _block.addClass("blog-section_inner_grid_item_info_favorite--added");
+        like({ id, type, lang, value: likeAction }, _block);
+        BX.localStorage.set("like-pt-" + id, 1, 3600 * 24 * 356);
+    });
 
     /**
      * @typedef {Object} LikeActionData
@@ -104,9 +92,7 @@ $(function () {
                 const { id } = data;
 
                 if (response.status === "success") {
-                    $(`[data-id-num-likes="${id}"]`, _block).html(
-                        response.data.CNT_P
-                    );
+                    $(`[data-id-num-likes="${id}"]`, _block).html(response.data.CNT_P);
                 } else {
                     console.log(response);
                 }
