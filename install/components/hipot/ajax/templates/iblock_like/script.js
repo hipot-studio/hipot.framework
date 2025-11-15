@@ -5,48 +5,55 @@ $(function () {
         type,
         template;
 
-		$("[data-like-block]").each(function () {
-			likeIds[likeIds.length] = $(this).data("id");
-			template = $(this).data("template");
-			if (typeof lang === "undefined") {
-				lang = $(this).data("lang");
-			}
-			if (typeof type === "undefined") {
-				type = $(this).data("type");
-			}
-		});
+    $("[data-like-block]").each(function () {
+        likeIds[likeIds.length] = $(this).data("id");
+        template = $(this).data("template");
+        if (typeof lang === "undefined") {
+            lang = $(this).data("lang");
+        }
+        if (typeof type === "undefined") {
+            type = $(this).data("type");
+        }
+    });
 
-		BX.ajax
-			.runComponentAction("hipot:ajax", "loadIblockLikeTemplates", {
-				mode: "class",
-				data: {
-					ids: likeIds,
-					type: type,
-					lang: lang,
-					template: template,
-				},
-				method: "POST",
-			})
-			.then(function (response) {
-				if (response.status === "success") {
-					$("[data-like-block]").each(function () {
-						let _block = $(this),
-							id = $(_block).data("id");
-						if (typeof response.data[id] !== "undefined") {
-							_block.replaceWith(response.data[id].HTML);
+    BX.ajax
+        .runComponentAction("hipot:ajax", "loadIblockLikeTemplates", {
+            mode: "class",
+            data: {
+                ids: likeIds,
+                type: type,
+                lang: lang,
+                template: template,
+            },
+            method: "POST",
+        })
+        .then(function (response) {
+            if (response.status === "success") {
+                $("[data-like-block]").each(function () {
+                    let _block = $(this),
+                        id = $(_block).data("id");
+                    if (typeof response.data[id] !== "undefined") {
+                        _block.replaceWith(response.data[id].HTML);
 
-							if (BX.localStorage.get("like-pt-" + id) == 1) {
-								$(`.blog-section_inner_grid_item_info_favorite[data-id="${id}"]`).addClass("blog-section_inner_grid_item_info_favorite--added");
-							}
-						}
-					});
-				} else {
-					console.log(response);
-				}
-			});
+                        if (BX.localStorage.get("like-pt-" + id) == 1) {
+                            $(
+                                `.blog-section_inner_grid_item_info_favorite[data-id="${id}"]`
+                            ).addClass(
+                                "blog-section_inner_grid_item_info_favorite--added"
+                            );
+                        }
+                    }
+                });
+            } else {
+                console.log(response);
+            }
+        });
 
     // actions on interface
-    $(document).on("click", ".blog-section_inner_grid_item_info_favorite", function () {
+    $(document).on(
+        "click",
+        ".blog-section_inner_grid_item_info_favorite",
+        function () {
             let _block = $(this),
                 id = $(_block).data("id"),
                 type = $(_block).data("type"),
@@ -56,14 +63,18 @@ $(function () {
             const likeAction = isLiked ? "-" : "+";
 
             if (isLiked) {
-                _block.removeClass("blog-section_inner_grid_item_info_favorite--added");
+                _block.removeClass(
+                    "blog-section_inner_grid_item_info_favorite--added"
+                );
                 like({ id, type, lang, value: likeAction }, _block);
-                BX.localStorage.remove("like-pt-" + id, null);
+                BX.localStorage.remove("like-pt-" + id);
 
                 return;
             }
 
-            _block.addClass("blog-section_inner_grid_item_info_favorite--added");
+            _block.addClass(
+                "blog-section_inner_grid_item_info_favorite--added"
+            );
             like({ id, type, lang, value: likeAction }, _block);
             BX.localStorage.set("like-pt-" + id, 1, 3600 * 24 * 356);
         }
@@ -80,8 +91,9 @@ $(function () {
     /**
      * Like action for iblock_like
      * @param {LikeActionData} data - for like action
+     * @param {HTMLElement} _block - for update count of likes
      */
-    function like(data) {
+    function like(data, _block) {
         BX.ajax
             .runComponentAction("hipot:ajax", "saveIblockLike", {
                 mode: "class",
@@ -92,7 +104,9 @@ $(function () {
                 const { id } = data;
 
                 if (response.status === "success") {
-                    $(`[data-id-num-likes="${id}"]`).html(response.data.CNT_P);
+                    $(`[data-id-num-likes="${id}"]`, _block).html(
+                        response.data.CNT_P
+                    );
                 } else {
                     console.log(response);
                 }
