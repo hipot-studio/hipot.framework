@@ -4,6 +4,8 @@
 ## Пример подключения:
 
 ```php
+// bitrix/catalog.detail/templates/.default/template.php
+
 /** @var array $arResult */
 /** @var CBitrixComponent $component */
 
