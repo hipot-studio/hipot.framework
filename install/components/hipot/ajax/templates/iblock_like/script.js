@@ -58,7 +58,7 @@ $(function () {
 		if (isLiked) {
 			_block.removeClass("blog-section_inner_grid_item_info_favorite--added");
 			like({id, type, lang, value: likeAction}, _block);
-			BX.localStorage.remove("like-pt-" + id, null);
+			BX.localStorage.remove("like-pt-" + id);
 
 			return;
 		}
@@ -79,6 +79,7 @@ $(function () {
 	/**
 	 * Like action for iblock_like
 	 * @param {LikeActionData} data - for like action
+	 * @param {HTMLElement} _block - for update count of likes
 	 */
 	function like(data, _block) {
 		BX.ajax
