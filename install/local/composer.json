@@ -9,7 +9,7 @@
     "ext-apcu": "*",
     "wikimedia/composer-merge-plugin": "dev-master",
     "intervention/image": "^2.7",
-    "opis/closure": "^4.3"
+    "opis/closure": "^4.4"
   },
   "require-dev": {
     "larapack/dd": "^1.1"

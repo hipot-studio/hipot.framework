@@ -15,10 +15,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
  * FILTER / если нужна еще какая-то дополнительная фильтрация
  * SELECT / выбрать поля элемента/секции в параметры меню (иначе выбираются поля элемента)
  * ADDON_URL_TO_SELECT_ITEM / string Дополнительный пункт меню для выделения
- * MODIFY_ITEM / Opis\Closure\SerializableClosure позволяет создать callback с ссылкой на элемент и поменять его перед присвоением
+ * MODIFY_ITEM / use function Opis\Closure\{serialize, unserialize} - позволяет создать callback с ссылкой на элемент и поменять его перед присвоением
  *
- * @version 2.0
- * @copyright hipot, 2024
+ * @version 2.1
+ * @copyright hipot, 2025
  */
 
 $arComponentDescription = array(
