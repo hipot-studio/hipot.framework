@@ -9,20 +9,23 @@
 | **5**   | Inline `<style>`           | Вёрстка шаблона/компонентов                     | Разработчик       | Всегда имеют приоритет над файлами           |
 | **6**   | Стили, вставленные JS      | `document.createElement('link')`                | JS                | Загружаются последними                       |
 
-</br>
-
 _**Bitrix читает список CSS из шаблона template_styles.css и styles.css → затем подключает стили компонентов → затем всё остальное, соблюдая фиксированный порядок через Asset Manager
-→ затем объединяет в общий файл при соответсвующей настройке в главном модуле.**_
+→ затем объединяет в общий файл при соответствующей настройке в главном модуле.**_
 
 # AssetsContainer
 
 Класс отвечает за сбор и подключение CSS-файлов с указанным режимом загрузки (**_[CSS_INLINE](#css_inline), [CSS_DEFER](#css_defer), [CSS](#css)_**), обходя стандартный механизм формирования файла **_template_styles.css_**. Позволяет гибко управлять стилями и снижать объём неиспользуемого CSS на сайте.
 
-Второе реализованные использование класса заключается в задании js-параметров шаблона сайта.
+Второе использование класса заключается в задании js-параметров шаблона сайта.
 
 **_Для инициализации класса необходимо добавить его в обработчик событий:_**</br>
 
-_<code>EventManager::getInstance()->addEventHandler('main', 'OnEpilog', [\Hipot\BitrixUtils\AssetsContainer::class, 'onEpilogSendAssets']);</code>_
+```php
+// init.php
+use Bitrix\Main\EventManager;
+EventManager::getInstance()->addEventHandler('main', 'OnEpilog', [\Hipot\BitrixUtils\AssetsContainer::class, 'onEpilogSendAssets']);
+```
+
 
 ## Примеры использования:
 
@@ -32,19 +35,19 @@ _<code>EventManager::getInstance()->addEventHandler('main', 'OnEpilog', [\Hipot\
 use Hipot\BitrixUtils\AssetsContainer;
 
 AssetsContainer::addCss(SITE_TEMPLATE_PATH . "/stylesheets/screen.css", AssetsContainer::CSS_INLINE);
+AssetsContainer::addCss(SITE_TEMPLATE_PATH . "/stylesheets/page.css", AssetsContainer::CSS_INLINE);
 ```
 
-_Вставляет CSS инлайном:_
+_Вставляет CSS инлайном в head:_
 
 ```html
 <style>
     /* __screen.min.css__ */
-    img {
-        border: 0;
-    }
-    body {
-        margin: 0;
-    }
+    img {border: 0;}
+    body {margin: 0;}
+
+    /* __page.min.css__ */
+    div {margin: 0;}
 
     /* __CSS_INLINE_SIZE__ = 2.25 КБ */
 </style>
@@ -63,14 +66,14 @@ _Вставляет `link` на минифицированную версию ф
 ```html
 <link
     rel="preload"
-    href="/local/templates/SITE_TEMPLATE_PATH/css/screen.min.css?17500973131517"
+    href="SITE_TEMPLATE_PATH/css/screen.min.css?17500973131517"
     as="style"
     onload="this.onload=null;this.rel='stylesheet'"
 />
 <noscript>
     <link
         rel="stylesheet"
-        href="/local/templates/SITE_TEMPLATE_PATH/css/screen.min.css?17500973131517"
+        href="SITE_TEMPLATE_PATH/css/screen.min.css?17500973131517"
     />
 </noscript>
 ```
@@ -86,7 +89,7 @@ AssetsContainer::addCss(SITE_TEMPLATE_PATH . "/css/screen.css");
 _Вставляет CSS через `Asset::getInstance()->addCss($css)`:_
 
 ```html
-<link rel="stylesheet" href="/local/templates/SITE_TEMPLATE_PATH/css/screen.min.css?17500973131517" />
+<link rel="stylesheet" href="SITE_TEMPLATE_PATH/css/screen.min.css?17500973131517" />
 ```
 
 ## Подключение глобальных и стилей компонента
