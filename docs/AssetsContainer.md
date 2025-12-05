@@ -11,13 +11,14 @@
 
 </br>
 
-> _Bitrix читает список CSS из шаблона styles.php → собирает их в template_styles.css → затем подключает стили компонентов → затем всё остальное, соблюдая фиксированный порядок через Asset Manager._
+_**Bitrix читает список CSS из шаблона styles.php → собирает их в template_styles.css → затем подключает стили компонентов → затем всё остальное, соблюдая фиксированный порядок через Asset Manager.**_
 
 # AssetsContainer
 
 Класс отвечает за сбор и подключение CSS-файлов с указанным режимом загрузки (**_[CSS_INLINE](#css_inline), [CSS_DEFER](#css_defer), [CSS](#css)_**), обходя стандартный механизм формирования файла **_template_styles.css_**. Позволяет гибко управлять стилями и снижать объём неиспользуемого CSS на сайте.
 
-> Для инициализации класса необходимо добавить его в обработчик событий:</br> > _<code>EventManager::getInstance()->addEventHandler('main', 'OnEpilog', [\Hipot\BitrixUtils\AssetsContainer::class, 'onEpilogSendAssets']);</code>_
+**_Для инициализации класса необходимо добавить его в обработчик событий:_**</br>
+_<code>EventManager::getInstance()->addEventHandler('main', 'OnEpilog', [\Hipot\BitrixUtils\AssetsContainer::class, 'onEpilogSendAssets']);</code>_
 
 ## Примеры использования:
 
