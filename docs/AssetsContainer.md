@@ -1,9 +1,9 @@
 # Двигатель болида css-битрикс
 
 | Уровень | Что загружается            | Источник                                        | Кто управляет     | Примечание                                   |
-| ------- | -------------------------- | ----------------------------------------------- | ----------------- | -------------------------------------------- |
+| ------- | -------------------------- |-------------------------------------------------| ----------------- | -------------------------------------------- |
 | **1**   | Системные стили ядра       | `/bitrix/js/...`, `/bitrix/themes/.default/...` | Bitrix Core       | Загружаются первыми, нельзя изменить порядок |
-| **2**   | Стили шаблона              | `.styles.php` → `template_styles.css`           | Asset Manager     | Объединяются в один файл                     |
+| **2**   | Стили шаблона              | `styles.css`, `template_styles.css`             | Asset Manager     | Объединяются в один файл                     |
 | **3**   | Стили компонентов          | `/components/.../style.css`, `addExternalCss()` | Компоненты Bitrix | Грузятся **после** стилей шаблона            |
 | **4**   | Стили, добавленные вручную | `Asset::getInstance()->addCss()`                | Разработчик       | Приоритет выше, чем у компонентов            |
 | **5**   | Inline `<style>`           | Вёрстка шаблона/компонентов                     | Разработчик       | Всегда имеют приоритет над файлами           |
@@ -11,13 +11,17 @@
 
 </br>
 
-_**Bitrix читает список CSS из шаблона styles.php → собирает их в template_styles.css → затем подключает стили компонентов → затем всё остальное, соблюдая фиксированный порядок через Asset Manager.**_
+_**Bitrix читает список CSS из шаблона template_styles.css и styles.css → затем подключает стили компонентов → затем всё остальное, соблюдая фиксированный порядок через Asset Manager
+→ затем объединяет в общий файл при соответсвующей настройке в главном модуле.**_
 
 # AssetsContainer
 
 Класс отвечает за сбор и подключение CSS-файлов с указанным режимом загрузки (**_[CSS_INLINE](#css_inline), [CSS_DEFER](#css_defer), [CSS](#css)_**), обходя стандартный механизм формирования файла **_template_styles.css_**. Позволяет гибко управлять стилями и снижать объём неиспользуемого CSS на сайте.
 
+Второе реализованные использование класса заключается в задании js-параметров шаблона сайта.
+
 **_Для инициализации класса необходимо добавить его в обработчик событий:_**</br>
+
 _<code>EventManager::getInstance()->addEventHandler('main', 'OnEpilog', [\Hipot\BitrixUtils\AssetsContainer::class, 'onEpilogSendAssets']);</code>_
 
 ## Примеры использования:
@@ -82,18 +86,7 @@ AssetsContainer::addCss(SITE_TEMPLATE_PATH . "/css/screen.css");
 _Вставляет CSS через `Asset::getInstance()->addCss($css)`:_
 
 ```html
-<link
-    rel="stylesheet"
-    href="/local/templates/SITE_TEMPLATE_PATH/css/screen.min.css?17500973131517"
-    as="style"
-    onload="this.onload=null;this.rel='stylesheet'"
-/>
-<noscript>
-    <link
-        rel="stylesheet"
-        href="/local/templates/SITE_TEMPLATE_PATH/css/screen.min.css?17500973131517"
-    />
-</noscript>
+<link rel="stylesheet" href="/local/templates/SITE_TEMPLATE_PATH/css/screen.min.css?17500973131517" />
 ```
 
 ## Подключение глобальных и стилей компонента
@@ -106,14 +99,14 @@ AssetsContainer::addCss(SITE_TEMPLATE_PATH . "/css/bootstrap.css", AssetsContain
 ```
 
 Далее, на странице кроме стилей _bootstrap_ у нас используются и стили компонента
-`courses-card` - компонент вывода карточек с доступными курсами и их описанием.
-В - `/courses-card/component_epilog.php` добавляем стили нашего компонента:
+` courses-card` - компонент вывода карточек с доступными курсами и их описанием.
+В эпилоге шаблона компонента - `/courses-card/component_epilog.php` добавляем стили нашего компонента:
 
 ```php
 AssetsContainer::addCss($templateFolder . '/style_inline.css', AssetsContainer::CSS_INLINE);
 ```
 
-Тем самым мы получим:
+Тем самым мы получим в head-страницы:
 
 ```html
 <style>
@@ -128,6 +121,46 @@ AssetsContainer::addCss($templateFolder . '/style_inline.css', AssetsContainer::
     }
     /* __CSS_INLINE_SIZE__ = 2.55 КБ */
 </style>
+```
+
+Обратите внимание, что файл в шаблоне компонента назван отличным от style.css, чтобы он не подключился автоматически движком системы.
+
+# Инициализация глобальных параметров js-приложения
+
+```php
+// header.php
+
+// all template scripts (used all above plugins and siteJsConfigs)
+$siteJsConfigs = [
+	'SITE_TEMPLATE_PATH' => SITE_TEMPLATE_PATH,
+	'IS_DEV'             => IS_BETA_TESTER || IS_CONTENT_MANAGER,	
+	'requireJSs' => [
+		'jquery.fancybox'   => CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . "/js/fancybox/jquery.fancybox.min.js"),
+		'owl.carousel'      => CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . "/js/owl.carousel.min.js"),
+		'jquery.formstyler' => CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . "/js/formstyler/1.7.8/jquery.formstyler.min.js"),
+		'ion.rangeSlider'   => CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . "/js/rangeSlider/2.3.1/ion.rangeSlider.min.js"),
+	],
+	'requireCss' => [
+		'jquery.fancybox'   => CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . "/js/fancybox/jquery.fancybox.min.css"),
+		'jquery.formstyler'	=> CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . "/js/formstyler/1.7.8/jquery.formstyler.css"),
+		'ion.rangeSlider'	=> CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . "/js/rangeSlider/2.3.1/ion.rangeSlider.min.css"),
+		'calculator'        => CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . "/stylesheets/calculator.min.css"),
+	]
+];
+
+use Hipot\BitrixUtils\AssetsContainer;
+AssetsContainer::addJsConfig($siteJsConfigs);
+```
+
+Затем в подключенных на странице js-скриптах можно использовать объект с параметрами appParams
+
+```js
+// site-global-script.js
+if (appParams.IS_DEV === false) {
+	$('body').on('contextmenu', 'img, *[data-observer-block-bg], .section1, .online-cources-form-bg-img', function (e) {
+		e.preventDefault();
+	});
+}
 ```
 
 # Методы
