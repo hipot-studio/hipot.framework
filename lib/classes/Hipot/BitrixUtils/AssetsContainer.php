@@ -20,6 +20,23 @@ class AssetsContainer
 
 	private static array $siteJsConfigs = [];
 
+	/**
+	 * Adds a CSS file path to the appropriate asset queue based on the specified type.
+	 *
+	 * This method organizes CSS assets into three categories:
+	 * - Inline CSS (processed and inserted directly into the page's `<style>` tags).
+	 * - Deferred CSS (loaded asynchronously to optimize performance).
+	 * - Standard CSS (linked in the conventional way for immediate loading).
+	 *
+	 * @param string $path The file path of the CSS resource to be added.
+	 * @param int    $type The type of CSS inclusion, which determines how the CSS will be processed.
+	 *                  Valid options are:
+	 *                  - self::CSS_INLINE: Adds the CSS file path to the inline CSS collection.
+	 *                  - self::CSS_DEFER: Adds the CSS file path to the deferred CSS collection.
+	 *                  - self::CSS: Adds the CSS file path to the standard CSS collection. Default is `self::CSS`.
+	 *
+	 * @return void
+	 */
 	public static function addCss(string $path, int $type = self::CSS): void
 	{
 		match ($type) {
@@ -29,15 +46,28 @@ class AssetsContainer
 		};
 	}
 
+	/**
+	 * Adds or updates the JavaScript configuration for the site.
+	 *
+	 * This method initializes the JavaScript configuration if it hasn't been set already, and then adds or updates
+	 * the configuration with the values provided in the input array. Existing configuration values can either
+	 * be overwritten completely or merged, based on the specified rewrite flag.
+	 *
+	 * @param array $config The configuration data to be added or updated. Keys represent configuration names, with corresponding values.
+	 * @param bool  $rewrite A flag indicating whether existing configuration values should be completely
+	 *                       overwritten. If false, values will be merged instead. Default is false.
+	 *
+	 * @return void
+	 */
 	public static function addJsConfig(array $config, bool $rewrite = false): void
 	{
 		if (!is_array(self::$siteJsConfigs) || count(self::$siteJsConfigs) == 0) {
 			$initJsConfigs = [
-				'SITE_TEMPLATE_PATH' => SITE_TEMPLATE_PATH,
-				'IS_DEV'             => IS_BETA_TESTER,
-				'lang'               => [],
-				'requireJSs'         => [],
-				'requireCss'         => []
+					'SITE_TEMPLATE_PATH' => SITE_TEMPLATE_PATH,
+					'IS_DEV'             => IS_BETA_TESTER,
+					'lang'               => [],
+					'requireJSs'         => [],
+					'requireCss'         => []
 			];
 			self::$siteJsConfigs = $initJsConfigs;
 		}
@@ -53,10 +83,21 @@ class AssetsContainer
 		}
 	}
 
+	/**
+	 * Method to process and correctly include CSS assets at the epilog stage of the application lifecycle.
+	 *
+	 * This method ensures that CSS resources are handled efficiently by:
+	 * - Detecting and skipping processing in admin sections or AJAX contexts.
+	 * - Consolidating and organizing inline, deferred, and typical CSS assets.
+	 * - Preloading and inlining CSS as needed while tuning relative URLs within stylesheets.
+	 * - Using the Asset system to append styles in appropriate locations for optimized loading.
+	 *
+	 * @return void
+	 */
 	public static function onEpilogSendAssets(): void
 	{
 		if (Application::getInstance()?->getContext()?->getRequest()->isAdminSection()
-			|| Application::getInstance()?->getContext()?->getRequest()->isAjaxRequest()
+				|| Application::getInstance()?->getContext()?->getRequest()->isAjaxRequest()
 		) {
 			return;
 		}
