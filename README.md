@@ -24,7 +24,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
     ```
   - с магазином <code>Hipot\BitrixUtils\Sale (aka SaleUtils)</code> и товаром каталога <code>Hipot\BitrixUtils\Catalog</code>
   - различные утилиты-хелперы <code>Hipot\Utils\UUtils (aka UnsortedUtils)</code> и трейты-хелперы в <code>namespace Hipot\Utils\Helper\\*</code>
-  - для отложенного подключения ресурсов [<code>Hipot\Utils\AssetsContainer</code>](docs/AssetsContainer.md)
+  - для отложенного подключения ресурсов [<code>Hipot\BitrixUtils\AssetsContainer</code>](docs/AssetsContainer.md)
   - различные [сервисы](docs/services.md) в пространстве имен <code>Hipot\Services</code>: не используем global's, используем DTO <code>Hipot\Services\BitrixEngine</code>,
   а для проброса данных между элементами приложения используем <code>Hipot\Services\Registry</code>
   - различные базовые типы в пространстве имен <code>[Hipot\Types](docs/types.md)</code>  
