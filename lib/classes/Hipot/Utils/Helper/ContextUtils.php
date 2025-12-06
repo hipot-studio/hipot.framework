@@ -9,6 +9,7 @@ namespace Hipot\Utils\Helper;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Web\Uri;
 use Hipot\Services\BitrixEngine;
 use Bitrix\Main\Composite\Page as CompositePage;
 use Bitrix\Main\Service\GeoIp;
@@ -29,7 +30,7 @@ trait ContextUtils
 		}
 		return $phpPath;
 	}
-
+	
 	/**
 	 * стартует по классике сессию
 	 */
@@ -39,11 +40,11 @@ trait ContextUtils
 		if (session_status() !== PHP_SESSION_ACTIVE) {
 			ini_set("session.cookie_httponly", "1");
 			ini_set("session.use_strict_mode", "On");
-
+			
 			session_start();
 		}
 	}
-
+	
 	/**
 	 * Возвращаем ip-адрес посетителя сайта
 	 *
@@ -70,7 +71,7 @@ trait ContextUtils
 		}
 		return null;
 	}
-
+	
 	/**
 	 * Retrieves geographical data for a given IP address.
 	 *
@@ -86,7 +87,7 @@ trait ContextUtils
 			return null;
 		}
 	}
-
+	
 	/**
 	 * Retrieves the country code associated with the provided IP address.
 	 * @param string $ip The IP address
@@ -96,7 +97,7 @@ trait ContextUtils
 		$data = self::getGeoIpDataByIp($ip);
 		return (string)$data?->countryCode;
 	}
-
+	
 	/**
 	 * Является ли текущая страница в данный момент страницей постраничной навигации
 	 * @return bool
@@ -113,7 +114,7 @@ trait ContextUtils
 		}
 		return false;
 	}
-
+	
 	/**
 	 * Получить содержимое по урлу
 	 * @param $url
@@ -124,7 +125,7 @@ trait ContextUtils
 		$el = new HttpClient();
 		return (string)$el->get( $url );
 	}
-
+	
 	public static function getHttpHeadersByUrl($url): array
 	{
 		$el = new HttpClient([
@@ -135,8 +136,8 @@ trait ContextUtils
 		$headers['status'] = $el->getStatus();
 		return $headers;
 	}
-
-
+	
+	
 	/**
 	 * write exception to log
 	 * @param \Exception|\Bitrix\Main\SystemException $exception
@@ -148,16 +149,16 @@ trait ContextUtils
 		$exceptionHandler = $application->getExceptionHandler();
 		$exceptionHandler->writeToLog($exception);
 	}
-
+	
 	public static function getInlineBase64Image(string $img_file): ?string
 	{
 		if (! file_exists($img_file)) {
 			return null;
 		}
-
+		
 		return 'data:'.mime_content_type($img_file).';base64,'.base64_encode(file_get_contents($img_file));
 	}
-
+	
 	/**
 	 * Останавливаем выполнение SQL- запросов
 	 * @return void
@@ -167,7 +168,7 @@ trait ContextUtils
 	{
 		\Bitrix\Main\Application::getConnection()->disableQueryExecuting();
 	}
-
+	
 	/**
 	 * Включаем выполнение запросов и получаем дамп накопившихся sql запросов
 	 * @return array|null
@@ -179,7 +180,7 @@ trait ContextUtils
 		$connection->enableQueryExecuting();
 		return $connection->getDisabledQueryExecutingDump();
 	}
-
+	
 	/**
 	 * Use this method to set 404 status + ERROR_404 constant in work-area section of page.
 	 * Use with combination of OnEpilog+OnEndBufferContent-handler
@@ -205,7 +206,7 @@ trait ContextUtils
 			}
 		}
 	}
-
+	
 	/**
 	 * Проверяет, находится ли текущая директория в списке директорий для текущего сайта.
 	 * @param array $dirs Массив директорий для проверки
@@ -221,7 +222,7 @@ trait ContextUtils
 		}
 		return false;
 	}
-
+	
 	/** @noinspection GlobalVariableUsageInspection */
 	/**
 	 * Set the URI to the current Bitrix Engine page to work menu property
@@ -233,7 +234,7 @@ trait ContextUtils
 	 */
 	public static function setUriToBitrixCurPage(string $uri): void
 	{
-		$oUri  = new \Bitrix\Main\Web\Uri($uri);
+		$oUri  = new Uri($uri);
 		// to work with GetCurPageParam()
 		parse_str($oUri->getQuery(), $_GET);
 		// to work with menu selected check
@@ -242,7 +243,7 @@ trait ContextUtils
 		}
 		BitrixEngine::getAppD0()->SetCurPage(rtrim($oUri->getPath() . '?' . $oUri->getQuery(), '?'));
 	}
-
+	
 	/**
 	 * Возвращает текущую страницу с добавленными параметрами, при этом удаляет некоторые параметры из URL
 	 *
@@ -270,7 +271,7 @@ trait ContextUtils
 		);
 		return BitrixEngine::getAppD0()->GetCurPageParam($addParams, $delParam, $get_index_page);
 	}
-
+	
 	/**
 	 * Disable all page process events (ex performance on ajax scripts)
 	 *
@@ -293,7 +294,7 @@ trait ContextUtils
 			}
 		}, false, 1);
 	}
-
+	
 	/**
 	 * Determines if the current request is an AJAX request.
 	 *
@@ -305,7 +306,7 @@ trait ContextUtils
 	{
 		$request = $bitrixEngine->request;
 		$server = $bitrixEngine->request->getServer();
-
+		
 		if (
 			($request["testajax"] === 'Y') || ($request["is_ajax_post"] === 'Y') || ($request['via_ajax'] === 'Y') ||
 			$request->isAjaxRequest() ||
@@ -317,7 +318,7 @@ trait ContextUtils
 		}
 		return $bIsAjax;
 	}
-
+	
 	/**
 	 * Clears the composite page cache for a specified URI.
 	 *
@@ -328,13 +329,13 @@ trait ContextUtils
 	public static function clearCompositePage(string $uri): void
 	{
 		$page = new CompositePage($uri);
-
+		
 		/** @var \Bitrix\Main\Composite\Data\AbstractStorage $storage */
 		if ($storage = $page->getStorage()) {
 			$storage->delete();
 		}
 	}
-
+	
 	/**
 	 * Captures the output of a callable.
 	 *
@@ -347,7 +348,7 @@ trait ContextUtils
 		$callback();
 		return ob_get_clean();
 	}
-
+	
 	/**
 	 * Отключает вход в Битрикс по HTTP авторизации
 	 * @see CUser::LoginByHttpAuth()
@@ -361,5 +362,23 @@ trait ContextUtils
 				return false;
 			}
 		);
+	}
+	
+	/**
+	 * Modifies the current page's URI by adding and deleting specified parameters.
+	 *
+	 * @param array $arAddParams An array of parameters to add to the URI.
+	 * @param array $arDeleteParams An array of parameters to remove from the URI.
+	 *
+	 * @return string The modified URI as a string.
+	 */
+	public static function getCurPageParamD7(array $arAddParams = [], array $arDeleteParams = []): string
+	{
+		$request = BitrixEngine::getInstance()->request;
+		$uriString = $request->getRequestUri();
+		$uri = new Uri($uriString);
+		$uri->deleteParams($arDeleteParams);
+		$uri->addParams($arAddParams);
+		return $uri->getUri();
 	}
 }
