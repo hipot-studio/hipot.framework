@@ -6,8 +6,8 @@ $arComponentDescription = [
 	"DESCRIPTION"	=> "ajax loaded blocks to decomposition public pages. author hipot studio.",
 	"ICON"			=> "/images/ico.gif",
 	"PATH" => [
-		"ID"		=> "mgu_root",
-		"NAME"		=> "mgu"
+		"ID"		=> "hipot_root",
+		"NAME"		=> "hipot"
 	],
 	"AREA_BUTTONS"	=> [],
 	"CACHE_PATH"	=> "Y",
