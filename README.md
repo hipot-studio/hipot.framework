@@ -31,7 +31,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
 
 - автозагрузчик к классам <code>lib/simple_loader.php</code> для копирования в <code>/local/php_interface/lib/simple_loader.php</code><br>
 В современных реалиях лучше для этого использовать [composer](install/local/composer.json)
-- немного "плавающих функций" <code>/lib/functions.php</code>
+- немного "плавающих функций" [<code>/lib/functions.php</code>](docs/functions.md)
 - универсальные обработчики событий <code>/lib/handlers_add.php</code> с подключением констант-рубильников из файла <code>/lib/constants.php</code>  
 - скрипт [xhprof.php](docs/xhprof.md) для быстрого профилирования "боевых" проектов
 - страница [<code>pages/error.php</code>](docs/error_php_monitoring.md) с перехватом фатальных php-ошибок и отправке их на почту разработчикам (размещается в DOCUMENT_ROOT проекта)
