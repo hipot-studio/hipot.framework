@@ -44,6 +44,9 @@
 ## Пример работы компонента
 ![img](/docs/img/iblocklike.gif)
 
+## Пошаговая инструкция использования
+
+
 [1]:https://github.com/hipot-studio/hipot.framework/tree/master/install/components/hipot/ajax
 [2]:https://github.com/hipot-studio/mgu-russian.com/blob/master/local/components/mgu/ajax/class.php#L131
 [3]:https://github.com/hipot-studio/mgu-russian.com/blob/master/local/components/mgu/ajax/class.php#L168

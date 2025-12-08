@@ -1,13 +1,13 @@
 # Двигатель болида css-битрикс
 
-| Уровень | Что загружается            | Источник                                        | Кто управляет     | Примечание                                   |
-| ------- | -------------------------- |-------------------------------------------------| ----------------- | -------------------------------------------- |
-| **1**   | Системные стили ядра       | `/bitrix/js/...`, `/bitrix/themes/.default/...` | Bitrix Core       | Загружаются первыми, нельзя изменить порядок |
-| **2**   | Стили шаблона              | `styles.css`, `template_styles.css`             | Asset Manager     | Объединяются в один файл                     |
-| **3**   | Стили компонентов          | `/components/.../style.css`, `addExternalCss()` | Компоненты Bitrix | Грузятся **после** стилей шаблона            |
-| **4**   | Стили, добавленные вручную | `Asset::getInstance()->addCss()`                | Разработчик       | Приоритет выше, чем у компонентов            |
-| **5**   | Inline `<style>`           | Вёрстка шаблона/компонентов                     | Разработчик       | Всегда имеют приоритет над файлами           |
-| **6**   | Стили, вставленные JS      | `document.createElement('link')`                | JS                | Загружаются последними                       |
+| Уровень | Что загружается            | Источник                                        | Кто управляет     | Примечание                                                  |
+| ------- | -------------------------- |-------------------------------------------------| ----------------- |-------------------------------------------------------------|
+| **1**   | Системные стили ядра       | `/bitrix/js/...`, `/bitrix/themes/.default/...` | Bitrix Core       | Загружаются первыми, нельзя изменить порядок                |
+| **2**   | Стили шаблона              | `styles.css`, `template_styles.css`             | Asset Manager     | Объединяются в один файл                                    |
+| **3**   | Стили компонентов          | `/components/.../style.css`, `addExternalCss()` | Компоненты Bitrix | Грузятся **после** стилей шаблона<br/>Объединяются в один файл |
+| **4**   | Стили, добавленные вручную | `Asset::getInstance()->addCss()`                | Разработчик       | Приоритет выше, чем у компонентов                           |
+| **5**   | Inline `<style>`           | Вёрстка шаблона/компонентов                     | Разработчик       | Всегда имеют приоритет над файлами                          |
+| **6**   | Стили, вставленные JS      | `document.createElement('link')`                | JS                | Загружаются последними                                      |
 
 _**Bitrix читает список CSS из шаблона template_styles.css и styles.css → затем подключает стили компонентов → затем всё остальное, соблюдая фиксированный порядок через Asset Manager
 → затем объединяет в общий файл при соответствующей настройке в главном модуле.**_
@@ -18,18 +18,21 @@ _**Bitrix читает список CSS из шаблона template_styles.css 
 
 Второе использование класса заключается в задании js-параметров шаблона сайта.
 
-**_Для инициализации класса необходимо добавить его в обработчик событий:_**</br>
+Для инициализации класса необходимо добавить его в обработчик событий:</br>
 
 ```php
 // init.php
 use Bitrix\Main\EventManager;
-EventManager::getInstance()->addEventHandler('main', 'OnEpilog', [\Hipot\BitrixUtils\AssetsContainer::class, 'onEpilogSendAssets']);
+EventManager::getInstance()->addEventHandler('main', 'OnEpilog', [
+    \Hipot\BitrixUtils\AssetsContainer::class, 
+    'onEpilogSendAssets'
+]);
 ```
 
 
 ## Примеры использования:
 
-### **_CSS_INLINE:_**
+### CSS_INLINE:
 
 ```php
 use Hipot\BitrixUtils\AssetsContainer;
@@ -53,7 +56,7 @@ _Вставляет CSS инлайном в head:_
 </style>
 ```
 
-### **_CSS_DEFER:_**
+### CSS_DEFER:
 
 ```php
 use Hipot\BitrixUtils\AssetsContainer;
@@ -78,7 +81,7 @@ _Вставляет `link` на минифицированную версию ф
 </noscript>
 ```
 
-### **_CSS:_**
+### CSS:
 
 ```php
 use Hipot\BitrixUtils\AssetsContainer;
@@ -160,7 +163,7 @@ AssetsContainer::addJsConfig($siteJsConfigs);
 ```js
 // site-global-script.js
 if (appParams.IS_DEV === false) {
-	$('body').on('contextmenu', 'img, *[data-observer-block-bg], .section1, .online-cources-form-bg-img', function (e) {
+	$('body').on('contextmenu', 'img, *[data-observer-block-bg], .online-cources-form-bg-img', function (e) {
 		e.preventDefault();
 	});
 }
