@@ -13,13 +13,13 @@ class AssetsContainer
 	public const CSS = 1;
 	public const CSS_INLINE = 1;
 	public const CSS_DEFER = 2;
-
+	
 	private static array $CSS = [];
 	private static array $CSS_INLINE = [];
 	private static array $CSS_DEFER = [];
-
+	
 	private static array $siteJsConfigs = [];
-
+	
 	/**
 	 * Adds a CSS file path to the appropriate asset queue based on the specified type.
 	 *
@@ -45,7 +45,7 @@ class AssetsContainer
 			default                 => self::$CSS[] = $path,
 		};
 	}
-
+	
 	/**
 	 * Adds or updates the JavaScript configuration for the site.
 	 *
@@ -63,11 +63,11 @@ class AssetsContainer
 	{
 		if (!is_array(self::$siteJsConfigs) || count(self::$siteJsConfigs) == 0) {
 			$initJsConfigs = [
-					'SITE_TEMPLATE_PATH' => SITE_TEMPLATE_PATH,
-					'IS_DEV'             => IS_BETA_TESTER,
-					'lang'               => [],
-					'requireJSs'         => [],
-					'requireCss'         => []
+				'SITE_TEMPLATE_PATH' => SITE_TEMPLATE_PATH,
+				'IS_DEV'             => IS_BETA_TESTER,
+				'lang'               => [],
+				'requireJSs'         => [],
+				'requireCss'         => []
 			];
 			self::$siteJsConfigs = $initJsConfigs;
 		}
@@ -82,7 +82,7 @@ class AssetsContainer
 			}
 		}
 	}
-
+	
 	/**
 	 * Method to process and correctly include CSS assets at the epilog stage of the application lifecycle.
 	 *
@@ -97,15 +97,15 @@ class AssetsContainer
 	public static function onEpilogSendAssets(): void
 	{
 		if (Application::getInstance()?->getContext()?->getRequest()->isAdminSection()
-				|| Application::getInstance()?->getContext()?->getRequest()->isAjaxRequest()
+			|| Application::getInstance()?->getContext()?->getRequest()->isAjaxRequest()
 		) {
 			return;
 		}
-
+		
 		self::$CSS_INLINE = array_unique(self::$CSS_INLINE);
 		self::$CSS_DEFER  = array_unique(self::$CSS_DEFER);
 		self::$CSS        = array_unique(self::$CSS);
-
+		
 		// region CSS_INLINE
 		ob_start();
 		if (count(self::$CSS_INLINE)) {
@@ -121,7 +121,7 @@ class AssetsContainer
 			$content = file_get_contents(Loader::getDocumentRoot() . $css);
 			$content = str_replace(['url(../'], 'url(' . SITE_TEMPLATE_PATH . '/', $content);
 			$content = preg_replace('#url\([\'"]\.\./([^\'"]+)[\'"]\)#', 'url("' . SITE_TEMPLATE_PATH . '/\1")', $content);
-			echo sprintf('/* __%s__ */ ', basename($css)) . $content . PHP_EOL;
+			echo sprintf('/* __%s__ */ ', basename(dirname($css)) . '/' . basename($css)) . $content . PHP_EOL;
 			$fileSize += filesize(Loader::getDocumentRoot() . $css);
 		}
 		unset($testMinCss);
@@ -131,7 +131,7 @@ class AssetsContainer
 		}
 		Asset::getInstance()?->addString(ob_get_clean(), true, AssetLocation::BEFORE_CSS);
 		// endregion
-
+		
 		// region CSS Defer
 		ob_start();
 		$fileSize = 0;
@@ -150,16 +150,16 @@ class AssetsContainer
 		unset($testMinCss);
 		Asset::getInstance()?->addString(ob_get_clean(), true, AssetLocation::AFTER_CSS);
 		// endregion
-
+		
 		// region typical CSS
 		foreach (self::$CSS as $css) {
 			Asset::getInstance()?->addCss($css);
 		}
 		// endregion
-
+		
 		self::sendJsParamsAsset();
 	}
-
+	
 	/**
 	 * need change on concrete site
 	 * @override
@@ -171,7 +171,7 @@ class AssetsContainer
 			// init base js config
 			self::addJsConfig([]);
 		}
-
+		
 		ob_start();
 		?>
 		<script data-skip-moving="true">
