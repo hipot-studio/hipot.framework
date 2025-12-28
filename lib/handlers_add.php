@@ -28,26 +28,26 @@ $request      = Application::getInstance()->getContext()->getRequest();
 // optimize turn off all page-process-handlers when it's ajax request:
 $eventManager->addEventHandler('main', 'OnPageStart', static function () use ($request) {
 	$be = BitrixEngine::getInstance();
-
+	
 	/**
 	 * На сайт пришел аякс-запрос
 	 */
 	define('IS_AJAX', UUtils::isAjaxRequest($be));
-
+	
 	/**
 	 * Текущий процесс запущен из командной строки
 	 */
 	define('IS_CLI', PHP_SAPI === 'cli');
-
+	
 	if (IS_AJAX || IS_CLI || (defined('DISABLE_PAGE_EVENTS') && DISABLE_PAGE_EVENTS === true)) {
 		UUtils::disableAllPageProcessEvents($be);
 	}
-
+	
 	if (! empty($request->get('sources'))) {
 		Asset::getInstance()->disableOptimizeCss();
 		Asset::getInstance()->disableOptimizeJs();
 		Asset::getInstance()->setJsToBody(false);
-
+		
 		// no .min.js and .min.css
 		$canLoad = Option::get("main","use_minified_assets", "Y") === "Y";
 		if ($canLoad) {
@@ -66,10 +66,10 @@ $eventManager->addEventHandler('main', 'OnPageStart', static function () use ($r
 // определяем глобальные константы, которые могут зависеть от $APPLICATION и $USER
 $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use ($request) {
 	global $APPLICATION, $USER;
-
+	
 	// need user and other internal engine items re-create
 	BitrixEngine::resetInstance();
-
+	
 	foreach (
 		[
 			__DIR__ . '/constants.php',
@@ -79,12 +79,12 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 			Loader::getDocumentRoot() . '/bitrix/php_interface/include/constants.php',
 			Loader::getDocumentRoot() . '/bitrix/php_interface/include/lib/constants.php'
 		] as $constFile) {
-			if (is_file($constFile)) {
-				include $constFile;
-				break;
-			}
+		if (is_file($constFile)) {
+			include $constFile;
+			break;
 		}
-
+	}
+	
 	// create user-d0 to work in agents
 	if ($USER === null) {
 		$USER = BitrixEngine::getCurrentUserD0();
@@ -195,19 +195,19 @@ $eventManager->addEventHandler('main', 'OnEpilog', static function () use ($requ
 	}
 	global $APPLICATION;
 	static $isRun = false;
-
+	
 	if (IS_BETA_TESTER) {
 		$isRun = true;
 	}
-
+	
 	// process 404 in content part
 	if ((!$isRun && defined('ERROR_404') && ERROR_404 === 'Y' && $APPLICATION->GetCurPage() != '/404.php')) {
 		$isRun = true;
 		\CHTTP::setStatus('404 Not Found');
-
+		
 		CompositePage::getInstance()?->markNonCacheable();
 		CompositeEngine::setEnable(false);
-
+		
 		// region re-get one time 404 page
 		$eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$content) use ($request) {
 			$contCacheFile = Loader::getDocumentRoot() . sprintf('/upload/404_%s_cache.html', Application::getInstance()?->getContext()?->getSite());
@@ -218,7 +218,7 @@ $eventManager->addEventHandler('main', 'OnEpilog', static function () use ($requ
 			if (trim($content) === '') {
 				$el      = new HttpClient();
 				$content = $el->get(($request->isHttps() ? 'https://' : 'http://') . $request->getServer()->getHttpHost() . '/404.php?last_page=' . urlencode($request->getRequestUri()));
-
+				
 				file_put_contents($contCacheFile, $content, LOCK_EX);
 			}
 		});
@@ -233,20 +233,20 @@ $eventManager->addEventHandler('main', 'OnEpilog', [AssetsContainer::class, 'onE
 // @see https://www.hipot-studio.com/Codex/form_iblock_element_settings/
 $eventManager->addEventHandler('main', 'OnBeforeEndBufferContent', static function () use ($request) {
 	$p = $request->getPost('p');
-
+	
 	if (!isset($p) || !is_array($p) || count($p) <= 0) {
 		return;
 	}
 	global $APPLICATION;
-
+	
 	$pCfg = array_shift($p);
 	if ($APPLICATION->GetCurPage() != '/bitrix/admin/user_options.php'
 		|| $pCfg['c'] != 'form' || $pCfg['d'] != 'Y'
-		|| !preg_match('#^form_((section)|(element))_\d+$#', $pCfg['n'])
+		|| !preg_match('#^(form_((section)|(element)))|(hlrow_edit)_\d+$#', $pCfg['n'])
 	) {
 		return;
 	}
-
+	
 	/** @noinspection SqlResolve */
 	Application::getConnection()->query("DELETE FROM b_user_option WHERE CATEGORY = 'form' AND NAME = '" . $pCfg['n'] . "' AND COMMON = 'N'");
 	Application::getInstance()->getManagedCache()->cleanDir("user_option");
@@ -258,7 +258,7 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 		return;
 	}
 	global $APPLICATION, $USER;
-
+	
 	if (is_object($USER) && !$USER->IsAuthorized() && !$request->isPost() && $APPLICATION->GetProperty('JS_core_frame_cache_NEED') != 'Y') {
 		$toRemove = [
 			'#<script[^>]+src="/bitrix/js/ui/dexie/[^>]+></script>#',
@@ -268,7 +268,7 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 		];
 		$cont = preg_replace($toRemove, "", $cont);
 	}
-
+	
 	$toInline = [
 		'#<script[^>]+src="(?<src>/bitrix/js/main/core/core.min.js)\?\d+"[^>]*></script>#',
 		'#<script[^>]+src="(?<src>/bitrix/js/main/core/core_ls.min.js)\?\d+"[^>]*></script>#',
@@ -280,14 +280,14 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 			return $matches[0];
 		}
 		$scriptHeader = '/////////////////////////////////////' . PHP_EOL
-				. '// Script: ' . $matches['src'] . PHP_EOL
-				. '/////////////////////////////////////' . PHP_EOL;
+			. '// Script: ' . $matches['src'] . PHP_EOL
+			. '/////////////////////////////////////' . PHP_EOL;
 		return '<script>' . PHP_EOL
-				. (IS_BETA_TESTER ? $scriptHeader : '')
-				. $content . PHP_EOL
-				. '</script>';
+			. (IS_BETA_TESTER ? $scriptHeader : '')
+			. $content . PHP_EOL
+			. '</script>';
 	}, $cont);
-
+	
 	// validator.w3.org: The type attribute is unnecessary for JavaScript resources.
 	$cont = preg_replace(['#<script([^>]*)type=[\'"]text/javascript[\'"]([^>]*)>#', '#<br\s*/>#i'], ['<script\\1\\2>', '<br>'], $cont);
 });
@@ -297,7 +297,7 @@ $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function
 	static $cnt = 0;
 	if (PHP_SAPI == 'cli' && (++$cnt % 200 == 0)) {
 		UUtils::setPrivateProperty(\CAllCatalogDiscount::class, 'arCacheProduct', []);
-
+		
 		\CCatalogDiscount::ClearDiscountCache([
 			'PRODUCT' => true,
 			/*'SECTIONS'        => true,
@@ -323,11 +323,11 @@ $eventManager->addEventHandler(
 	static function (Event $event) {
 		/** @var \Bitrix\Sale\Order $order */
 		$order = $event->getParameter("ENTITY");
-
+		
 		if (isset($GLOBALS['deletedOrderUnusedProps_' . $order->getId()])) {
 			return;
 		}
-
+		
 		Hipot\BitrixUtils\Sale::deleteUnUsedBasketProps();
 		$GLOBALS['deletedOrderUnusedProps_' . $order->getId()] = true;
 	}
