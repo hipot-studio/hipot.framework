@@ -244,12 +244,7 @@ $eventManager->addEventHandler('main', 'OnBeforeEndBufferContent', static functi
 		$checkByNameRegx = '#^(form_((section)|(element)))|(hlrow_edit)_\d+$#';
 	} elseif ($request['action'] == 'main.userOption.saveOptions' && BitrixEngine::getAppD0()->GetCurPage() == '/bitrix/services/main/ajax.php') {
 		// list forms
-		$p = file_get_contents('php://input');
-		if (!json_validate($p)) {
-			return;
-		}
-		$p = json_decode($p, true);
-		$p = $p['newValues'] ?? null;
+		$p = $request->getJsonList()['newValues'] ?? null;
 		
 		$category = 'list';
 		$checkByNameRegx = '#^tbl_#';
