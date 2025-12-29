@@ -13,6 +13,8 @@ use Bitrix\Main\Web\Uri;
 use Hipot\Services\BitrixEngine;
 use Bitrix\Main\Composite\Page as CompositePage;
 use Bitrix\Main\Service\GeoIp;
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Config\Option;
 
 trait ContextUtils
 {
@@ -293,6 +295,34 @@ trait ContextUtils
 				}
 			}
 		}, false, 1);
+	}
+	
+	/**
+	 * Disables the minifying of CSS and JavaScript assets.
+	 * This method prevents the usage of minified versions of assets
+	 * and modifies asset-related settings to ensure files are loaded
+	 * in their original, unoptimized form.
+	 *
+	 * @return void
+	 */
+	public static function disableAssetMinifying(): void
+	{
+		Asset::getInstance()->disableOptimizeCss();
+		Asset::getInstance()->disableOptimizeJs();
+		Asset::getInstance()->setJsToBody(false);
+		
+		// no .min.js and .min.css
+		$canLoad = Option::get("main","use_minified_assets", "Y") === "Y";
+		if ($canLoad) {
+			$optionClass = new \ReflectionClass(Option::class);
+			$options = $optionClass->getStaticPropertyValue('options');
+			$options['main']['-']['use_minified_assets'] = 'N';
+			$optionClass->setStaticPropertyValue('options', $options);
+			$canLoad = Asset::getInstance()::canUseMinifiedAssets();
+			$options['main']['-']['use_minified_assets'] = 'Y';
+			$optionClass->setStaticPropertyValue('options', $options);
+			unset($options, $optionClass, $canLoad);
+		}
 	}
 	
 	/**

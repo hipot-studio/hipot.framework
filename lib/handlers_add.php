@@ -14,12 +14,10 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Composite\Page as CompositePage;
 use Bitrix\Main\Composite\Engine as CompositeEngine;
-use Bitrix\Main\Page\Asset;
 use Hipot\BitrixUtils\AssetsContainer;
 use Hipot\BitrixUtils\HiBlockApps;
 use Hipot\Services\BitrixEngine;
 use Hipot\Utils\UUtils;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\ORM\Data\DataManager;
 
 $eventManager = EventManager::getInstance();
@@ -44,22 +42,7 @@ $eventManager->addEventHandler('main', 'OnPageStart', static function () use ($r
 	}
 	
 	if (! empty($request->get('sources'))) {
-		Asset::getInstance()->disableOptimizeCss();
-		Asset::getInstance()->disableOptimizeJs();
-		Asset::getInstance()->setJsToBody(false);
-		
-		// no .min.js and .min.css
-		$canLoad = Option::get("main","use_minified_assets", "Y") === "Y";
-		if ($canLoad) {
-			$optionClass = new \ReflectionClass(Option::class);
-			$options = $optionClass->getStaticPropertyValue('options');
-			$options['main']['-']['use_minified_assets'] = 'N';
-			$optionClass->setStaticPropertyValue('options', $options);
-			$canLoad = Asset::getInstance()::canUseMinifiedAssets();
-			$options['main']['-']['use_minified_assets'] = 'Y';
-			$optionClass->setStaticPropertyValue('options', $options);
-			unset($options, $optionClass, $canLoad);
-		}
+		UUtils::disableAssetMinifying();
 	}
 });
 
