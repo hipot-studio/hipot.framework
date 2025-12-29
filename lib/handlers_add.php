@@ -229,27 +229,53 @@ $eventManager->addEventHandler('main', 'OnEpilog', static function () use ($requ
 // lazy loaded css, TOFUTURE: js and js-appConfig array
 $eventManager->addEventHandler('main', 'OnEpilog', [AssetsContainer::class, 'onEpilogSendAssets']);
 
-// очищаем настройки формы по-умолчанию для всех админов
+// Очистка настроек форм по-умолчанию для всех админов при галочке "Установить данные настройки по умолчанию для всех пользователей"
 // @see https://www.hipot-studio.com/Codex/form_iblock_element_settings/
 $eventManager->addEventHandler('main', 'OnBeforeEndBufferContent', static function () use ($request) {
-	$p = $request->getPost('p');
+	if (! $request->isPost()) {
+		return;
+	}
+	
+	if (BitrixEngine::getAppD0()->GetCurPage() == '/bitrix/admin/user_options.php') {
+		// detail forms
+		$p = $request->getPost('p');
+		
+		$category = 'form';
+		$checkByNameRegx = '#^(form_((section)|(element)))|(hlrow_edit)_\d+$#';
+	} elseif ($request['action'] == 'main.userOption.saveOptions' && BitrixEngine::getAppD0()->GetCurPage() == '/bitrix/services/main/ajax.php') {
+		// list forms
+		$p = file_get_contents('php://input');
+		if (!json_validate($p)) {
+			return;
+		}
+		$p = json_decode($p, true);
+		$p = $p['newValues'] ?? null;
+		
+		$category = 'list';
+		$checkByNameRegx = '#^tbl_#';
+	} else {
+		return;
+	}
 	
 	if (!isset($p) || !is_array($p) || count($p) <= 0) {
 		return;
 	}
-	global $APPLICATION;
-	
 	$pCfg = array_shift($p);
-	if ($APPLICATION->GetCurPage() != '/bitrix/admin/user_options.php'
-		|| $pCfg['c'] != 'form' || $pCfg['d'] != 'Y'
-		|| !preg_match('#^(form_((section)|(element)))|(hlrow_edit)_\d+$#', $pCfg['n'])
-	) {
+	
+	if ($pCfg['c'] != $category || $pCfg['d'] != 'Y' || !preg_match($checkByNameRegx, $pCfg['n'])) {
 		return;
 	}
 	
-	/** @noinspection SqlResolve */
-	Application::getConnection()->query("DELETE FROM b_user_option WHERE CATEGORY = 'form' AND NAME = '" . $pCfg['n'] . "' AND COMMON = 'N'");
-	Application::getInstance()->getManagedCache()->cleanDir("user_option");
+	$userOptionCategory = $pCfg['c'];
+	$userOptionName     = $pCfg['n'];
+	
+	if (BitrixEngine::getCurrentUserD0()->CanDoOperation('edit_other_settings')) {
+		/** @noinspection SqlResolve */
+		BitrixEngine::getInstance()->connection->query(
+			sprintf("DELETE FROM b_user_option WHERE CATEGORY = '%s' AND NAME = '%s' AND COMMON = 'N'", $userOptionCategory, $userOptionName)
+		);
+		BitrixEngine::getInstance()->app->getManagedCache()->cleanDir("user_option");
+	}
 });
 
 // delete system scripts (Use only when not needed composite dynamic blocks)
