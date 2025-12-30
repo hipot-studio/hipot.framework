@@ -46,12 +46,17 @@ $eventManager->addEventHandler('main', 'OnPageStart', static function () use ($r
 	}
 });
 
-// определяем глобальные константы, которые могут зависеть от $APPLICATION и $USER
+// define global constants that may depend on $APPLICATION and $USER
 $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use ($request) {
 	global $APPLICATION, $USER;
 	
 	// need user and other internal engine items re-create
 	BitrixEngine::resetInstance();
+	
+	// create user-d0 to work in agents
+	if ($USER === null) {
+		$USER = BitrixEngine::getCurrentUserD0();
+	}
 	
 	foreach (
 		[
@@ -67,14 +72,9 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 			break;
 		}
 	}
-	
-	// create user-d0 to work in agents
-	if ($USER === null) {
-		$USER = BitrixEngine::getCurrentUserD0();
-	}
 });
 
-// проставляем id инфоблоков в административном меню
+// Add meta-IDs of the information blocks in the administrative menu
 $eventManager->addEventHandler("main", "OnBuildGlobalMenu", static function (&$aGlobalMenu, &$aModuleMenu) use ($request) {
 	if (!defined('IS_BETA_TESTER') || !IS_BETA_TESTER || !$request->isAdminSection()) {
 		return;
