@@ -19,6 +19,7 @@ final class PageScreenshotCapture
 	
 	public function __construct()
 	{
+		$this->createBrowser();
 	}
 	
 	public function __destruct()
@@ -67,7 +68,6 @@ final class PageScreenshotCapture
 			return;
 		}
 		
-		$this->createBrowser();
 		$this->browser->Visible = true;
 		$this->browser->Fullscreen = true;
 		$this->browser->Width = 2560;
