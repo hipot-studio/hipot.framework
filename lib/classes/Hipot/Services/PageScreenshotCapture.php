@@ -1,6 +1,8 @@
 <?php
 namespace Hipot\Services;
 
+use COM;
+
 /**
  * work only on Windows capture IE-screenshot service
  */
