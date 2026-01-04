@@ -4,7 +4,7 @@ namespace Hipot\Services;
 /**
  * work only on Windows capture IE-screenshot service
  */
-final class PageScreenshotCaptureService
+final class PageScreenshotCapture
 {
 	const string COM_OBJECT_NAME = 'InternetExplorer.Application';
 	
