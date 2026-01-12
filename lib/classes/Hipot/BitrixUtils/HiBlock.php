@@ -195,7 +195,7 @@ class HiBlock
 			$hlblock['LOC'] = $localization[ $hlblock['ID'] ] ?? ['NAME' => $hlblock['NAME']];
 			if ($getProps) {
 				$props = [];
-				$rs    = \CAllUserTypeEntity::GetList(['SORT' => 'ASC', 'FIELD_NAME' => 'ASC'], ['%ENTITY_ID' => 'HLBLOCK_', 'LANG' => self::getLanguageId()]);
+				$rs    = \CUserTypeEntity::GetList(['SORT' => 'ASC', 'FIELD_NAME' => 'ASC'], ['%ENTITY_ID' => 'HLBLOCK_', 'LANG' => self::getLanguageId()]);
 				while ($prop = $rs->Fetch()) {
 					if ($prop['USER_TYPE_ID'] === 'enumeration') {
 						$prop['VALUE_LIST'] = self::getEnumPropertyValues($prop['ID']);

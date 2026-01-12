@@ -66,7 +66,7 @@ class Iblock extends _CIBElement
 		if (Loader::includeModule('catalog')) {
 			\Bitrix\Catalog\Product\Sku::enableDeferredCalculation();
 		}
-		\CAllIBlock::disableTagCache($iblockId);
+		\CIBlock::disableTagCache($iblockId);
 	}
 
 	/**
@@ -77,8 +77,8 @@ class Iblock extends _CIBElement
 	 */
 	public static function endMultipleElemsUpdate(int $iblockId): void
 	{
-		\CAllIBlock::enableTagCache($iblockId);
-		\CAllIBlock::clearIblockTagCache($iblockId);
+		\CIBlock::enableTagCache($iblockId);
+		\CIBlock::clearIblockTagCache($iblockId);
 
 		if (Loader::includeModule('catalog')) {
 			\Bitrix\Catalog\Product\Sku::disableDeferredCalculation();

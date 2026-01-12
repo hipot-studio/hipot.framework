@@ -10,7 +10,7 @@
  * - /local/php_interface/include/lib/classes/
  * - /bitrix/php_interface/include/lib/classes/
  *
- * use classes with namespaces:
+ * Use classes with namespaces:
  * \Hipot\Db\AbstractBaseAdapter	-->  <classes root>/hipot/db/abstractbaseadapter.php
  * \CImg 							-->  <classes root>/cimg.php
  * ...
