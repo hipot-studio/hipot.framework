@@ -74,6 +74,22 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 		}
 });
 
+// Remove admin notify message after execute updaters
+$eventManager->addEventHandler('main', 'OnProlog', static function () use ($request) {
+	if ($request === null || !$request->isAdminSection()) {
+		return;
+	}
+	
+	$iterator = \CAdminNotify::GetList([], [
+		'MODULE_ID' => 'main',
+		'TAG'       => 'checklist_cp',
+	]);
+	$adminNotify = $iterator->Fetch();
+	if ($adminNotify) {
+		\CAdminNotify::Delete($adminNotify['ID']);
+	}
+});
+
 // Add meta-IDs of the information blocks in the administrative menu
 $eventManager->addEventHandler("main", "OnBuildGlobalMenu", static function (&$aGlobalMenu, &$aModuleMenu) use ($request) {
 	if (!defined('IS_BETA_TESTER') || !IS_BETA_TESTER || !$request->isAdminSection()) {
