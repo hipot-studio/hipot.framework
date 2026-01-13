@@ -338,5 +338,24 @@ $eventManager->addEventHandler(
 );
 // endregion
 
+// Remove admin notify message after execute updaters
+$eventManager->addEventHandler('main', 'OnProlog', static function () use ($request) {
+	if ($request === null || !$request->isAdminSection()) {
+		return;
+	}
+
+	$iterator = \CAdminNotify::GetList(
+		array(),
+		array(
+			'MODULE_ID' => 'main',
+			'TAG' => 'checklist_cp',
+		)
+	);
+	$adminNotify = $iterator->Fetch();
+	if ($adminNotify) {
+		CAdminNotify::Delete($adminNotify['ID']);
+	}
+});
+
 // disable basic auth in bitrix admin
 UUtils::disableHttpAuth();
