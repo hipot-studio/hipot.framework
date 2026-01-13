@@ -76,7 +76,7 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 
 // Remove admin notify message after execute updaters
 $eventManager->addEventHandler('main', 'OnProlog', static function () use ($request) {
-	if ($request === null || !$request->isAdminSection()) {
+	if ($request === null || (defined('IS_BETA_TESTER') && !IS_BETA_TESTER) || !$request->isAdminSection()) {
 		return;
 	}
 	
