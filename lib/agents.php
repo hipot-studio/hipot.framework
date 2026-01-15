@@ -6,31 +6,29 @@
  * @version pre 1.0
  */
 
+use Hipot\Services\BitrixEngine;
+
 /**
- * Удаляем заснувшие запросы и запросы SELECT, длительность которых больше 200 секунд
- *
- * Константа HI_NOT_REMOVE_LONG_SELECT позволяет отменить выполнение
- *
+ * Завершаем заснувшие запросы и запросы SELECT, длительность которых больше 600 секунд.
+ * Установленная константа HI_NOT_REMOVE_LONG_SELECT = true позволяет отменить это действие.
  * @return string
  */
-function RemoveLongSelectAgent()
+function RemoveLongSelectAgent(): string
 {
 	if (constant('HI_NOT_REMOVE_LONG_SELECT') === true) {
 		return __FUNCTION__ . '();';
 	}
-	$timeout_s = 200;
-
-	global $DB;
-	$r = $DB->Query('SHOW PROCESSLIST');
-
-	while ($p = $r->Fetch()) {
+	$timeout_s = 600;
+	
+	$l = BitrixEngine::getInstance()->connection->query('SHOW PROCESSLIST');
+	while ($p = $l->Fetch()) {
 		$sql		= trim($p['Info']);
 		$procId		= (int)$p['Id'];
-
+		
 		if ((int)$p['Time'] >= $timeout_s &&
-			(substr($sql, 0, 6) == 'SELECT' || $p['Command'] == 'Sleep')
+			(strpos($sql, 'SELECT') === 0 || $p['Command'] == 'Sleep')
 		) {
-			$DB->Query('KILL ' . $procId);
+			BitrixEngine::getInstance()->connection->query('KILL ' . $procId);
 		}
 	}
 	return __FUNCTION__ . '();';
@@ -39,16 +37,16 @@ function RemoveLongSelectAgent()
 // check agents run log
 if (! defined('BX_AGENTS_LOG_FUNCTION')) {
 	define('BX_AGENTS_LOG_FUNCTION', 'HipotAgentsLogFunction');
-
+	
 	function HipotAgentsLogFunction($arAgent, $point)
 	{
 		@file_put_contents(
-			$_SERVER["DOCUMENT_ROOT"] . '/agents_executions_points.log',
-
+			BitrixEngine::getInstance()->app::getDocumentRoot() . '/agents_executions_points.log',
+			
 			date('d-m-Y H:i:s') . PHP_EOL .
 			print_r($point, 1) . PHP_EOL .
 			print_r($arAgent, 1) . PHP_EOL . PHP_EOL,
-
+			
 			FILE_APPEND
 		);
 	}
