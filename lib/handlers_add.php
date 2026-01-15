@@ -80,13 +80,22 @@ $eventManager->addEventHandler('main', 'OnProlog', static function () use ($requ
 		return;
 	}
 	
-	$iterator = \CAdminNotify::GetList([], [
-		'MODULE_ID' => 'main',
-		'TAG'       => 'checklist_cp',
-	]);
-	$adminNotify = $iterator->Fetch();
-	if ($adminNotify) {
-		\CAdminNotify::Delete($adminNotify['ID']);
+	$notNeededNotifyFilters = [
+		[
+			'MODULE_ID' => 'main',
+			'TAG'       => 'checklist_cp',
+		],
+		[
+			'MODULE_ID' => 'acrit.%',
+			'TAG'       => 'TOKEN_NOTIFIER',
+		]
+	];
+	foreach ($notNeededNotifyFilters as $filter) {
+		$iterator    = \CAdminNotify::GetList([], $filter);
+		$adminNotify = $iterator->Fetch();
+		if ($adminNotify) {
+			\CAdminNotify::Delete($adminNotify['ID']);
+		}
 	}
 });
 
