@@ -1,4 +1,5 @@
 <?php
+defined('B_PROLOG_INCLUDED') || die();
 /**
  * Установка обработчиков и их описание.
  * Желательно описание (определение класса и метода) делать отдельно от данного файла
@@ -23,24 +24,24 @@ use Bitrix\Main\ORM\Data\DataManager;
 $eventManager = EventManager::getInstance();
 $request      = Application::getInstance()->getContext()->getRequest();
 
-// optimize turn off all page-process-handlers when it's ajax request:
+// optimize turn off all page-process-handlers when it's an ajax request:
 $eventManager->addEventHandler('main', 'OnPageStart', static function () use ($request) {
 	$be = BitrixEngine::getInstance();
-
+	
 	/**
 	 * На сайт пришел аякс-запрос
 	 */
 	define('IS_AJAX', UUtils::isAjaxRequest($be));
-
+	
 	/**
 	 * Текущий процесс запущен из командной строки
 	 */
 	define('IS_CLI', PHP_SAPI === 'cli');
-
+	
 	if (IS_AJAX || IS_CLI || (defined('DISABLE_PAGE_EVENTS') && DISABLE_PAGE_EVENTS === true)) {
 		UUtils::disableAllPageProcessEvents($be);
 	}
-
+	
 	if (! empty($request->get('sources'))) {
 		UUtils::disableAssetMinifying();
 	}
@@ -49,7 +50,7 @@ $eventManager->addEventHandler('main', 'OnPageStart', static function () use ($r
 // define global constants that may depend on $APPLICATION and $USER
 $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use ($request) {
 	global $APPLICATION, $USER;
-
+	
 	// need user and other internal engine items re-create
 	BitrixEngine::resetInstance();
 	
@@ -57,7 +58,7 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 	if ($USER === null) {
 		$USER = BitrixEngine::getCurrentUserD0();
 	}
-
+	
 	foreach (
 		[
 			__DIR__ . '/constants.php',
@@ -67,12 +68,14 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 			Loader::getDocumentRoot() . '/bitrix/php_interface/include/constants.php',
 			Loader::getDocumentRoot() . '/bitrix/php_interface/include/lib/constants.php'
 		] as $constFile) {
-			if (is_file($constFile)) {
-				include $constFile;
-				break;
-			}
+		if (is_file($constFile)) {
+			include $constFile;
+			break;
 		}
+	}
 });
+
+// region admin UI
 
 // Remove admin notify message after execute updaters
 $eventManager->addEventHandler('main', 'OnProlog', static function () use ($request) {
@@ -134,6 +137,7 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 	}
 	unset($resProps);
 	/** @noinspection HtmlUnknownAttribute */
+	/** @noinspection HtmlDeprecatedAttribute */
 	$strRegExp  = '#(<tr [^>]*id="tr_PROPERTY_(\d+)"[^>]*>\s*<td class="[^>]+" width="40%">)(\s*<span[^>]+>.*?</script>&nbsp;)?(\s*[^>]+:\s*)(</td>)#is';
 	$strContent = preg_replace_callback($strRegExp, static function ($arMatch) use ($arProps) {
 		$strName = sprintf('%s%s <span class="hi_iblock_prop_meta">%d, %s</span>', $arMatch[3], $arMatch[4],
@@ -161,12 +165,13 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 
 // RemoveYandexDirectTab in iblock elements
 $eventManager->addEventHandler('main', 'OnAdminTabControlBegin', static function (&$TabControl) {
-	/** @var $GLOBALS array{'DB':\CDatabase, 'APPLICATION':\CMain, 'USER':\CUser, 'USER_FIELD_MANAGER':\CUserTypeManager, 'CACHE_MANAGER':\CCacheManager, 'stackCacheManager':\CStackCacheManager} */
-	if ($GLOBALS['APPLICATION']->GetCurPage() == '/bitrix/admin/iblock_element_edit.php') {
-		foreach ($TabControl->tabs as $Key => $arTab) {
-			if ($arTab['DIV'] == 'seo_adv_seo_adv') {
-				unset($TabControl->tabs[$Key]);
-			}
+	$arAllowedUrls = ['/bitrix/admin/cat_product_edit.php', '/bitrix/admin/iblock_element_edit.php'];
+	if (! in_array(BitrixEngine::getAppD0()->GetCurPage(false), $arAllowedUrls, false)) {
+		return;
+	}
+	foreach ($TabControl->tabs as $Key => $arTab) {
+		if ($arTab['DIV'] == 'seo_adv_seo_adv') {
+			unset($TabControl->tabs[$Key]);
 		}
 	}
 });
@@ -195,47 +200,6 @@ $eventManager->addEventHandler(	"main", "OnAdminListDisplay",
 		}
 	}
 );
-
-// отрисовка 404 страницы с прерыванием текущего буфера и замены его на содержимое 404
-$eventManager->addEventHandler('main', 'OnEpilog', static function () use ($request, $eventManager) {
-	if ($request->isAdminSection() || $request->isAjaxRequest()) {
-		return;
-	}
-	global $APPLICATION;
-	static $isRun = false;
-
-	if (IS_BETA_TESTER) {
-		$isRun = true;
-	}
-
-	// process 404 in content part
-	if ((!$isRun && defined('ERROR_404') && ERROR_404 === 'Y' && $APPLICATION->GetCurPage() != '/404.php')) {
-		$isRun = true;
-		\CHTTP::setStatus('404 Not Found');
-
-		CompositePage::getInstance()?->markNonCacheable();
-		CompositeEngine::setEnable(false);
-
-		// region re-get one time 404 page
-		$eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$content) use ($request) {
-			$contCacheFile = Loader::getDocumentRoot() . sprintf('/upload/404_%s_cache.html', Application::getInstance()?->getContext()?->getSite());
-			if (is_file($contCacheFile) && ((time() - filemtime($contCacheFile)) > 3600 * 24 * 7)) {
-				unlink($contCacheFile);
-			}
-			$content = is_file($contCacheFile) ? file_get_contents($contCacheFile) : '';
-			if (trim($content) === '') {
-				$el      = new HttpClient();
-				$content = $el->get(($request->isHttps() ? 'https://' : 'http://') . $request->getServer()->getHttpHost() . '/404.php?last_page=' . urlencode($request->getRequestUri()));
-
-				file_put_contents($contCacheFile, $content, LOCK_EX);
-			}
-		});
-		// endregion
-	}
-});
-
-// lazy loaded css, TOFUTURE: js and js-appConfig array
-$eventManager->addEventHandler('main', 'OnEpilog', [AssetsContainer::class, 'onEpilogSendAssets']);
 
 // Очистка настроек форм по-умолчанию для всех админов при галочке "Установить данные настройки по умолчанию для всех пользователей"
 // @see https://www.hipot-studio.com/Codex/form_iblock_element_settings/
@@ -281,13 +245,58 @@ $eventManager->addEventHandler('main', 'OnBeforeEndBufferContent', static functi
 	}
 });
 
+// endregion admin UI
+
+// region some SEO fixes in public pages and js-appConfig array
+
+// отрисовка 404 страницы с прерыванием текущего буфера и замены его на содержимое 404
+$eventManager->addEventHandler('main', 'OnEpilog', static function () use ($request, $eventManager) {
+	if ($request->isAdminSection() || $request->isAjaxRequest()) {
+		return;
+	}
+	global $APPLICATION;
+	static $isRun = false;
+	
+	if (IS_BETA_TESTER) {
+		$isRun = true;
+	}
+	
+	// process 404 in content part
+	if ((!$isRun && defined('ERROR_404') && ERROR_404 === 'Y' && $APPLICATION->GetCurPage() != '/404.php')) {
+		$isRun = true;
+		\CHTTP::setStatus('404 Not Found');
+		
+		CompositePage::getInstance()?->markNonCacheable();
+		CompositeEngine::setEnable(false);
+		
+		// region re-get one time 404 page
+		$eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$content) use ($request) {
+			$contCacheFile = Loader::getDocumentRoot() . sprintf('/upload/404_%s_cache.html', Application::getInstance()?->getContext()?->getSite());
+			if (is_file($contCacheFile) && ((time() - filemtime($contCacheFile)) > 3600 * 24 * 7)) {
+				unlink($contCacheFile);
+			}
+			$content = is_file($contCacheFile) ? file_get_contents($contCacheFile) : '';
+			if (trim($content) === '') {
+				$el      = new HttpClient();
+				$content = $el->get(($request->isHttps() ? 'https://' : 'http://') . $request->getServer()->getHttpHost() . '/404.php?last_page=' . urlencode($request->getRequestUri()));
+				
+				file_put_contents($contCacheFile, $content, LOCK_EX);
+			}
+		});
+		// endregion
+	}
+});
+
+// lazy loaded css, TOFUTURE: js and js-appConfig array
+$eventManager->addEventHandler('main', 'OnEpilog', [AssetsContainer::class, 'onEpilogSendAssets']);
+
 // delete system scripts (Use only when not needed composite dynamic blocks)
 $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$cont) use ($request) {
 	if ($request === null || $request->isAdminSection()) {
 		return;
 	}
 	global $APPLICATION, $USER;
-
+	
 	if (is_object($USER) && !$USER->IsAuthorized() && !$request->isPost() && $APPLICATION->GetProperty('JS_core_frame_cache_NEED') != 'Y') {
 		$toRemove = [
 			'#<script[^>]+src="/bitrix/js/ui/dexie/[^>]+></script>#',
@@ -297,7 +306,7 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 		];
 		$cont = preg_replace($toRemove, "", $cont);
 	}
-
+	
 	$toInline = [
 		'#<script[^>]+src="(?<src>/bitrix/js/main/core/core.min.js)\?\d+"[^>]*></script>#',
 		'#<script[^>]+src="(?<src>/bitrix/js/main/core/core_ls.min.js)\?\d+"[^>]*></script>#',
@@ -309,24 +318,28 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 			return $matches[0];
 		}
 		$scriptHeader = '/////////////////////////////////////' . PHP_EOL
-				. '// Script: ' . $matches['src'] . PHP_EOL
-				. '/////////////////////////////////////' . PHP_EOL;
+			. '// Script: ' . $matches['src'] . PHP_EOL
+			. '/////////////////////////////////////' . PHP_EOL;
 		return '<script>' . PHP_EOL
-				. (IS_BETA_TESTER ? $scriptHeader : '')
-				. $content . PHP_EOL
-				. '</script>';
+			. (IS_BETA_TESTER ? $scriptHeader : '')
+			. $content . PHP_EOL
+			. '</script>';
 	}, $cont);
-
+	
 	// validator.w3.org: The type attribute is unnecessary for JavaScript resources.
 	$cont = preg_replace(['#<script([^>]*)type=[\'"]text/javascript[\'"]([^>]*)>#', '#<br\s*/>#i'], ['<script\\1\\2>', '<br>'], $cont);
 });
+
+// endregion some SEO fixes
+
+// region sale and catalog
 
 // drop unused cache to per-product discount on cli run
 $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function (&$arResult) {
 	static $cnt = 0;
 	if (PHP_SAPI == 'cli' && (++$cnt % 200 == 0)) {
 		UUtils::setPrivateProperty(\CCatalogDiscount::class, 'arCacheProduct', []);
-
+		
 		\CCatalogDiscount::ClearDiscountCache([
 			'PRODUCT' => true,
 			/*'SECTIONS'        => true,
@@ -336,11 +349,6 @@ $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function
 	}
 	return true;
 });
-
-// immediately drop the custom setting hl-block cache
-foreach ([DataManager::EVENT_ON_AFTER_UPDATE, DataManager::EVENT_ON_AFTER_ADD, DataManager::EVENT_ON_AFTER_DELETE] as $event) {
-	$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . $event,   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
-}
 
 // region очистка из корзины ненужных свойств (при добавлении товара из админки)
 $eventManager->addEventHandler("sale", "OnBasketAdd", static function ($ID, $arFields) {
@@ -352,16 +360,25 @@ $eventManager->addEventHandler(
 	static function (Event $event) {
 		/** @var \Bitrix\Sale\Order $order */
 		$order = $event->getParameter("ENTITY");
-
-		if (isset($GLOBALS['deletedOrderUnusedProps_' . $order->getId()])) {
+		
+		$checkFlag = 'deletedOrderUnusedProps_' . $order->getId();
+		/** @noinspection GlobalVariableUsageInspection */
+		if (isset($GLOBALS[$checkFlag])) {
 			return;
 		}
-
 		Hipot\BitrixUtils\Sale::deleteUnUsedBasketProps();
-		$GLOBALS['deletedOrderUnusedProps_' . $order->getId()] = true;
+		/** @noinspection GlobalVariableUsageInspection */
+		$GLOBALS[$checkFlag] = true;
 	}
 );
 // endregion
+
+// endregion sale and catalog
+
+// immediately drop the custom setting hl-block cache
+foreach ([DataManager::EVENT_ON_AFTER_UPDATE, DataManager::EVENT_ON_AFTER_ADD, DataManager::EVENT_ON_AFTER_DELETE] as $event) {
+	$eventManager->addEventHandler('', HiBlockApps::CS_HIBLOCK_NAME . $event,   [HiBlockApps::class, 'clearCustomSettingsCacheHandler']);
+}
 
 // disable basic auth in bitrix admin
 UUtils::disableHttpAuth();
