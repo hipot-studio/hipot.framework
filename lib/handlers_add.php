@@ -5,7 +5,7 @@ defined('B_PROLOG_INCLUDED') || die();
  * Желательно описание (определение класса и метода) делать отдельно от данного файла
  *
  * Т.е. в данном файле пишем AddEventHandler
- * а сам обработчик в файле с классом /include/lib/classes/siteevents.php
+ * а сам обработчик в файле с классом lib/classes/SiteEvents.php, lib/classes/CatalogEvents.php, ...
  */
 
 use Bitrix\Main\Loader;
