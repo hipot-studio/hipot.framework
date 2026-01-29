@@ -76,11 +76,13 @@ spl_autoload_register(static function ($className) {
 	$libDirs = [...$libDirs, ...$mainVendorSrcDirs];
 	*/
 	// endregion
-
+	
 	// region hipot component classes
-	\Hipot\Utils\UUtils::loadHipotComponentClass($className);
-	if (class_exists($className, false)) {
-		return;
+	if (class_exists(\Hipot\Utils\UUtils::class)) {
+		\Hipot\Utils\UUtils::loadHipotComponentClass($className);
+		if (class_exists($className, false)) {
+			return;
+		}
 	}
 	// endregion
 
