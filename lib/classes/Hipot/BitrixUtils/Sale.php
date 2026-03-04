@@ -271,7 +271,7 @@ final class Sale
 	/**
 	 * Установить свойства заказа
 	 * @param int $orderId Идентификатор заказа,
-	 * @param array $orderProp Массив свойств вида ['код свойства' => 'значение свойства'].
+	 * @param array $orderProps Массив свойств вида ['код свойства' => 'значение свойства'].
 	 * @return bool Возвращает true, если свойства заданы, иначе - false
 	 */
 	public static function setOrderProperties(int $orderId, array $orderProps): bool
@@ -291,7 +291,7 @@ final class Sale
 			if (!$property) {
 				$propData = OrderPropsTable::getList([
 					'filter' => [
-						'=CODE' => $code,
+						'=CODE'           => $code,
 						'=PERSON_TYPE_ID' => $personTypeId
 					],
 					'limit' => 1
@@ -304,6 +304,7 @@ final class Sale
 			$property->setValue($value);
 		}
 		$result = $propertyCollection->save();
+		
 		return $result->isSuccess();
 	}
 }
