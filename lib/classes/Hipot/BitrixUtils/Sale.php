@@ -12,6 +12,7 @@ use Bitrix\Sale\Discount;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Internals\DiscountTable;
 use Bitrix\Sale\Internals\OrderChangeTable;
+use Bitrix\Sale\Internals\OrderPropsTable;
 use Bitrix\Sale\Order;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity\ReferenceField;
@@ -265,5 +266,46 @@ final class Sale
 			//'delete from b_sale_basket_props WHERE BASKET_ID = ' . (int)$ID . ' AND ' .
 			'CODE NOT IN ('.implode(', ',$nps).')';
 		$DB->Query($sqlDelUnusedProps);
+	}
+
+	/**
+	 * Установить свойства заказа
+	 * @param int $orderId Идентификатор заказа,
+	 * @param array $orderProp Массив свойств вида ['код свойства' => 'значение свойства'].
+	 * @return bool Возвращает true, если свойства заданы, иначе - false
+	 */
+	public static function setOrderProperties(int $orderId, array $orderProps): bool
+	{
+		if ($orderId <= 0 || empty($orderProps)) {
+			return false;
+		}
+		$order = Order::load($orderId);
+		if (!$order) {
+			return false;
+		}
+		$propertyCollection = $order->getPropertyCollection();
+		$personTypeId = $order->getPersonTypeId();
+
+		foreach ($orderProps as $code => $value)
+		{
+			$property = $propertyCollection->getItemByOrderPropertyCode($code);
+			if (!$property)
+			{
+				$propData = OrderPropsTable::getList([
+					'filter' => [
+						'=CODE' => $code,
+						'=PERSON_TYPE_ID' => $personTypeId
+					],
+					'limit' => 1
+				])->fetch();
+				if (!$propData) {
+					continue;
+				}
+				$property = $propertyCollection->createItem($propData);
+			}
+			$property->setValue($value);
+		}
+		$result = $propertyCollection->save();
+		return $result->isSuccess();
 	}
 }
