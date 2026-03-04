@@ -91,6 +91,10 @@ $eventManager->addEventHandler('main', 'OnProlog', static function () use ($requ
 		[
 			'MODULE_ID' => 'acrit.%',
 			'TAG'       => 'TOKEN_NOTIFIER',
+		],
+		[
+			'MODULE_ID' => 'call',
+			'TAG'       => 'call_registration',
 		]
 	];
 	foreach ($notNeededNotifyFilters as $filter) {
@@ -352,7 +356,7 @@ $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function
 
 // region очистка из корзины ненужных свойств (при добавлении товара из админки)
 $eventManager->addEventHandler("sale", "OnBasketAdd", static function ($ID, $arFields) {
-	Hipot\BitrixUtils\Sale::deleteUnUsedBasketProps($ID);
+	Hipot\BitrixUtils\Sale::deleteUnusedBasketProps($ID);
 });
 $eventManager->addEventHandler(
 	'sale',
@@ -366,7 +370,7 @@ $eventManager->addEventHandler(
 		if (isset($GLOBALS[$checkFlag])) {
 			return;
 		}
-		Hipot\BitrixUtils\Sale::deleteUnUsedBasketProps();
+		Hipot\BitrixUtils\Sale::deleteUnusedBasketProps();
 		/** @noinspection GlobalVariableUsageInspection */
 		$GLOBALS[$checkFlag] = true;
 	}

@@ -16,6 +16,7 @@ use Bitrix\Sale\Internals\OrderPropsTable;
 use Bitrix\Sale\Order;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity\ReferenceField;
+use Hipot\Services\BitrixEngine;
 
 Loader::includeModule('sale');
 
@@ -34,7 +35,7 @@ final class Sale
 		);
 		return $basket;
 	}
-
+	
 	/**
 	 * Retrieves the orderable items from the FUser basket.
 	 *
@@ -45,26 +46,26 @@ final class Sale
 		$basket = self::getFUserBasket();
 		return $basket->getOrderableItems();
 	}
-
+	
 	public static function getBasketItemProperties(BasketItem $basketItem, array $ignoreItemsCode = ['CATALOG.XML_ID', 'PRODUCT.XML_ID', 'SUM_OF_CHARGE']): array
 	{
 		$properties = [];
 		/** @var bxSale\BasketPropertiesCollection $propertyCollection */
 		$propertyCollection = $basketItem->getPropertyCollection();
 		$basketId           = $basketItem->getBasketCode();
-
+		
 		foreach ($propertyCollection->getPropertyValues() as $property) {
 			if (in_array($property['CODE'], $ignoreItemsCode, false)) {
 				continue;
 			}
-
+			
 			$property              = array_filter($property, [\CSaleBasketHelper::class, 'filterFields']);
 			$property['BASKET_ID'] = $basketId;
 			$properties[] = $property;
 		}
 		return $properties;
 	}
-
+	
 	/**
 	 * Checks if an order exists.
 	 *
@@ -82,7 +83,7 @@ final class Sale
 		}
 		return $result;
 	}
-
+	
 	/**
 	 * Retrieves the store ID associated with the given order.
 	 *
@@ -102,7 +103,7 @@ final class Sale
 		}
 		return $storeId;
 	}
-
+	
 	/**
 	 * Applies order discounts to a given order.
 	 *
@@ -114,26 +115,26 @@ final class Sale
 	public static function applyOrderDiscounts(?Order $order = null, array &$result = null): array
 	{
 		$errors = [];
-
+		
 		if (is_null($order)) {
 			return $errors;
 		}
-
+		
 		$discounts = $order->getDiscount();
 		$discounts->setOrderRefresh(true);
 		$r = $discounts->calculate();
-
+		
 		if ($r->isSuccess()) {
 			$result = $discounts->getApplyResult(true);
 		} else {
 			$errors[] = $r->getErrorMessages();
 		}
-
+		
 		$order->doFinalAction(true);
-
+		
 		return $errors;
 	}
-
+	
 	/**
 	 * Applies basket discounts to a given basket.
 	 *
@@ -145,11 +146,11 @@ final class Sale
 	public static function applyBasketDiscounts(?Basket $basket, array &$result = null): array
 	{
 		$errors = [];
-
+		
 		if (is_null($basket)) {
 			return $errors;
 		}
-
+		
 		if ($basket->getOrder() !== null) {
 			$discounts = Discount::buildFromOrder($basket->getOrder());
 		} else {
@@ -157,16 +158,16 @@ final class Sale
 			$discounts = Discount::buildFromBasket($basket, $context);
 		}
 		$r = $discounts->calculate();
-
+		
 		if ($r->isSuccess()) {
 			$result = $discounts->getApplyResult(true);
 		} else {
 			$errors[] = $r->getErrorMessages();
 		}
-
+		
 		return $errors;
 	}
-
+	
 	/**
 	 * Получить время изменения акций модуля sale
 	 */
@@ -188,13 +189,13 @@ final class Sale
 			$getListParams['select']['CATALOG_DISCOUNT_ID'] = 'CATALOG_DISCOUNT.ID';
 		}
 		$getListParams['limit'] = 1;
-
+		
 		$discount   = DiscountTable::getList($getListParams)->fetch();
 		$discountTs = $discount['TIMESTAMP_X'];
 		/* @var $discountTs \Bitrix\Main\Type\DateTime */
 		return $discountTs->format('U');
 	}
-
+	
 	/**
 	 * @param \Bitrix\Sale\Order $order
 	 *
@@ -208,7 +209,7 @@ final class Sale
 		$paymentCollection = $order->getPaymentCollection();
 		/** @var $payment \Bitrix\Sale\Payment */
 		$payment = $paymentCollection->getIterator()->current();
-
+		
 		$paySystemAction = \Bitrix\Sale\PaySystem\Manager::getList([
 			'filter' => ['PAY_SYSTEM_ID' => $payment->getPaymentSystemId()],
 			'select' => ['*'],
@@ -216,12 +217,10 @@ final class Sale
 		$service         = new \Bitrix\Sale\PaySystem\Service($paySystemAction);
 		return [$service, $payment];
 	}
-
+	
 	/**
 	 * Проверяет, был ли заказ оплачен в истории изменений заказа
-	 *
 	 * @param int $orderId Идентификатор заказа
-	 *
 	 * @return bool Возвращает true, если заказ оплачен в истории изменений заказа, иначе - false
 	 */
 	public static function orderHasPayedInHistory(int $orderId): bool
@@ -242,32 +241,39 @@ final class Sale
 		}
 		return false;
 	}
-
+	
 	/**
 	 * Deletes unused basket properties from the database (event handler)
-	 *
 	 * @param bool|int $basketId The ID of the basket to delete unused properties from. Optional, defaults to false.
-	 *
 	 * @return void
+	 * @deprecated
 	 */
-	public static function deleteUnUsedBasketProps($basketId = false): void
+	public static function deleteUnusedBasketProps($basketId = false): void
 	{
-		global $DB;
-
+		// need per-site config class \App
+		/** @noinspection PhpUndefinedClassInspection */
+		if (!class_exists(\App::class)) {
+			return;
+		}
+		
 		$nps = [];
 		foreach (\App::NEED_BASKET_PROPERTY as $np) {
 			$nps[] = "\"" . $np . "\"";
 		}
-
+		if (count($nps) <= 0) {
+			return;
+		}
+		
 		/** @noinspection SqlNoDataSourceInspection */
 		/** @noinspection SqlResolve */
 		$sqlDelUnusedProps =
-			'delete from b_sale_basket_props where ' .
+			'DELETE from b_sale_basket_props where ' .
 			//'delete from b_sale_basket_props WHERE BASKET_ID = ' . (int)$ID . ' AND ' .
-			'CODE NOT IN ('.implode(', ',$nps).')';
-		$DB->Query($sqlDelUnusedProps);
+			'CODE NOT IN (' . implode(', ', $nps) . ')';
+		
+		BitrixEngine::getInstance()->connection->query($sqlDelUnusedProps);
 	}
-
+	
 	/**
 	 * Установить свойства заказа
 	 * @param int $orderId Идентификатор заказа,
@@ -285,7 +291,7 @@ final class Sale
 		}
 		$propertyCollection = $order->getPropertyCollection();
 		$personTypeId = $order->getPersonTypeId();
-
+		
 		foreach ($orderProps as $code => $value) {
 			$property = $propertyCollection->getItemByOrderPropertyCode($code);
 			if (!$property) {
