@@ -286,11 +286,9 @@ final class Sale
 		$propertyCollection = $order->getPropertyCollection();
 		$personTypeId = $order->getPersonTypeId();
 
-		foreach ($orderProps as $code => $value)
-		{
+		foreach ($orderProps as $code => $value) {
 			$property = $propertyCollection->getItemByOrderPropertyCode($code);
-			if (!$property)
-			{
+			if (!$property) {
 				$propData = OrderPropsTable::getList([
 					'filter' => [
 						'=CODE' => $code,
