@@ -33,16 +33,16 @@ $installEmailType       = static function ($typeId = 'DEBUG_MESSAGE'): bool {
 		'filter' => [],
 		'select' => ["LID", "NAME", "LANGUAGE_ID"],
 	])->fetchAll();
-
+	
 	if (!is_countable($arSites) || !class_exists(\CEventType::class)) {
 		return false;
 	}
-
+	
 	$rsT = \CEventType::GetList(['TYPE_ID' => $typeId]);
 	if ($rsT->SelectedRowsCount() >= 1) {
 		return true;
 	}
-
+	
 	$typeIdInputs = [];
 	foreach (array_column($arSites, 'LANGUAGE_ID') as $langId) {
 		$et   = new \CEventType();
@@ -75,22 +75,23 @@ $installEmailType       = static function ($typeId = 'DEBUG_MESSAGE'): bool {
 };
 $sendEmailToSupport     = static function () use ($exception, $developerEmail, $request, $argv, $installEmailType) {
 	$dateStr = date('d.m.Y H:i:s');
-
+	
 	$html = sprintf('Данные об ошибке <code>[%s]</code>:', $dateStr) . "\n";
 	$html .= ExceptionHandlerFormatter::format($exception, true);
 	if (function_exists('debug_string_backtrace')) {
 		$html .= '<pre>'. debug_string_backtrace() . "</pre>\n";
 	}
-
+	
 	$html .= "\n\nДополнительные переменные:\n" . "\n";
 	$html .= '<pre>'. wordwrap(print_r([
 			'request'   => is_null($request) ? $_REQUEST    : $request->toArray(),
 			'cookie'    => is_null($request) ? $_COOKIE     : $request->getCookieList()->toArray(),
 			'session'   => $_SESSION,
 			'server'    => is_null($request) ? $_SERVER     : $request->getServer()->toArray(),
+			'files'     => is_null($request) ? $_FILES      : $request->getFileList()->toArray(),
 			'PHP_SAPI'  => PHP_SAPI
 		] , true), 100) . "</pre>\n". "\n";
-
+	
 	$subject = 'Ошибка PHP ';
 	if (PHP_SAPI == 'cli') {
 		if (!empty($_SERVER['argv']) && (int)ini_get('register_argc_argv') === 0) {
@@ -102,7 +103,7 @@ $sendEmailToSupport     = static function () use ($exception, $developerEmail, $
 			: $request->getServer()->getServerName() . $request->getRequestUri() . ' IP:' . $request->getServer()->getRemoteAddr());
 	}
 	$subject .= sprintf(' [%s]', $dateStr);
-
+	
 	if ($installEmailType()) {
 		// use send() to may clear list of next erros by query "DELETE FROM b_event WHERE EVENT_NAME = 'EVENT_NAME'"
 		Event::send([
@@ -196,7 +197,7 @@ if ($isAjaxRequest) {
 
 		<small>Вы можете <a href="mailto:<?=$developerEmail?>?subject=Ошибка+PHP+<?=htmlspecialcharsbx($request?->getServer()->getServerName() . $request?->getRequestUri())?>">написать нам</a>, указав подробности,
 			если вы не впервые видите данную ошибку</small><br />
-
+		
 		<?
 		if ($isNotBetaTester) {
 			$sendEmailToSupport();
