@@ -99,15 +99,18 @@ while ($ar = $rs->fetch()) {
 try {
 	/** @var MemcacheConnection $mc */
 	$mc = Application::getConnection('memcache');
-
-	$GLOBALS['IBLOCK_CACHE_PROPERTY'] = new MemcacheWrapper(
-		'IBLOCK_CACHE_PROPERTY_' . md5(serialize($arIblockVersions)),
-		$mc->getResource()
-	);
+	$serverName = (string)Application::getInstance()->getContext()->getServer()->getServerName();
+	if (null !== $mc) {
+		/** @noinspection GlobalVariableUsageInspection */
+		$GLOBALS['IBLOCK_CACHE_PROPERTY'] = new MemcacheWrapper(
+			'IBLOCK_CACHE_PROPERTY_' . md5(serialize($arIblockVersions) . $serverName),
+			$mc->getResource()
+		);
+	}
 } catch (Error $e) {
 	UUtils::logException($e);
 }
-unset($arIblockVersions);
+unset($arIblockVersions, $serverName, $rs, $mc);
 
 // _tests:
 /*
