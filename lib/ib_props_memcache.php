@@ -78,50 +78,52 @@ use Bitrix\Main\Loader,
 	Hipot\Services\MemcacheWrapper,
 	Hipot\Utils\UUtils;
 
-if (!class_exists('Memcache') || !class_exists(MemcacheWrapper::class)) {
-	UUtils::logException(new \Bitrix\Main\SystemException('no memcache classes to ' . basename(__FILE__)));
-	return;
-}
-
-Loader::includeModule('iblock');
-
-// init global $IBLOCK_CACHE_PROPERTY in iblock/classes/general/iblockproperty.php by autoload
-$pr = new CIBlockProperty();
-unset($pr);
-
-// relay cache to iblock property types, avoid iblock2.0 not found tables error
-$arIblockVersions = [];
-$rs = IblockTable::query()->setSelect(['ID', 'VERSION'])->setOrder(['ID' => 'ASC'])->setCacheTtl(3600 * 24 * 3)->exec();
-while ($ar = $rs->fetch()) {
-	$arIblockVersions[ $ar['ID'] ] = $ar['VERSION'];
-}
-
-try {
-	/** @var MemcacheConnection $mc */
-	$mc = Application::getConnection('memcache');
-	$serverName = (string)Application::getInstance()->getContext()->getServer()->getServerName();
-	if (null !== $mc) {
-		/** @noinspection GlobalVariableUsageInspection */
-		$GLOBALS['IBLOCK_CACHE_PROPERTY'] = new MemcacheWrapper(
-			'IBLOCK_CACHE_PROPERTY_' . md5(serialize($arIblockVersions) . $serverName),
-			$mc->getResource()
-		);
+(static function () {
+	if (!class_exists('Memcache') || !class_exists(MemcacheWrapper::class)) {
+		UUtils::logException(new \Bitrix\Main\SystemException('no memcache classes to ' . basename(__FILE__)));
+		return;
 	}
-} catch (Error $e) {
-	UUtils::logException($e);
-}
-unset($arIblockVersions, $serverName, $rs, $mc);
-
-// _tests:
-/*
-if (isset($_REQUEST['IBLOCK_CACHE_PROPERTY'])) {
-	// var_dump( $GLOBALS['IBLOCK_CACHE_PROPERTY']->getMc()->getExtendedStats() );
-
-	$keys = $GLOBALS['IBLOCK_CACHE_PROPERTY']->getMemcachedKeys( $mc->getConfiguration() );
-	foreach ($keys as $k) {
-		echo $k;
-		\Bitrix\Main\Diag\Debug::dump($GLOBALS['IBLOCK_CACHE_PROPERTY'][$k]);
+	
+	Loader::includeModule('iblock');
+	
+	// init global $IBLOCK_CACHE_PROPERTY in iblock/classes/general/iblockproperty.php by autoload
+	$pr = new CIBlockProperty();
+	unset($pr);
+	
+	// relay cache to iblock property types, avoid iblock2.0 not found tables error
+	$arIblockVersions = [];
+	$rs               = IblockTable::query()->setSelect(['ID', 'VERSION'])->setOrder(['ID' => 'ASC'])->setCacheTtl(3600 * 24 * 3)->exec();
+	while ($ar = $rs->fetch()) {
+		$arIblockVersions[$ar['ID']] = $ar['VERSION'];
 	}
-	exit;
-}
-*/
+	
+	try {
+		/** @var MemcacheConnection $mc */
+		$mc         = Application::getConnection('memcache');
+		$serverName = (string)Application::getInstance()->getContext()->getServer()->getServerName();
+		if (null !== $mc) {
+			/** @noinspection GlobalVariableUsageInspection */
+			$GLOBALS['IBLOCK_CACHE_PROPERTY'] = new MemcacheWrapper(
+				'IBLOCK_CACHE_PROPERTY_' . md5(serialize($arIblockVersions) . $serverName),
+				$mc->getResource()
+			);
+		}
+	} catch (Error $e) {
+		UUtils::logException($e);
+	}
+	unset($arIblockVersions, $serverName, $rs, $mc);
+	
+	// _tests:
+	/*
+	if (isset($_REQUEST['IBLOCK_CACHE_PROPERTY'])) {
+		// var_dump( $GLOBALS['IBLOCK_CACHE_PROPERTY']->getMc()->getExtendedStats() );
+	
+		$keys = $GLOBALS['IBLOCK_CACHE_PROPERTY']->getMemcachedKeys( $mc->getConfiguration() );
+		foreach ($keys as $k) {
+			echo $k;
+			\Bitrix\Main\Diag\Debug::dump($GLOBALS['IBLOCK_CACHE_PROPERTY'][$k]);
+		}
+		exit;
+	}
+	*/
+})();
