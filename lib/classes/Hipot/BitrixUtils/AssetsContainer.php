@@ -7,6 +7,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Page\AssetLocation;
 use Bitrix\Main\Web\Json;
+use Hipot\Utils\UUtils;
 
 class AssetsContainer
 {
@@ -137,7 +138,7 @@ class AssetsContainer
 		$fileSize = 0;
 		foreach (self::$CSS_DEFER as $css) {
 			$testMinCss = str_replace('.css', '.min.css', $css);
-			if (is_file(Loader::getDocumentRoot() . $testMinCss)) {
+			if (UUtils::isMainUsedMinifiedAssets() && is_file(Loader::getDocumentRoot() . $testMinCss)) {
 				$css = $testMinCss;
 			}
 			?>

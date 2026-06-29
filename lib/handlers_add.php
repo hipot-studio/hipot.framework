@@ -27,21 +27,21 @@ $request      = Application::getInstance()->getContext()->getRequest();
 // optimize turn off all page-process-handlers when it's an ajax request:
 $eventManager->addEventHandler('main', 'OnPageStart', static function () use ($request) {
 	$be = BitrixEngine::getInstance();
-	
+
 	/**
 	 * На сайт пришел аякс-запрос
 	 */
 	define('IS_AJAX', UUtils::isAjaxRequest($be));
-	
+
 	/**
 	 * Текущий процесс запущен из командной строки
 	 */
 	define('IS_CLI', PHP_SAPI === 'cli');
-	
+
 	if (IS_AJAX || IS_CLI || (defined('DISABLE_PAGE_EVENTS') && DISABLE_PAGE_EVENTS === true)) {
 		UUtils::disableAllPageProcessEvents($be);
 	}
-	
+
 	if (! empty($request->get('sources'))) {
 		UUtils::disableAssetMinifying();
 	}
@@ -50,7 +50,7 @@ $eventManager->addEventHandler('main', 'OnPageStart', static function () use ($r
 // define global constants that may depend on $APPLICATION and $USER
 $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use ($request) {
 	global $APPLICATION, $USER;
-	
+
 	// need user and other internal engine items re-create
 	BitrixEngine::resetInstance();
 	
@@ -58,7 +58,7 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 	if ($USER === null) {
 		$USER = BitrixEngine::getCurrentUserD0();
 	}
-	
+
 	foreach (
 		[
 			__DIR__ . '/constants.php',
@@ -68,11 +68,11 @@ $eventManager->addEventHandler("main", "OnBeforeProlog", static function () use 
 			Loader::getDocumentRoot() . '/bitrix/php_interface/include/constants.php',
 			Loader::getDocumentRoot() . '/bitrix/php_interface/include/lib/constants.php'
 		] as $constFile) {
-		if (is_file($constFile)) {
-			include $constFile;
-			break;
+			if (is_file($constFile)) {
+				include $constFile;
+				break;
+			}
 		}
-	}
 });
 
 // region admin UI
@@ -260,19 +260,19 @@ $eventManager->addEventHandler('main', 'OnEpilog', static function () use ($requ
 	}
 	global $APPLICATION;
 	static $isRun = false;
-	
+
 	if (IS_BETA_TESTER) {
 		$isRun = true;
 	}
-	
+
 	// process 404 in content part
 	if ((!$isRun && defined('ERROR_404') && ERROR_404 === 'Y' && $APPLICATION->GetCurPage() != '/404.php')) {
 		$isRun = true;
 		\CHTTP::setStatus('404 Not Found');
-		
+
 		CompositePage::getInstance()?->markNonCacheable();
 		CompositeEngine::setEnable(false);
-		
+
 		// region re-get one time 404 page
 		$eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$content) use ($request) {
 			$contCacheFile = Loader::getDocumentRoot() . sprintf('/upload/404_%s_cache.html', Application::getInstance()?->getContext()?->getSite());
@@ -283,7 +283,7 @@ $eventManager->addEventHandler('main', 'OnEpilog', static function () use ($requ
 			if (trim($content) === '') {
 				$el      = new HttpClient();
 				$content = $el->get(($request->isHttps() ? 'https://' : 'http://') . $request->getServer()->getHttpHost() . '/404.php?last_page=' . urlencode($request->getRequestUri()));
-				
+
 				file_put_contents($contCacheFile, $content, LOCK_EX);
 			}
 		});
@@ -300,7 +300,7 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 		return;
 	}
 	global $APPLICATION, $USER;
-	
+
 	if (is_object($USER) && !$USER->IsAuthorized() && !$request->isPost() && $APPLICATION->GetProperty('JS_core_frame_cache_NEED') != 'Y') {
 		$toRemove = [
 			'#<script[^>]+src="/bitrix/js/ui/dexie/[^>]+></script>#',
@@ -310,7 +310,7 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 		];
 		$cont = preg_replace($toRemove, "", $cont);
 	}
-	
+
 	$toInline = [
 		'#<script[^>]+src="(?<src>/bitrix/js/main/core/core.min.js)\?\d+"[^>]*></script>#',
 		'#<script[^>]+src="(?<src>/bitrix/js/main/core/core_ls.min.js)\?\d+"[^>]*></script>#',
@@ -322,14 +322,14 @@ $eventManager->addEventHandler('main', 'OnEndBufferContent', static function (&$
 			return $matches[0];
 		}
 		$scriptHeader = '/////////////////////////////////////' . PHP_EOL
-			. '// Script: ' . $matches['src'] . PHP_EOL
-			. '/////////////////////////////////////' . PHP_EOL;
+				. '// Script: ' . $matches['src'] . PHP_EOL
+				. '/////////////////////////////////////' . PHP_EOL;
 		return '<script>' . PHP_EOL
-			. (IS_BETA_TESTER ? $scriptHeader : '')
-			. $content . PHP_EOL
-			. '</script>';
+				. (IS_BETA_TESTER ? $scriptHeader : '')
+				. $content . PHP_EOL
+				. '</script>';
 	}, $cont);
-	
+
 	// validator.w3.org: The type attribute is unnecessary for JavaScript resources.
 	$cont = preg_replace(['#<script([^>]*)type=[\'"]text/javascript[\'"]([^>]*)>#', '#<br\s*/>#i'], ['<script\\1\\2>', '<br>'], $cont);
 });

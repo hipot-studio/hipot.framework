@@ -312,8 +312,7 @@ trait ContextUtils
 		Asset::getInstance()->setJsToBody(false);
 		
 		// no .min.js and .min.css
-		$canLoad = Option::get("main","use_minified_assets", "Y") === "Y";
-		if ($canLoad) {
+		if (self::isMainUsedMinifiedAssets()) {
 			$optionClass = new \ReflectionClass(Option::class);
 			$options = $optionClass->getStaticPropertyValue('options');
 			$options['main']['-']['use_minified_assets'] = 'N';
@@ -365,7 +364,15 @@ trait ContextUtils
 			$storage->delete();
 		}
 	}
-
+	
+	/**
+	 * @return bool
+	 */
+	public static function isMainUsedMinifiedAssets(): bool
+	{
+		return Option::get("main", "use_minified_assets", "Y") === "Y";
+	}
+	
 	/**
 	 * Captures the output of a callable.
 	 *

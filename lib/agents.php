@@ -19,12 +19,12 @@ function RemoveLongSelectAgent(): string
 		return __FUNCTION__ . '();';
 	}
 	$timeout_s = 600;
-	
+
 	$l = BitrixEngine::getInstance()->connection->query('SHOW PROCESSLIST');
 	while ($p = $l->Fetch()) {
 		$sql		= trim($p['Info']);
 		$procId		= (int)$p['Id'];
-		
+
 		if ((int)$p['Time'] >= $timeout_s &&
 			(strpos($sql, 'SELECT') === 0 || $p['Command'] == 'Sleep')
 		) {
@@ -37,16 +37,16 @@ function RemoveLongSelectAgent(): string
 // check agents run log
 if (! defined('BX_AGENTS_LOG_FUNCTION')) {
 	define('BX_AGENTS_LOG_FUNCTION', 'HipotAgentsLogFunction');
-	
+
 	function HipotAgentsLogFunction($arAgent, $point)
 	{
 		@file_put_contents(
 			BitrixEngine::getInstance()->app::getDocumentRoot() . '/agents_executions_points.log',
-			
+
 			date('d-m-Y H:i:s') . PHP_EOL .
 			print_r($point, 1) . PHP_EOL .
 			print_r($arAgent, 1) . PHP_EOL . PHP_EOL,
-			
+
 			FILE_APPEND
 		);
 	}

@@ -126,7 +126,7 @@ class HiBlock
 	 *
 	 * @return false|int код добавленного свойства
 	 */
-	public static function addHiBlockField($arFields)
+	public static function addHiBlockField(array $arFields)
 	{
 		if (!isset($arFields['SETTINGS'])) {
 			$arFields['SETTINGS'] = ["SIZE" => 60, "ROWS" => 2];
@@ -157,6 +157,22 @@ class HiBlock
 			"ERROR_MESSAGE"     => [self::getLanguageId() => $arFields['NAME']],
 			"HELP_MESSAGE"      => [self::getLanguageId() => $arFields['HELP']],
 		]);
+	}
+	
+	public static function deleteUserField(int $hlId, string $fieldName): void
+	{
+		$entityId = 'HLBLOCK_' . $hlId;
+		
+		$row = \Bitrix\Main\UserFieldTable::getList([
+			'filter' => ['=ENTITY_ID' => $entityId, '=FIELD_NAME' => $fieldName],
+			'select' => ['ID'],
+			'limit' => 1
+		])->fetch();
+		
+		if ($row) {
+			$userField = new \CUserTypeEntity();
+			$userField->Delete((int)$row['ID']);
+		}
 	}
 
 	/**

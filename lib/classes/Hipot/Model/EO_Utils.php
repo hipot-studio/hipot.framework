@@ -313,4 +313,100 @@ trait EO_Utils
 			throw new RuntimeException($e->getMessage(), $e->getCode(), $e);
 		}
 	}
+	
+	/**
+	 * Строит безопасное SQL-выражение WHERE из Bitrix-фильтра.
+	 * Поддерживаемые префиксы: '>=', '<=', '>', '<', '=', '!=', '!', '@' (IN), '!@' (NOT IN), '%' (LIKE %v%), '!%' (NOT LIKE), '><' (BETWEEN).
+	 */
+	public static function buildWhereFromBitrixFilter(array $filter, \Bitrix\Main\DB\SqlHelper $sqlHelper): string
+	{
+		$conditions = [];
+		$prefixes = ['><=', '><', '>=', '<=', '!=', '!@', '@', '!%', '%', '!', '>', '<', '='];
+		
+		foreach ($filter as $key => $value) {
+			$op = '=';
+			$field = (string)$key;
+			
+			foreach ($prefixes as $prefix) {
+				if (str_starts_with($field, $prefix)) {
+					$op = $prefix;
+					$field = substr($field, strlen($prefix));
+					break;
+				}
+			}
+			
+			$field = trim($field);
+			if ($field === '') {
+				continue;
+			}
+			
+			$fieldSql = $sqlHelper->quote($field);
+			
+			switch ($op) {
+				case '><':
+				case '><=': // трактуем как BETWEEN (включительно)
+					if (is_array($value) && count($value) === 2) {
+						[$from, $to] = array_values($value);
+						$from = $sqlHelper->forSql((string)$from);
+						$to   = $sqlHelper->forSql((string)$to);
+						$conditions[] = "{$fieldSql} BETWEEN '{$from}' AND '{$to}'";
+					}
+					break;
+				
+				case '@': // IN
+					$list = is_array($value) ? $value : [$value];
+					$list = array_map(static fn($v) => "'" . $sqlHelper->forSql((string)$v) . "'", $list);
+					if (!empty($list)) {
+						$conditions[] = "{$fieldSql} IN (" . implode(', ', $list) . ")";
+					}
+					break;
+				
+				case '!@': // NOT IN
+					$list = is_array($value) ? $value : [$value];
+					$list = array_map(static fn($v) => "'" . $sqlHelper->forSql((string)$v) . "'", $list);
+					if (!empty($list)) {
+						$conditions[] = "{$fieldSql} NOT IN (" . implode(', ', $list) . ")";
+					}
+					break;
+				
+				case '%': // LIKE %value%
+					$val = $sqlHelper->forSql((string)$value);
+					$conditions[] = "{$fieldSql} LIKE '%{$val}%'";
+					break;
+				
+				case '!%': // NOT LIKE %value%
+					$val = $sqlHelper->forSql((string)$value);
+					$conditions[] = "{$fieldSql} NOT LIKE '%{$val}%'";
+					break;
+				
+				case '!':
+				case '!=':
+					if ($value === null) {
+						$conditions[] = "{$fieldSql} IS NOT NULL";
+					} else {
+						$val = $sqlHelper->forSql((string)$value);
+						$conditions[] = "{$fieldSql} <> '{$val}'";
+					}
+					break;
+				
+				case '>=':
+				case '<=':
+				case '>':
+				case '<':
+				case '=':
+				default:
+					if ($value === null) {
+						if ($op === '=') {
+							$conditions[] = "{$fieldSql} IS NULL";
+						}
+					} else {
+						$val = $sqlHelper->forSql((string)$value);
+						$sqlOp = in_array($op, ['>=','<=','>','<','=','!='], true) ? $op : '=';
+						$conditions[] = "{$fieldSql} {$sqlOp} '{$val}'";
+					}
+			}
+		}
+		
+		return implode(' AND ', array_filter($conditions));
+	}
 }
