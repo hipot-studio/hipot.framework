@@ -52,3 +52,5 @@ const PHPCACHER_TAGGED_CACHE_AUTOSTART = false;
  * @var string PHPCACHER_DEFAULT_CACHE_SERVICE
  */
 const PHPCACHER_DEFAULT_CACHE_SERVICE = '';
+
+const LOG_DIR_FULL_PATH = '/home/bitrix/logs';

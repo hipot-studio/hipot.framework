@@ -83,22 +83,22 @@ class ListWrapper
 	 * @var string
 	 */
 	public $sTableID;
-	
+
 	/**
 	 * @var \CAdminList
 	 */
 	public $lAdmin;
-	
+
 	/**
 	 * @var array
 	 */
 	public $arFields;
-	
+
 	/**
 	 * @var \CAdminResult
 	 */
 	public $rsData;
-	
+
 	public function __construct($sTableID = '', $initSort = 'ID', $orderSort = 'ASC')
 	{
 		if (trim($sTableID) == '') {
@@ -106,11 +106,11 @@ class ListWrapper
 		} else {
 			$this->sTableID = $sTableID;
 		}
-		
+
 		$oSort = new \CAdminSorting($this->sTableID, $initSort, $orderSort);
 		$this->lAdmin = new \CAdminList($this->sTableID, $oSort);
 	}
-	
+
 	/**
 	 * @param array $arFieldsEx обязательно описать как передавать колонки!!!!
 	 */
@@ -120,7 +120,7 @@ class ListWrapper
 		foreach ($arFieldsEx as $FIELD_NAME => $FIELD_INFO) {
 			$this->arFields[$FIELD_NAME] = $FIELD_INFO["data_type"];
 		}
-		
+
 		$arHeaders = [];
 		foreach ($this->arFields as $FIELD_NAME => $FIELD_TYPE) {
 			$arHeaders[$FIELD_NAME] = [
@@ -133,24 +133,24 @@ class ListWrapper
 				$arHeaders[$FIELD_NAME]["align"] = "right";
 			}
 		}
-		
+
 		$this->lAdmin->AddHeaders($arHeaders);
 	}
-	
+
 	public function getNavParams()
 	{
 		$navyParams = \CDBResult::GetNavParams(\CAdminResult::GetNavSize(
 			$this->sTableID,
 			['nPageSize' => 20/*, 'sNavID' => $APPLICATION->GetCurPage().'?ENTITY_ID='.$ENTITY_ID*/]
 		));
-		
+
 		$navyParams['PAGEN'] = (int)$navyParams['PAGEN'];
 		$navyParams['SIZEN'] = (int)$navyParams['SIZEN'];
-		
+
 		return $navyParams;
 	}
-	
-	
+
+
 	/**
 	 * @param \CDBResult $rsDataOrm
 	 * @param string|null $ormDataClass  = null
@@ -164,19 +164,19 @@ class ListWrapper
 	public function collectAdminResultAndNav($rsDataOrm, $ormDataClass = null, $itemPresaveCallback = null, $rowActionCallback = null, $groupActionCallback = null): void
 	{
 		$perPage = $this->getNavParams();
-		
+
 		$this->rsData = new \CAdminResult($rsDataOrm, $this->sTableID);
-		
+
 		$this->rsData->NavStart($perPage['SIZEN']);
 		$this->lAdmin->NavText($this->rsData->GetNavPrint(""));
-		
+
 		while ($arRes = $this->rsData->Fetch()) {
 			$row =& $this->lAdmin->AddRow($arRes["ID"], $arRes);
-			
+
 			if (is_callable($itemPresaveCallback)) {
 				$itemPresaveCallback($this->arFields, $arRes);
 			}
-			
+
 			foreach ($this->arFields as $FIELD_NAME => $FIELD_TYPE) {
 				if (strlen($arRes[$FIELD_NAME]) > 0) {
 					if ($FIELD_TYPE == "int" || $FIELD_TYPE == 'integer') {
@@ -197,21 +197,21 @@ class ListWrapper
 					$row->AddViewField($FIELD_NAME, $val);
 				}
 			}
-			
+
 			if (is_callable($rowActionCallback)) {
 				$rowActionCallback($row, $arRes, $this->lAdmin);
 			} else {
 				$this->setRowActions($row, $arRes);
 			}
 		}
-		
+
 		$this->rsData->NavRecordCount = $this->rsData->SelectedRowsCount();
 		$this->rsData->NavPageCount = ceil($this->rsData->NavRecordCount / $perPage['SIZEN']);
 		$this->rsData->NavPageNomer = $perPage['PAGEN'];
-		
+
 		$this->drawFooter($groupActionCallback);
 	}
-	
+
 	/**
 	 * @param callable|null $groupActionCallback
 	 */
@@ -225,7 +225,7 @@ class ListWrapper
 				],
 			]
 		);
-		
+
 		if (is_callable($groupActionCallback)) {
 			$groupActionCallback($this->lAdmin);
 		} else {
@@ -236,7 +236,7 @@ class ListWrapper
 			);
 		}
 	}
-	
+
 	/**
 	 * @param \CAdminListRow   $row
 	 * @param array $arRes
@@ -259,12 +259,12 @@ class ListWrapper
 				"ACTION" => $this->lAdmin->ActionDoGroup($arRes["ID"], "delete", 'profile_table=Y&lang=ru&mid=acrit.cleanmaster&mid_menu=1'),
 			];
 		}
-		
+
 		if (count($arActions)) {
 			$row->AddActions($arActions);
 		}
 	}
-	
+
 	public function addAdminContextMenuAndCheckXls($aContext = [])
 	{
 		if (count($aContext) <= 0) {
@@ -275,21 +275,21 @@ class ListWrapper
 				"ICON" => "btn_new",
 			);*/
 		}
-		
+
 		$this->lAdmin->AddAdminContextMenu($aContext);
 		$this->lAdmin->CheckListMode();
 	}
-	
+
 	public function displayList()
 	{
 		/*$filter = new \CAdminFilter($this->sTableID);
 		$filter->Begin();
 		$filter->Buttons();
 		$filter->End();*/
-		
+
 		$this->lAdmin->DisplayList();
 	}
-	
+
 	/**
 	 * @param \Bitrix\Main\Entity\DataManager|class-string $ormDataClass
 	 */

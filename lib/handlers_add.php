@@ -184,7 +184,10 @@ $eventManager->addEventHandler('main', 'OnAdminTabControlBegin', static function
 $eventManager->addEventHandler(	"main", "OnAdminListDisplay",
 	/** @param CAdminUiList $this_al */
 	static function (&$this_al) {
-		if ($this_al->table_id == "tbl_user" || str_contains($this_al->table_id, 'iblock') || str_starts_with($this_al->table_id, 'tbl_hi')) {
+		if ($this_al->table_id == "tbl_user" || str_contains($this_al->table_id, 'iblock')
+			|| str_starts_with($this_al->table_id, 'tbl_hi')
+			|| str_starts_with($this_al->table_id, 't_users_online')
+		) {
 			echo $this_al->sNavText;
 			BitrixEngine::getInstance()->asset->addString('
 				<style>
