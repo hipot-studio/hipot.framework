@@ -283,4 +283,15 @@ class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Er
 	{
 		return $this->errorCollection->getErrorByCode($code);
 	}
+	
+	/**
+	 * Adds the hi_model.js script to the page to enable additional functionality.
+	 *
+	 * @return void
+	 */
+	public static function addHiModelToPage(): void
+	{
+		$asset = \Bitrix\Main\Page\Asset::getInstance();
+		$asset->addJs('/local/components/hipot/ajax/js/hi_model.js');
+	}
 }

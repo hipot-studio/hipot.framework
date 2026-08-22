@@ -12,6 +12,7 @@ use Bitrix\Highloadblock\HighloadBlockTable,
 	Bitrix\Main\Loader,
 	Hipot\Utils\UUtils;
 
+use function Opis\Closure\unserialize as UnserializeClosure; // from 4.4 version of a library
 use function ShowError;
 
 /**
@@ -70,12 +71,12 @@ use function ShowError;
 class HiblockList extends \CBitrixComponent
 {
 	public const CACHE_TTL = 3600 * 24;
-	
+
 	/**
 	 * @var string|null
 	 */
-	private ?string $entity_class;
-	
+	private ?string $entity_class = null;
+
 	/**
 	 * @param $arParams
 	 * @return array|void
@@ -83,61 +84,41 @@ class HiblockList extends \CBitrixComponent
 	public function onPrepareComponentParams($arParams)
 	{
 		\CPageOption::SetOptionString("main", "nav_page_in_session", "N");
-		
+
 		$arParams['PAGEN_1']			    = (int)$_REQUEST['PAGEN_1'];
 		$arParams['SHOWALL_1']			    = (int)$_REQUEST['SHOWALL_1'];
 		$arParams['NAV_TEMPLATE']		    = (trim($arParams['NAV_TEMPLATE']) != '') ? $arParams['NAV_TEMPLATE'] : '';
 		$arParams['NAV_SHOW_ALWAYS']	    = (trim($arParams['NAV_SHOW_ALWAYS']) == 'Y') ? 'Y' : 'N';
 		$arParams['CACHE_TIME_ORM']         = (int)$arParams['CACHE_TIME_ORM'];
-		
+
 		return $arParams;
 	}
-	
+
 	public function executeComponent()
 	{
 		global $USER_FIELD_MANAGER;
-		
+
 		// simplifier )
 		$arParams     = &$this->arParams;
 		$arResult     = &$this->arResult;
-		$entity_class = &$this->entity_class;
-		
-		$requiredModules = ['highloadblock', 'iblock'];
-		foreach ($requiredModules as $requiredModule) {
-			if (! Loader::includeModule($requiredModule)) {
-				ShowError($requiredModule . " not inslaled and required!");
-				return false;
-			}
+
+		if (! $this->includeRequiredModules()) {
+			return false;
 		}
+
 		if ($this->startResultCache(false)) {
-			// hlblock info
-			$hlblock_id     = $arParams['HLBLOCK_ID'];
-			$hlblock_code   = $arParams['HLBLOCK_CODE'];
-			
-			if (is_numeric($hlblock_id)) {
-				$hlblock    = HighloadBlockTable::getByPrimary($hlblock_id, ['cache' => ["ttl" => self::CACHE_TTL, "cache_joins" => true]])->fetch();
-			} else if (trim($hlblock_code) != '') {
-				$hlblock	= HighloadBlockTable::getList([
-					'filter'    => ['NAME' => $hlblock_code],
-					'cache'     => ["ttl" => self::CACHE_TTL, "cache_joins" => true]
-				])->fetch();
-			} else {
+			$hlblock = $this->getHlblock();
+			if (empty($hlblock)) {
 				ShowError('cant init HL-block');
 				$this->abortResultCache();
 				return false;
 			}
-			
-			$obEntity = HighloadBlockTable::compileEntity( $hlblock );
-			$entity_class = $obEntity->getDataClass();
-			
-			if (! class_exists($entity_class)) {
-				if ($arParams["SET_404"] == "Y") {
-					UUtils::setStatusNotFound(true);
-				}
-				ShowError('404 HighloadBlock not found');
+
+			$entityClass = $this->resolveEntityClass($hlblock);
+			if (empty($entityClass)) {
 				return false;
 			}
-			
+
 			// region parameters
 			// sort
 			if ($arParams["ORDER"]) {
@@ -145,7 +126,7 @@ class HiblockList extends \CBitrixComponent
 			} else {
 				$arOrder = ["ID" => "DESC"];
 			}
-			
+
 			// limit
 			$limit = [
 				'iNumPage' => is_set($arParams['PAGEN_1']) ? $arParams['PAGEN_1'] : 1,
@@ -157,25 +138,25 @@ class HiblockList extends \CBitrixComponent
 			if ((int)$arParams["PAGESIZE"] > 0) {
 				$limit['nPageSize'] = (int)$arParams["PAGESIZE"];
 			}
-			
+
 			$arSelect = ["*"];
 			if (!empty($arParams["SELECT"])) {
 				$arSelect = $arParams["SELECT"];
 				$arSelect[] = "ID";
 			}
-			
+
 			$arFilter = [];
 			if (!empty($arParams["FILTER"])) {
 				$arFilter = $arParams["FILTER"];
 			}
-			
+
 			$arGroupBy = [];
 			if (!empty($arParams["GROUP_BY"])) {
 				$arGroupBy = $arParams["GROUP_BY"];
 			}
 			// endregion
-			
-			$result = $entity_class::getList([
+
+			$result = $entityClass::getList([
 				"order"  => $arOrder,
 				"select" => $arSelect,
 				"filter" => $arFilter,
@@ -183,12 +164,12 @@ class HiblockList extends \CBitrixComponent
 				"limit"  => ($limit["nPageTop"] > 0) ? $limit["nPageTop"] : 0,
 				"cache"  => ["ttl" => $arParams['CACHE_TIME_ORM'], "cache_joins" => true]
 			]);
-			
+
 			// region pager
 			if ($limit["nPageTop"] <= 0) {
 				$result = new \CDBResult($result);
 				$result->NavStart($limit, false, true);
-				
+
 				$arResult["NAV_STRING"] = $result->GetPageNavStringEx(
 					$navComponentObject,
 					$arParams["NAV_TITLE"],
@@ -198,52 +179,27 @@ class HiblockList extends \CBitrixComponent
 				$arResult["NAV_RESULT"] = $result;
 			}
 			// endregion
-			
+
 			// build results
 			$arResult["ITEMS"] = [];
-			
+
 			// uf info
 			$fields = $USER_FIELD_MANAGER->GetUserFields('HLBLOCK_' . $hlblock['ID'], 0, LANGUAGE_ID);
-			
+
 			while ($row = $result->Fetch()) {
-				foreach ($row as $k => $v) {
-					if ($k == "ID") {
-						continue;
-					}
-					$arUserField = $fields[$k];
-					
-					$html = '';
-					/** @see https://dev.1c-bitrix.ru/api_help/iblock/classes/user_properties/GetAdminListViewHTML.php */
-					/** @see https://dev.1c-bitrix.ru/api_d7/bitrix/main/userfield/uf-fieldcomponent.php */
-					/** @see \Bitrix\Main\UserField\Types\BaseType::getHtml() */
-					/** @var \Bitrix\Main\UserField\Types\BaseType $className */
-					$className = $arUserField["USER_TYPE"]["CLASS_NAME"];
-					if (is_callable([$className, "GetAdminListViewHTML"])) {
-						$html = $className::GetAdminListViewHTML(
-							$arUserField,
-							[
-								"NAME"      => "FIELDS[" . $row['ID'] . "][" . $arUserField["FIELD_NAME"] . "]",
-								"VALUE"     => htmlspecialcharsbx($v)
-							]
-						);
-					}
-					if ($html == '') {
-						$html = '&nbsp;';
-					}
-					
-					$row[$k] = $html;
-					$row["~" . $k] = $v;
-				}
-				
+				$row = $this->prepareRow($row, $fields);
+
 				$row['fields'] = $USER_FIELD_MANAGER->getUserFieldsWithReadyData(
 					'HLBLOCK_'.$hlblock['ID'],
 					$row,
 					LANGUAGE_ID
 				);
-				
+
+				$this->modifyItem($row);
+
 				$arResult["ITEMS"][] = $row;
 			}
-			
+
 			$bHasItems = count($arResult["ITEMS"]) > 0;
 			if ($bHasItems) {
 				// добавили сохранение ключей по параметру
@@ -258,13 +214,116 @@ class HiblockList extends \CBitrixComponent
 				}
 				$this->abortResultCache();
 			}
-			
+
 			if ($arParams["ALWAYS_INCLUDE_TEMPLATE"] == "Y" || $bHasItems) {
 				$this->includeComponentTemplate();
 			}
 		}
-		
+
 		// IF NEED SOME USE WITH "SET_CACHE_KEYS"-params
 		return $arResult;
+	}
+
+	private function includeRequiredModules(): bool
+	{
+		$requiredModules = ['highloadblock', 'iblock'];
+		foreach ($requiredModules as $requiredModule) {
+			if (! Loader::includeModule($requiredModule)) {
+				ShowError($requiredModule . " not inslaled and required!");
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private function getHlblock(): ?array
+	{
+		$hlblockId = $this->arParams['HLBLOCK_ID'];
+		$hlblockCode = $this->arParams['HLBLOCK_CODE'];
+
+		if (is_numeric($hlblockId)) {
+			$hlblock = HighloadBlockTable::getByPrimary(
+				$hlblockId,
+				['cache' => ["ttl" => self::CACHE_TTL, "cache_joins" => true]]
+			)->fetch();
+		} else if (trim($hlblockCode) != '') {
+			$hlblock = HighloadBlockTable::getList([
+				'filter' => ['NAME' => $hlblockCode],
+				'cache'  => ["ttl" => self::CACHE_TTL, "cache_joins" => true]
+			])->fetch();
+		} else {
+			$hlblock = null;
+		}
+
+		return is_array($hlblock) ? $hlblock : null;
+	}
+
+	private function resolveEntityClass(array $hlblock): ?string
+	{
+		$obEntity = HighloadBlockTable::compileEntity($hlblock);
+		$this->entity_class = $obEntity->getDataClass();
+
+		if (! class_exists($this->entity_class)) {
+			if ($this->arParams["SET_404"] == "Y") {
+				UUtils::setStatusNotFound(true);
+			}
+			ShowError('404 HighloadBlock not found');
+			return null;
+		}
+
+		return $this->entity_class;
+	}
+
+	private function prepareRow(array $row, array $fields): array
+	{
+		foreach ($row as $k => $v) {
+			if ($k === "ID") {
+				continue;
+			}
+
+			$row[$k] = $this->getFieldHtml($row, $fields[$k] ?? [], $v);
+			$row["~" . $k] = $v;
+		}
+
+		return $row;
+	}
+
+	private function getFieldHtml(array $row, array $arUserField, $value): string
+	{
+		$html = '';
+		if (empty($arUserField["USER_TYPE"]["CLASS_NAME"])) {
+			return '&nbsp;';
+		}
+
+		/** @see https://dev.1c-bitrix.ru/api_help/iblock/classes/user_properties/GetAdminListViewHTML.php */
+		/** @see https://dev.1c-bitrix.ru/api_d7/bitrix/main/userfield/uf-fieldcomponent.php */
+		/** @see \Bitrix\Main\UserField\Types\BaseType::getHtml() */
+		/** @var \Bitrix\Main\UserField\Types\BaseType $className */
+		$className = $arUserField["USER_TYPE"]["CLASS_NAME"];
+		if (is_callable([$className, "GetAdminListViewHTML"])) {
+			$html = $className::GetAdminListViewHTML(
+				$arUserField,
+				[
+					"NAME"  => "FIELDS[" . $row['ID'] . "][" . $arUserField["FIELD_NAME"] . "]",
+					"VALUE" => htmlspecialcharsbx($value)
+				]
+			);
+		}
+
+		return $html != '' ? $html : '&nbsp;';
+	}
+
+	private function modifyItem(array &$row): void
+	{
+		$modifier = $this->arParams['~MODIFY_ITEM'] ?? $this->arParams['MODIFY_ITEM'] ?? null;
+		if (empty($modifier)) {
+			return;
+		}
+
+		$closure = UnserializeClosure($modifier);
+		if (is_callable($closure)) {
+			$closure($row);
+		}
 	}
 }

@@ -12,6 +12,8 @@ use Bitrix\Main,
 	Hipot\IbAbstractLayer\IblockElemLinkedChains;
 use Hipot\Services\BitrixEngine;
 use Hipot\Utils\UUtils;
+use function ShowError;
+use function Opis\Closure\unserialize as UnserializeClosure; // from 4.4 version of a library
 
 /**
  * Уникальный компонент всяческих листов элементов инфоблока
@@ -115,101 +117,42 @@ class IblockList extends \CBitrixComponent
 		$arResult =& $this->arResult;
 
 		if ($this->startResultCache(false, $this->getAdditionalCacheId())) {
-			Main\Loader::includeModule("iblock");
-
-			if ($arParams["ORDER"]) {
-				$arOrder = $arParams["ORDER"];
-			} else {
-				$arOrder = ["SORT" => "ASC"];
-			}
-
-			$arFilter = ["IBLOCK_ID" => $arParams["IBLOCK_ID"], "ACTIVE" => "Y"];
-			if (count($arParams["FILTER"]) > 0) {
-				$arFilter = array_merge($arFilter, $arParams["~FILTER"]);
-			}
-
-			$arNavParams = false;
-			if ($arParams["NTOPCOUNT"] > 0) {
-				$arNavParams["nTopCount"] = $arParams["NTOPCOUNT"];
-			} else if ($arParams["PAGESIZE"] > 0) {
-				$arNavParams["nPageSize"]	= $arParams["PAGESIZE"];
-				$arNavParams["bShowAll"]	= ($arParams['NAV_SHOW_ALL'] == 'Y');
-			}
-
-			$arSelect = ["ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME", "TIMESTAMP_X"];
-			if (count($arParams["SELECT"]) > 0) {
-				$arSelect = array_merge($arSelect, $arParams["SELECT"]);
+			if (! $this->includeRequiredModules()) {
+				$this->abortResultCache();
+				return false;
 			}
 
 			$arResult["ITEMS"]     = [];
 			$arResult["CNT_ITEMS"] = 0;
 
 			// QUERY 1 MAIN
-			$rsItems = \CIBlockElement::GetList($arOrder, $arFilter, false, $arNavParams, $arSelect);
+			$rsItems = \CIBlockElement::GetList(
+				$this->getOrder(),
+				$this->getFilter(),
+				false,
+				$this->getNavParams(),
+				$this->getSelect()
+			);
 
-			if ($arParams['SELECT_CHAINS'] === 'Y') {
-				// Создаем объект, должен создаваться до цикла по элементам, т.к. в него складываются
-				// уже выбранные цепочки в качестве кеша
-				$className = static::LINKED_CHAINS_CLASS;
-				$this->obChainBuilder = new $className();
-			}
+			$this->initChainBuilder();
 
 			while ($arItem = $rsItems->GetNext()) {
-				if ($arParams['GET_PROPERTY'] === "Y") {
-					// QUERY 2
-					$arItem['PROPERTIES'] = IblockUtils::selectElementProperties(
-						(int)$arItem['ID'],
-						(int)$arItem["IBLOCK_ID"],
-						false,
-						["EMPTY" => "N"],
-						($arParams['SELECT_CHAINS'] === 'Y' ? $this->obChainBuilder : null),
-						(int)$arParams['SELECT_CHAINS_DEPTH']
-					);
-				}
-
-				/*
-				 * TOFUTURE Всяческие довыборки на каждый элемент $arItem по произвольному
-				 * параметру $arParams писать тут
-				 * оставить комментарий по параметру, где этот параметр используется.
-				 * Предпочтительнее это делать в result_modifier.php
-				 */
-
-				$arResult["ITEMS"][] = $arItem;
+				$arResult["ITEMS"][] = $this->prepareItem($arItem);
 			}
 
-			// освобождаем память от цепочек
-			if (isset($this->obChainBuilder)) {
-				unset($this->obChainBuilder);
-			}
-
+			$this->releaseChainBuilder();
+			
 			/*
 			 * TOFUTURE Всяческие довыборки на произвольный параметр $arParams писать тут
 			 * оставить комментарий по параметру, где этот параметр используется.
 			 * Предпочтительнее это делать в result_modifier.php
 			 */
-
-			if (is_countable($arResult["ITEMS"]) && count($arResult["ITEMS"]) > 0) {
+			
+			$arResult["CNT_ITEMS"] = is_countable($arResult["ITEMS"]) ? count($arResult["ITEMS"]) : 0;
+			if ($arResult["CNT_ITEMS"] > 0) {
 				if ($arParams["PAGESIZE"]) {
-					if ($arParams['NAV_PAGEWINDOW'] > 0) {
-						$rsItems->nPageWindow = $arParams['NAV_PAGEWINDOW'];
-					}
-					$arResult["NAV_STRING"] = $rsItems->GetPageNavStringEx(
-						$navComponentObject,
-						"",
-						$arParams['NAV_TEMPLATE'],
-						($arParams["NAV_SHOW_ALWAYS"] === 'Y'),
-						$this
-					);
-
-					$arResult["NAV_RESULT"] = [
-						'PAGE_NOMER'					=> (int)$rsItems->NavPageNomer,		// номер текущей страницы постранички
-						'PAGES_COUNT'					=> (int)$rsItems->NavPageCount,		// всего страниц постранички
-						'RECORDS_COUNT'					=> (int)$rsItems->NavRecordCount,	// размер выборки, всего строк
-						'CURRENT_PAGE_RECORDS_COUNT'	=> count($arResult["ITEMS"])	    // размер выборки текущей страницы
-					];
+					$this->setNavResult($rsItems);
 				}
-				$arResult["CNT_ITEMS"] = count($arResult["ITEMS"]);
-
 				$this->setResultCacheKeys([
 					'NAV_RESULT',
 					'CNT_ITEMS'
@@ -221,7 +164,7 @@ class IblockList extends \CBitrixComponent
 				$this->abortResultCache();
 			}
 
-			if (count($arResult["ITEMS"]) > 0 || $arParams["ALWAYS_INCLUDE_TEMPLATE"] == "Y") {
+			if ($arResult["CNT_ITEMS"] > 0 || $arParams["ALWAYS_INCLUDE_TEMPLATE"] === "Y") {
 				$this->includeComponentTemplate();
 			}
 		}
@@ -232,6 +175,143 @@ class IblockList extends \CBitrixComponent
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	private function includeRequiredModules(): bool
+	{
+		if (! Main\Loader::includeModule("iblock")) {
+			ShowError("iblock not inslaled and required!");
+			return false;
+		}
+
+		return true;
+	}
+
+	private function getOrder(): array
+	{
+		return $this->arParams["ORDER"] ?: ["SORT" => "ASC"];
+	}
+
+	private function getFilter(): array
+	{
+		$arFilter = ["IBLOCK_ID" => $this->arParams["IBLOCK_ID"], "ACTIVE" => "Y"];
+		if (count($this->arParams["FILTER"]) > 0) {
+			$arFilter = array_merge($arFilter, $this->arParams["~FILTER"]);
+		}
+
+		return $arFilter;
+	}
+
+	private function getNavParams(): array|false
+	{
+		if ($this->arParams["NTOPCOUNT"] > 0) {
+			$arNavParams = [];
+			$arNavParams["nTopCount"] = $this->arParams["NTOPCOUNT"];
+		} else if ($this->arParams["PAGESIZE"] > 0) {
+			$arNavParams = [];
+			$arNavParams["nPageSize"] = $this->arParams["PAGESIZE"];
+			$arNavParams["bShowAll"] = ($this->arParams['NAV_SHOW_ALL'] == 'Y');
+		} else {
+			$arNavParams = false;
+		}
+
+		return $arNavParams;
+	}
+
+	private function getSelect(): array
+	{
+		$arSelect = ["ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME", "TIMESTAMP_X"];
+		if (count($this->arParams["SELECT"]) > 0) {
+			$arSelect = array_merge($arSelect, $this->arParams["SELECT"]);
+		}
+
+		return $arSelect;
+	}
+
+	private function initChainBuilder(): void
+	{
+		if ($this->arParams['SELECT_CHAINS'] !== 'Y') {
+			return;
+		}
+
+		// Создаем объект до цикла по элементам, т.к. в него складываются уже выбранные цепочки в качестве кеша.
+		$className = static::LINKED_CHAINS_CLASS;
+		$this->obChainBuilder = new $className();
+	}
+
+	private function prepareItem(array $arItem): array
+	{
+		if ($this->arParams['GET_PROPERTY'] === "Y") {
+			// QUERY 2
+			$arItem['PROPERTIES'] = IblockUtils::selectElementProperties(
+				(int)$arItem['ID'],
+				(int)$arItem["IBLOCK_ID"],
+				false,
+				["EMPTY" => "N"],
+				($this->arParams['SELECT_CHAINS'] === 'Y' ? $this->obChainBuilder : null),
+				(int)$this->arParams['SELECT_CHAINS_DEPTH']
+			);
+		}
+
+		/*
+		 * TOFUTURE Всяческие довыборки на каждый элемент $arItem по произвольному
+		 * параметру $arParams писать тут
+		 * оставить комментарий по параметру, где этот параметр используется.
+		 * Предпочтительнее это делать в result_modifier.php
+		 */
+
+		$this->modifyItem($arItem);
+
+		return $arItem;
+	}
+
+	private function modifyItem(array &$arItem): void
+	{
+		$modifier = $this->arParams['~MODIFY_ITEM'] ?? $this->arParams['MODIFY_ITEM'] ?? null;
+		if (empty($modifier)) {
+			return;
+		}
+
+		$closure = UnserializeClosure($modifier);
+		if (is_callable($closure)) {
+			$closure($arItem);
+		}
+	}
+
+	private function releaseChainBuilder(): void
+	{
+		// освобождаем память от цепочек
+		if (isset($this->obChainBuilder)) {
+			unset($this->obChainBuilder);
+		}
+	}
+	
+	/**
+	 * @param \CIBlockResult $rsItems
+	 * @return void
+	 */
+	private function setNavResult($rsItems): void
+	{
+		$arParams =& $this->arParams;
+		$arResult =& $this->arResult;
+
+		if ($arParams['NAV_PAGEWINDOW'] > 0) {
+			$rsItems->nPageWindow = $arParams['NAV_PAGEWINDOW'];
+		}
+		$arResult["NAV_STRING"] = $rsItems->GetPageNavStringEx(
+			$navComponentObject,
+			"",
+			$arParams['NAV_TEMPLATE'],
+			($arParams["NAV_SHOW_ALWAYS"] === 'Y'),
+			$this
+		);
+
+		$arResult["NAV_RESULT"] = [
+			'PAGE_NOMER'					=> (int)$rsItems->NavPageNomer,		// номер текущей страницы постранички
+			'PAGES_COUNT'					=> (int)$rsItems->NavPageCount,		// всего страниц постранички
+			'RECORDS_COUNT'					=> (int)$rsItems->NavRecordCount,	// размер выборки, всего строк
+			'CURRENT_PAGE_RECORDS_COUNT'	=> count($arResult["ITEMS"])	    // размер выборки текущей страницы
+		];
+	}
+
 	private function getAdditionalCacheId(): array
 	{
 		return [
@@ -240,8 +320,7 @@ class IblockList extends \CBitrixComponent
 	}
 
 	/**
-	 * Return user groups. Now worked only with current user.
-	 *
+	 * Return user groups. Now it's worked only with current user.
 	 * @return array
 	 */
 	private function getUserGroups(): array
