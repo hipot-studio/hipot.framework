@@ -26,8 +26,9 @@ use Bitrix\Main\Diag\ExceptionHandlerFormatter,
 	Bitrix\Main\Mail\Event,
 	Bitrix\Main\SiteTable;
 
-$developerEmail = defined('ERROR_EMAIL') ? ERROR_EMAIL : 'info@hipot-studio.com';
-$request        = Application::getInstance()?->getContext()?->getRequest();
+$developerEmail       = defined('ERROR_EMAIL') ? ERROR_EMAIL : 'info@hipot-studio.com';
+$developerEmailMailTo = trim(explode(',', $developerEmail)[0]);
+$request              = Application::getInstance()?->getContext()?->getRequest();
 
 // to copy and one-time-run in the admin PHP Command line instrument...
 $installEmailType       = static function ($typeId = 'DEBUG_MESSAGE'): bool {
@@ -203,7 +204,7 @@ if ($isAjaxRequest) {
 		<div class="we-know">Мы уже об этом знаем, и в ближайшее время все будет исправлено.</div>
 		Просим прощения за неудобства.<br /><br />
 
-		<small>Вы можете <a href="mailto:<?=$developerEmail?>?subject=Ошибка+PHP+<?=htmlspecialcharsbx($request?->getServer()->getServerName() . $request?->getRequestUri())?>">написать нам</a>, указав подробности,
+		<small>Вы можете <a href="mailto:<?=$developerEmailMailTo?>?subject=Ошибка+PHP+<?=htmlspecialcharsbx($request?->getServer()->getServerName() . $request?->getRequestUri())?>">написать нам</a>, указав подробности,
 			если вы не впервые видите данную ошибку</small><br />
 		
 		<?
