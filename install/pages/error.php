@@ -1,11 +1,16 @@
 <?php
 /** @noinspection GlobalVariableUsageInspection */
 /**
- * error page with managed errors.
- * You can define your own function debug_string_backtrace() to generate stack-error-message
+ * Error page with managed errors.
+ * You can define your own function debug_string_backtrace() to generate a stack-error-message.
  *
- * @version 2.2
+ * See also email to catch errors https://dev.1c-bitrix.ru/api_help/main/general/constants.php#error_email
+ * // dbconn.php
+ * define("ERROR_EMAIL", "info@hipot-studio.com");
+ *
+ * @version 2.3
  * @author hipot-studio.com
+ * @see https://dev.1c-bitrix.ru/api_help/main/general/constants.php#error_email
  * @see \Bitrix\Main\Diag\HttpExceptionHandlerOutput::renderExceptionMessage()
  */
 defined('B_PROLOG_INCLUDED') || die();
@@ -21,7 +26,7 @@ use Bitrix\Main\Diag\ExceptionHandlerFormatter,
 	Bitrix\Main\Mail\Event,
 	Bitrix\Main\SiteTable;
 
-$developerEmail = 'info@hipot-studio.com';
+$developerEmail = defined('ERROR_EMAIL') ? ERROR_EMAIL : 'info@hipot-studio.com';
 $request        = Application::getInstance()?->getContext()?->getRequest();
 
 // to copy and one-time-run in the admin PHP Command line instrument...
@@ -143,6 +148,9 @@ $getExceptionStack      = static function (bool $htmlMode = false) use ($excepti
 	$result = ExceptionHandlerFormatter::format($exception, $htmlMode);
 	return $result;
 };
+$isDbConnectionError = static function () use ($exception): bool {
+	return $exception instanceof \Bitrix\Main\DB\ConnectionException;
+};
 
 $isAjaxRequest = (defined('IS_AJAX') && IS_AJAX === true) || $request?->isAjaxRequest();
 $isCliTun = (PHP_SAPI === 'cli');
@@ -202,10 +210,14 @@ if ($isAjaxRequest) {
 		if ($isNotBetaTester) {
 			$sendEmailToSupport();
 		}
-		if ($isAdmin()) {?>
+		if ($isDbConnectionError() || $isAdmin()) {?>
 			<div class="error-raw">
 				<?
-				echo $getExceptionStack(true);
+				if ($isDbConnectionError()) {
+					echo 'Ошибка подключения к Базе данных [' . $exception->getCode() . '].';
+				} else {
+					echo $getExceptionStack(true);
+				}
 				?>
 			</div>
 		<?}?>
