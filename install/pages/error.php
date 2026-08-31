@@ -111,7 +111,7 @@ $sendEmailToSupport     = static function () use ($exception, $developerEmail, $
 	$subject .= sprintf(' [%s]', $dateStr);
 	
 	if ($installEmailType()) {
-		// use send() to may clear list of next erros by query "DELETE FROM b_event WHERE EVENT_NAME = 'EVENT_NAME'"
+		// use send() to may clear list of next erros by query "DELETE FROM b_event WHERE EVENT_NAME = 'DEBUG_MESSAGE'"
 		Event::send([
 			"EVENT_NAME" => "DEBUG_MESSAGE",
 			"LID"        => defined('SITE_ID') ? SITE_ID : Application::getInstance()?->getContext()?->getLanguage(),
