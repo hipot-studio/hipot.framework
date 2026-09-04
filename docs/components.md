@@ -35,3 +35,7 @@ $APPLICATION->SetTitle("Expand Your Reach with <br/> Reliable <span class=\"red-
 
 ## hipot:ajax
 Пример создания [лайков для элементов инфоблока](hipot_ajax_likes.md)
+
+## hipot:iblock.list, hipot:hiblock.list, hipot:iblock.section и hipot:medialibrary.items.list
+Это все компоненты для работы с универсальными выборками для построения любых блоков на сайте
+- [Пример использования компонента hipot:iblock.list](hipot_iblock_list.md)
