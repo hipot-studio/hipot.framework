@@ -30,7 +30,7 @@ apachectl restart
 
 качаем клиент профайлера, написанный на php
 ```shell
-wget https://pecl.php.net/get/xhprof-2.3.9.tgz
+wget https://pecl.php.net/get/xhprof-2.3.10.tgz
 
 #copy dirs from tarball xhprof_lib, xhprof_html to
 #/home/bitrix/ext_www/domain.com/local

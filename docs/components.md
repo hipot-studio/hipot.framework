@@ -33,9 +33,17 @@ $APPLICATION->SetTitle("Expand Your Reach with <br/> Reliable <span class=\"red-
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
 ```
 
-## hipot:ajax
-Пример создания [лайков для элементов инфоблока](hipot_ajax_likes.md)
-
 ## hipot:iblock.list, hipot:hiblock.list, hipot:iblock.section и hipot:medialibrary.items.list
-Это все компоненты для работы с универсальными выборками для построения любых блоков на сайте
-- [Пример использования компонента hipot:iblock.list](hipot_iblock_list.md)
+Это семейство компонентов реализует один подход к построению блоков: параметры вызова описывают выборку, компонент получает и кеширует данные, `result_modifier.php` готовит модель представления, а `template.php` отвечает за вывод. Компоненты отличаются источником данных:
+
+- [`hipot:iblock.list`](components/hipot_iblock_list.md) — элементы инфоблока;
+- [`hipot:hiblock.list`](components/hipot_hiblock_list.md) — записи highload-блока;
+- [`hipot:iblock.section`](components/hipot_iblock_section.md) — разделы инфоблока;
+- [`hipot:medialibrary.items.list`](components/hipot_medialibrary_items_list.md) — элементы коллекций медиабиблиотеки.
+
+## hipot:ajax
+Пример создания [лайков для элементов инфоблока](components/hipot_ajax_likes.md)
+
+## hipot:comments.blog
+Пример [комментариев модуля блогов на детальных страницах элементов инфоблока](components/comments_blog.md).
+
