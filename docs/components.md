@@ -48,6 +48,9 @@ $APPLICATION->SetTitle("Expand Your Reach with <br/> Reliable <span class=\"red-
 ## hipot:ajax
 Пример создания [лайков для элементов инфоблока](components/hipot_ajax_likes.md)
 
+## hipot:request.form.system — старый компонент-конструктор форм и обработчиков к ним
+[Описание компонента request.form.system](components/hipot_request_form_system.md). Компонент устарел, использовать вместо него `hipot:ajax`.
+
 ## hipot:comments.blog
 Пример [комментариев модуля блогов на детальных страницах элементов инфоблока](components/comments_blog.md).
 
