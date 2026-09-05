@@ -5,13 +5,27 @@
  */
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
-/* @var $this CBitrixComponent */
+// region var_comp
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CMain $APPLICATION */
+/** @global CUser $USER */
+/** @global CDatabase $DB */
+/** @var CBitrixComponent $this */
+/** @var string $componentPath */
+/** @var string $componentName */
+/** @var string $componentTemplate */
+/** @var array $parentComponentPath */
+/** @var string $parentComponentName */
+/** @var string $parentComponentTemplate */
+/** @var CBitrixComponent $component */
+// endregion
 
 if ($arParams["SELECT_WITH_ITEMS"] == 'Y') {
 	$arParams['ITEMS_LIST_COMPONENT_NAME'] =
-				(trim($arParams['ITEMS_LIST_COMPONENT_NAME']) == '')
-				? "hipot:medialibrary.items.list"
-				: $arParams['ITEMS_LIST_COMPONENT_NAME'];
+		(trim($arParams['ITEMS_LIST_COMPONENT_NAME']) == '')
+			? "hipot:medialibrary.items.list"
+			: $arParams['ITEMS_LIST_COMPONENT_NAME'];
 }
 
 if ($this->startResultCache(false)) {
@@ -21,7 +35,7 @@ if ($this->startResultCache(false)) {
 		$arAllItems = $APPLICATION->IncludeComponent($arParams['ITEMS_LIST_COMPONENT_NAME'], '', [
 			'ONLY_RETURN_ITEMS'		=> 'Y',
 			'CACHE_TIME'			=> 0		//избыточно, он и так будет 0 из-за ONLY_RETURN_ITEMS => Y
-		]);
+		], $this, ['HIDE_ICONS' => 'Y']);
 		
 		// массив связей, в ключе ID коллекции
 		$arAllItemsIndexed = [];
@@ -53,7 +67,7 @@ if ($this->startResultCache(false)) {
 			$v['ITEMS'] = $arAllItemsIndexed[ $v['ID'] ];
 			unset( $arAllItemsIndexed[ $v['ID'] ] );
 		}
-				
+		
 		$arResult['COLLECTIONS'][] = $v;
 	}
 	

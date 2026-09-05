@@ -1,4 +1,4 @@
-# TODO; описать все компоненты с примерами
+# Описание всех компонентов пространства имен `hipot:` с примерами использования
 
 ## hipot:includer
 Простой компонент для создания повторно используемых виджетов или блоков на сайте:
@@ -33,13 +33,17 @@ $APPLICATION->SetTitle("Expand Your Reach with <br/> Reliable <span class=\"red-
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
 ```
 
-## hipot:iblock.list, hipot:hiblock.list, hipot:iblock.section и hipot:medialibrary.items.list
+## hipot:iblock.list, hiblock.list, iblock.section и medialibrary.items.list, medialibrary.collection.list
 Это семейство компонентов реализует один подход к построению блоков: параметры вызова описывают выборку, компонент получает и кеширует данные, `result_modifier.php` готовит модель представления, а `template.php` отвечает за вывод. Компоненты отличаются источником данных:
 
 - [`hipot:iblock.list`](components/hipot_iblock_list.md) — элементы инфоблока;
 - [`hipot:hiblock.list`](components/hipot_hiblock_list.md) — записи highload-блока;
 - [`hipot:iblock.section`](components/hipot_iblock_section.md) — разделы инфоблока;
-- [`hipot:medialibrary.items.list`](components/hipot_medialibrary_items_list.md) — элементы коллекций медиабиблиотеки.
+- [`hipot:medialibrary.items.list`](components/hipot_medialibrary_items_list.md) — элементы коллекций медиабиблиотеки;
+- [`hipot:medialibrary.collection.list`](components/hipot_medialibrary_collection_list.md) — список коллекций медиабиблиотеки с довыборкой в них элементов при необходимости.
+
+## hipot:iblock.menu_ext
+Пример создания динамичного (_ext) [меню из разделов или элементов инфоблока](components/hipot_iblock_menu_ext.md).
 
 ## hipot:ajax
 Пример создания [лайков для элементов инфоблока](components/hipot_ajax_likes.md)
