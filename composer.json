@@ -2,7 +2,7 @@
   "name": "hipot/hipot.framework",
   "description": "Utilities for creating projects on Bitrix",
   "minimum-stability": "stable",
-  "license": "proprietary",
+  "license": "MIT",
   "authors": [
     {
       "name": "hipot",
@@ -10,6 +10,15 @@
     }
   ],
   "require": {
+    "php": ">=8.3.0",
+    "ext-gd": "*",
+    "ext-fileinfo": "*",
+    "ext-mbstring": "*",
+    "ext-imagick": "*",
+    "ext-dom": "*",
+    "ext-apcu": "*",
+    "intervention/image": "^2.7",
+    "opis/closure": "^4.4"
   },
   "require-dev": {
     "pestphp/pest": "^4.0"
