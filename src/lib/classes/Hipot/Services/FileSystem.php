@@ -47,12 +47,16 @@ class FileSystem
 	 */
 	public static function filePutPrepend(string $strFilename = '', string $strPrepend = ''): void
 	{
+		if ($strPrepend === '') {
+			return;
+		}
+
 		$handler = fopen($strFilename, 'rb+');
 		flock($handler, LOCK_EX);
 		rewind($handler);
 
 		$prepend = $strPrepend;
-		$chunkLength = mb_strlen($prepend);
+		$chunkLength = strlen($prepend);
 		$i = 0;
 		do {
 			$readData = fread($handler, $chunkLength);
