@@ -21,7 +21,7 @@ class ObjectArItem implements \ArrayAccess, \Countable, \IteratorAggregate
 
 	public static function create(bool $useMagicChain = false): static
 	{
-		$object = new self();
+		$object = new static();
 		$object->useMagicChain = $useMagicChain;
 		return $object;
 	}
