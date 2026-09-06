@@ -277,6 +277,10 @@ namespace Bitrix\Main\DI {
 }
 
 namespace {
+	class CDBResult
+	{
+	}
+
 	class CUser
 	{
 	}

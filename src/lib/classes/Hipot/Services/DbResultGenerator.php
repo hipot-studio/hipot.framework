@@ -39,23 +39,26 @@ class DbResultGenerator implements IteratorAggregate
 
 	final public function getIterator(): \Generator
 	{
-		return (function () {
-			if (is_subclass_of($this->result, IteratorAggregate::class)) {
-				return $this->result->getIterator();
+		if (is_subclass_of($this->result, IteratorAggregate::class)) {
+			foreach ($this->result as $item) {
+				if (!is_array($item)) {
+					$item = ObjectArItem::toArr($item);
+				}
+				yield $this->makeItem($item);
 			}
+			return;
+		}
 
-			if ($this->getExtra) {
-				while ($item = $this->result->GetNext(true, true)) {
-					$item = $this->makeItem($item);
-					yield $item;
-				}
-			} else {
-				while ($item = $this->result->Fetch()) {
-					$item = $this->makeItem($item);
-					yield $item;
-				}
+		if ($this->getExtra) {
+			while ($item = $this->result->GetNext(true, true)) {
+				yield $this->makeItem($item);
 			}
-		})();
+			return;
+		}
+
+		while ($item = $this->result->Fetch()) {
+			yield $this->makeItem($item);
+		}
 	}
 
 	final public function getSelectedRowsCount(): int
