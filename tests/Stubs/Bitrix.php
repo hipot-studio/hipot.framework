@@ -281,6 +281,12 @@ namespace {
 	{
 	}
 
+	if (!class_exists('Memcache')) {
+		class Memcache
+		{
+		}
+	}
+
 	class CUser
 	{
 	}

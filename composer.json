@@ -17,6 +17,7 @@
     "ext-imagick": "*",
     "ext-dom": "*",
     "ext-apcu": "*",
+    "ext-memcache": "*",
     "intervention/image": "^2.7",
     "opis/closure": "^4.4"
   },

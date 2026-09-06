@@ -149,10 +149,7 @@ class MemcacheWrapper implements \ArrayAccess
 	 */
 	public function offsetExists($offset): bool
 	{
-		if ($this->mc->get($this->prefix . $offset)) {
-			return true;
-		}
-		return false;
+		return $this->mc->get($this->prefix . $offset) !== false;
 	}
 
 	/**
@@ -160,6 +157,7 @@ class MemcacheWrapper implements \ArrayAccess
 	 *
 	 * @return string|array|bool
 	 */
+	#[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
 		return $this->mc->get($this->prefix . $offset);
@@ -172,6 +170,7 @@ class MemcacheWrapper implements \ArrayAccess
 	 * @return bool|void
 	 * @throws \RuntimeException
 	 */
+	#[\ReturnTypeWillChange]
 	public function offsetSet($offset, $value)
 	{
 		if ($offset === null) {
@@ -185,6 +184,7 @@ class MemcacheWrapper implements \ArrayAccess
 	 *
 	 * @return bool|void
 	 */
+	#[\ReturnTypeWillChange]
 	public function offsetUnset($offset)
 	{
 		return $this->mc->delete($this->prefix . $offset);
