@@ -26,6 +26,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
     /** @var $cachedUser \CUser */
     \Bitrix\Main\Diag\Debug::dump($cachedUser->GetID());
     ```
+  - [объектная обёртка над агентами Bitrix](docs/agents.md) в пространстве имён <code>Hipot\BitrixUtils\Agent</code>
   - с магазином <code>Hipot\BitrixUtils\Sale (aka SaleUtils)</code> и товаром каталога <code>Hipot\BitrixUtils\Catalog</code>
   - различные утилиты-хелперы <code>Hipot\Utils\UUtils (aka UnsortedUtils)</code> и трейты-хелперы в <code>namespace Hipot\Utils\Helper\\*</code>
   - для отложенного подключения ресурсов [<code>Hipot\BitrixUtils\AssetsContainer</code>](docs/AssetsContainer.md)
@@ -34,7 +35,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
   - различные базовые типы в пространстве имен <code>[Hipot\Types](docs/types.md)</code>  
 
 - автозагрузчик к классам <code>lib/simple_loader.php</code> для копирования в <code>/local/php_interface/lib/simple_loader.php</code><br>
-В современных реалиях лучше для этого использовать [composer](install/local/composer.json)
+В современных реалиях лучше для этого использовать [composer предназначенный для копирования в Bitrix-сайт](src/install/local/composer-example.json)
 - немного "плавающих функций" [<code>/lib/functions.php</code>](docs/functions.md)
 - универсальные обработчики событий <code>/lib/handlers_add.php</code> с подключением констант-рубильников из файла <code>/lib/constants.php</code>  
 - скрипт [xhprof.php](docs/xhprof.md) для быстрого профилирования "боевых" проектов
@@ -49,7 +50,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
   - <code>hipot:medialibrary.items.list</code> для вывода списка элементов медиабиблиотеки (напр. определенного альбома) в публичную часть
   - <code>Hipot\Components\CommentsBlog</code> для реализации комментариев из модуля блогов к детальным страницам элементов инфоблоков
 - пример файла <code>/local/php_interface/init.php</code> с подключением деталей фреймворка к битриксу
-можно найти в файле [include.php](include.php)
+можно найти в файле [include.php](src/include.php)
 
   
 ### Установка:

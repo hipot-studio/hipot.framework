@@ -113,7 +113,7 @@ $statusesCnt = PhpCacher::cache('total_statistic', 3600 * 24 * 30, static functi
 ### Возможность кэшировать данные в разных местах
 
 Теперь этот класс умеет кэшировать не только в кэше по умолчанию, а еще и в любом наследнике от <code>Bitrix\Main\Data\CacheEngine</code>.
-Сами наследники конфигурируются через <code>\Bitrix\Main\DI\ServiceLocator</code>, т.е. в конфигурации [<code>.settings_extra.php</code>](../install/.settings_extra.php) задаем службу:
+Сами наследники конфигурируются через <code>\Bitrix\Main\DI\ServiceLocator</code>, т.е. в конфигурации [<code>.settings_extra.php</code>](../src/install/.settings_extra.php) задаем службу:
 ```php
 'services' => [
     'value' => [
