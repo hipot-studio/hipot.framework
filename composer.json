@@ -1,6 +1,6 @@
 {
   "name": "hipot/hipot.framework",
-  "description": "Utilities for creating projects on Bitrix",
+  "description": "A set of tools and practices for Bitrix development",
   "minimum-stability": "stable",
   "license": "MIT",
   "authors": [
@@ -21,6 +21,7 @@
     "opis/closure": "^4.4"
   },
   "require-dev": {
+    "larapack/dd": "^1.1",
     "pestphp/pest": "^4.0"
   },
   "autoload": {
