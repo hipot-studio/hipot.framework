@@ -1,6 +1,6 @@
 # Abstract Iblock Elements Layer
 
-## Подсказки на выборки CIBlockElement::GetList() на базе компонента hipot:iblock.list и на выборки HL::getList() на базе компонента hipot:hiblock.list
+Подсказки на выборки CIBlockElement::GetList() на базе компонента hipot:iblock.list и на выборки HL::getList() на базе компонента hipot:hiblock.list
 
 ### ЗАЧЕМ ЭТО НУЖНО?
 * Написание шаблонов компонент, выбирающих данные из инфоблоков и HL-блоков
@@ -9,12 +9,48 @@
   естественно, тоже с подсказками по связанным элементам
 * Просмотр символьных кодов свойств (схемы БД) при подключении компонент  hipot:iblock.list и hipot:hiblock.list для их парамтеров SELECT и FILTER
 
+Статья с анонсом библиотеки ["Счастье при написании шаблонов компонента iblock.list"](https://www.hipot-studio.com/Codex/happy-iblock-list-templates-beta/)
 
-![](img/2020-10-15_19-16-26.png)
+Сразу рассмотрим пример кода:
 
-![](img/2020-10-15_19-17-28.png)
+```php
+use Bitrix\Main\Loader;
+use \Hipot\IbAbstractLayer\IblockElemLinkedChains as hiIblockElemLinkedChains;
 
-![](img/2020-10-15_19-16-57.png)
+Loader::includeModule('hipot.framework');
+
+// example to select some linked elements by linked-chained-class
+$resultChains = hiIblockElemLinkedChains::getList(
+	['sort' => 'asc'],
+	['iblock_id' => 3, 'ID' => 232],
+	false, false,
+	['ID', 'NAME', 'PROPERTY_CML2_LINK']
+);
+// see iblock 3 properties to use in getList:
+// (new __IblockElementItem_HIPOT3_LAN_3())->PROPERTIES->CML2_LINK
+
+foreach ($resultChains as $ibItem) {
+	/** @var $ibItem __IblockElementItem_HIPOT3_LAN_3 */
+	echo $ibItem->PROPERTIES->CML2_LINK->CHAIN->PROPERTIES->MANUFACTURER->NAME;
+}
+
+var_dump($resultChains);
+
+/* hiIblockElemLinkedChains помимо рекурсивных выборок и объектной модели умеет все, 
+ что умеет класс Hipot\BitrixUtils\IblockUtils */
+```
+
+рис. смотрим какие классы есть после индексации модели инфоблоков в файл для IDE подсказок <code>/bitrix/modules/generated_iblock_sxem.php</code>:
+
+![layer example](docs/img/2020-10-15_19-16-26.png)
+
+рис. смотрим какие свойства есть в 3м инфоблоке и какие у них коды для выборки:
+
+![layer example](docs/img/2020-10-15_19-16-57.png)
+
+рис. имеем code completion для всех типов свойств, в том числе для свойств связанных элементов инфоблоков:
+
+![layer example](docs/img/2020-10-15_19-17-28.png)
 
 Также доступен и просмотр свойств HL-блоков (схема свойств HL-блоков), где для списочных свойств приведены их значения
 
@@ -29,7 +65,7 @@
 
 Для удобства использования в нескольких проектах следует указать соль, используемая в имени генерированных классов, напр. подключить так
 
-  ```php
+```php
   // напр. для сайта www.mysite.ru следует указать (разрешены только символы по маске: [0-9a-zA-Z_])
   define('ABSTRACT_LAYER_SAULT', 'MY_SITE_RU');
   /*
@@ -37,7 +73,10 @@
   * трансформированного имени домена:
   * Напр. www.good-site.wexpert.ru --> GOOD_SITE_WEXPERT_RU
   */
-  ```
+```
+
+1.1/ **ВАЖНО!** После включения Abstract Iblock Elements Layer нужно проиндексировать файл <code>bitrix/modules/generated_iblock_sxem.php</code> в используемой IDE.
+Это делается для подсказок (автокомплит кода), по аналогии как в битриксе с аннотациями файл <code>bitrix/modules/orm_annotations.php</code>
 
 2/ Имя класса пишется следующим образом: ```__hiIblockElementItem_#ABSTRACT_LAYER_SAULT#_#IBLOCK_ID#```
 ```#ABSTRACT_LAYER_SAULT#``` - соль заданная либо по домену
@@ -230,4 +269,4 @@ foreach ($resultChains as $ibItem) {
 dd(\CFile::FormatSize(memory_get_usage(true)));
 ```
 
-[CHANGELOG](ABSTRACT_IBLOCK_ELEMENT_LAYER_CHANGELOG.MD)
+[CHANGELOG](history.md)
