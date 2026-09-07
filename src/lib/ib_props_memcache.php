@@ -57,7 +57,7 @@
  *              'host' => 'unix:///home/bitrix/memcached.sock'
  *      ],
  * ]],
- * 2/ add need classes within autoloader (MemcacheWrapper, MemcacheWrapperError, UUtils)
+ * 2/ add need classes within autoloader (GlobalsCacher, MemcacheWrapper, MemcacheWrapperError, UUtils)
  * 3/ require file in init.php
  * require __DIR__ . '/include/ib_props_memcache.php';
  *
@@ -69,49 +69,67 @@
  * @version 1.5.2
  * @author hipot, 2022
  */
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+defined('B_PROLOG_INCLUDED') || die();
 
 use Bitrix\Main\Loader,
 	Bitrix\Main\Application,
 	Bitrix\Main\Data\MemcacheConnection,
 	Bitrix\Iblock\IblockTable,
+	Hipot\Services\GlobalsCacher,
 	Hipot\Services\MemcacheWrapper,
 	Hipot\Utils\UUtils;
 
 (static function () {
-	if (!class_exists('Memcache') || !class_exists(MemcacheWrapper::class)) {
+	if (
+		!class_exists('Memcache')
+		|| !class_exists(MemcacheWrapper::class)
+		|| !class_exists(GlobalsCacher::class)
+	) {
 		UUtils::logException(new \Bitrix\Main\SystemException('no memcache classes to ' . basename(__FILE__)));
 		return;
 	}
 	
-	Loader::includeModule('iblock');
-	
-	// init global $IBLOCK_CACHE_PROPERTY in iblock/classes/general/iblockproperty.php by autoload
-	$pr = new CIBlockProperty();
-	unset($pr);
-	
-	// relay cache to iblock property types, avoid iblock2.0 not found tables error
-	$arIblockVersions = [];
-	$rs               = IblockTable::query()->setSelect(['ID', 'VERSION'])->setOrder(['ID' => 'ASC'])->setCacheTtl(3600 * 24 * 3)->exec();
-	while ($ar = $rs->fetch()) {
-		$arIblockVersions[$ar['ID']] = $ar['VERSION'];
-	}
-	
 	try {
 		/** @var MemcacheConnection $mc */
-		$mc         = Application::getConnection('memcache');
-		$serverName = (string)Application::getInstance()->getContext()->getServer()->getServerName();
+		$mc = Application::getConnection('memcache');
 		if (null !== $mc) {
-			/** @noinspection GlobalVariableUsageInspection */
-			$GLOBALS['IBLOCK_CACHE_PROPERTY'] = new MemcacheWrapper(
-				'IBLOCK_CACHE_PROPERTY_' . md5(serialize($arIblockVersions) . $serverName),
-				$mc->getResource()
-			);
+			(new GlobalsCacher(
+				$mc->getResource(),
+				[
+					'IBLOCK_CACHE_PROPERTY' => [
+						static function (): void {
+							Loader::includeModule('iblock');
+							// Initialize the global in iblock/classes/general/iblockproperty.php by autoload.
+							$property = new CIBlockProperty();
+							unset($property);
+						},
+						static function (): string {
+							// Keep caches for different iblock storage versions isolated.
+							$iblockVersions = [];
+							$result = IblockTable::query()
+								->setSelect(['ID', 'VERSION'])
+								->setOrder(['ID' => 'ASC'])
+								->setCacheTtl(3600 * 24 * 3)
+								->exec();
+							while ($iblock = $result->fetch()) {
+								$iblockVersions[$iblock['ID']] = $iblock['VERSION'];
+							}
+
+							$serverName = (string)Application::getInstance()
+								->getContext()
+								->getServer()
+								->getServerName();
+
+							return 'IBLOCK_CACHE_PROPERTY_' . md5(serialize($iblockVersions) . $serverName);
+						},
+					],
+				]
+			))->cache();
 		}
 	} catch (Error $e) {
 		UUtils::logException($e);
 	}
-	unset($arIblockVersions, $serverName, $rs, $mc);
+	unset($mc);
 	
 	// _tests:
 	/*
@@ -126,4 +144,5 @@ use Bitrix\Main\Loader,
 		exit;
 	}
 	*/
+
 })();

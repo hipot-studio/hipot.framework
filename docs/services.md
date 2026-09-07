@@ -93,7 +93,11 @@ try {
 }
 ```
 
-5/ Класс для хранения различных значений (реестр значений), чтобы не использовать $GLOBALS 
+5/ Класс для переноса array-like глобальных справочников Bitrix во внешний кеш
+<code>\Hipot\Services\GlobalsCacher</code>. По умолчанию использует <code>MemcacheWrapper</code>;
+другой движок можно подключить через третий аргумент — фабрику обёртки с интерфейсом <code>ArrayAccess</code>.
+
+6/ Класс для хранения различных значений (реестр значений), чтобы не использовать $GLOBALS
 <code>\Hipot\Services\Registry</code>
 
 ```php
@@ -104,21 +108,21 @@ Registry::set('key', 'value');
 $value = Registry::get('key');
 ```
 
-6/ Сервис для чтения xml-файлов через php_xmlreader
+7/ Сервис для чтения xml-файлов через php_xmlreader
 <code>\Hipot\Services\SimpleXMLReader</code>
 
-7/ Сервис создания простого excel-файла <code>\Hipot\Services\SimpleXlsx</code> на основе PhpSpreadsheet
+8/ Сервис создания простого excel-файла <code>\Hipot\Services\SimpleXlsx</code> на основе PhpSpreadsheet
 
-8/ Сервис для работы с сервисом Google Recaptcha3 и его внедрением в битрикс
+9/ Сервис для работы с сервисом Google Recaptcha3 и его внедрением в битрикс
 <code>\Hipot\Services\Recaptcha3</code>
 
-9/ Класс-обертка над запуском wkhtmltopdf для создания pdf из страницы:
+10/ Класс-обертка над запуском wkhtmltopdf для создания pdf из страницы:
 <code>\Hipot\Services\PdfPageGenerator</code>
 
-10/ Класс-обертка над пакетом ffmpeg для работы с видео
+11/ Класс-обертка над пакетом ffmpeg для работы с видео
 <code>\Hipot\Services\FfmpegExec</code>
 
-11/ Класс для работы с календарем и рабочими (банковскими) днями
+12/ Класс для работы с календарем и рабочими (банковскими) днями
 <code>\Hipot\Services\BankDayCalc</code>
 
-12/ Сервис для работы с AI <code>\Hipot\Services\OpenAI</code>
+13/ Сервис для работы с AI <code>\Hipot\Services\OpenAI</code>
