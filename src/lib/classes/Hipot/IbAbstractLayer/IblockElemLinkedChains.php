@@ -9,8 +9,8 @@
 namespace Hipot\IbAbstractLayer;
 
 use Hipot\IbAbstractLayer\Types\IblockElementItem,
-	Hipot\BitrixUtils\Iblock;
-use Hipot\Types\Collection\Collection;
+	Hipot\BitrixUtils\Iblock,
+	Hipot\Types\Collection\Collection;
 
 /**
  * Класс для работы с получением цепочек связанных элементов (через свойства привязка к элементам),
@@ -51,6 +51,8 @@ final class IblockElemLinkedChains extends Iblock
 	 * @var array
 	 */
 	private array $__cacheItems;
+	
+	public const int DEFAULT_SELECT_LEVEL = 3;
 
 	public function __construct()
 	{
@@ -63,7 +65,7 @@ final class IblockElemLinkedChains extends Iblock
 	 *
 	 * @param int $maxLevel = 3 Максимальный уровень вложения (O)
 	 */
-	public function init(int $maxLevel = 3): void
+	public function init(int $maxLevel = self::DEFAULT_SELECT_LEVEL): void
 	{
 		$this->__topLevelId = NULL;
 		$this->__maxLevel = (int)$maxLevel;
@@ -155,7 +157,7 @@ final class IblockElemLinkedChains extends Iblock
 		}
 
 		$arParams = $arResult = [];
-		$arParams['SELECT_CHAINS_DEPTH'] = defined('ABSTRACT_LAYER_SELECT_CHAINS_DEPTH') ? ABSTRACT_LAYER_SELECT_CHAINS_DEPTH : 3;
+		$arParams['SELECT_CHAINS_DEPTH'] = defined('ABSTRACT_LAYER_SELECT_CHAINS_DEPTH') ? ABSTRACT_LAYER_SELECT_CHAINS_DEPTH : self::DEFAULT_SELECT_LEVEL;
 		$arResult["ITEMS"] = [];
 
 		$obChainBuilder = new self();
@@ -175,10 +177,8 @@ final class IblockElemLinkedChains extends Iblock
 		}
 
 		// освобождаем память от цепочек
-		if (isset($obChainBuilder)) {
-			unset($obChainBuilder);
-		}
-
+		unset($obChainBuilder);
+		
 		return new Collection($arResult["ITEMS"]);
 	}
 }

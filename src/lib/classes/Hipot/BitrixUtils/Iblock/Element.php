@@ -5,6 +5,7 @@ namespace Hipot\BitrixUtils\Iblock;
 use Bitrix\Iblock\InheritedProperty\ElementTemplates;
 use Bitrix\Iblock\InheritedProperty\ElementValues;
 use Bitrix\Iblock\PropertyIndex\Manager;
+use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\Config\Option;
 use Hipot\IbAbstractLayer\IblockElemLinkedChains;
 use Hipot\Types\UpdateResult;
@@ -169,12 +170,14 @@ trait Element
 	 * @param bool $SelectAllProps = false
 	 * @param bool $OnlyPropsValue = true
 	 * @param bool $bSelectChains = false
-	 * @param int $selectChainsDepth = 3
+	 * @param int $selectChainsDepth = IblockElemLinkedChains::DEFAULT_SELECT_LEVEL
+	 * @param bool $returnOneIfOnlyOneSelected = true
 	 * @return array|int
 	 */
 	public static function selectElementsByFilterArray($arOrder, $arFilter, $arGroupBy = false, $arNavParams = false,
 	                                                   $arSelect = [], $SelectAllProps = false, $OnlyPropsValue = true,
-	                                                   $bSelectChains = false, $selectChainsDepth = 3, bool $returnOneIfOnlyOneSelected = true): array|int
+	                                                   bool $bSelectChains = false, int $selectChainsDepth = IblockElemLinkedChains::DEFAULT_SELECT_LEVEL,
+	                                                   bool $returnOneIfOnlyOneSelected = true): array|int
 	{
 		if (! in_array('IBLOCK_ID', $arSelect, false)) {
 			$arSelect[] = 'IBLOCK_ID';
@@ -227,7 +230,8 @@ trait Element
 	 *
 	 * @return array | bool
 	 */
-	public static function selectElementProperties($ID, $IBLOCK_ID = 0, $onlyValue = false, $exFilter = [], $obChainBuilder = null, $selectChainsDepth = 3)
+	public static function selectElementProperties($ID, $IBLOCK_ID = 0, $onlyValue = false, $exFilter = [],
+	                                               $obChainBuilder = null, int $selectChainsDepth = IblockElemLinkedChains::DEFAULT_SELECT_LEVEL)
 	{
 		$IBLOCK_ID	= (int)$IBLOCK_ID;
 		$ID			= (int)$ID;
@@ -251,21 +255,21 @@ trait Element
 		$db_props = CIBlockElement::GetProperty($IBLOCK_ID, $ID, ["sort" => "asc"], $arFilter);
 		while ($ar_props = $db_props->Fetch()) {
 
-			// довыборка цепочек глубиной 3, магия чепочек в ключе CHAIN
-			if (is_object($obChainBuilder) && $ar_props['PROPERTY_TYPE'] == 'E') {
+			// довыборка цепочек глубиной 3, магия цепочек в ключе CHAIN
+			if (is_object($obChainBuilder) && $ar_props['PROPERTY_TYPE'] == PropertyTable::TYPE_ELEMENT) {
 				// инициализация должна происходить перед каждым вызовом getChains_r
 				// с указанием выбираемой вложенности
-				$obChainBuilder->init( (int)$selectChainsDepth );
+				$obChainBuilder->init( $selectChainsDepth );
 				$ar_props['CHAIN'] = $obChainBuilder->getChains_r($ar_props['VALUE']);
 			}
 
 			if (trim($ar_props['CODE']) == '') {
 				$ar_props['CODE'] = $ar_props['ID'];
 			}
-			if ($ar_props['PROPERTY_TYPE'] == "S" && isset($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE'])) {
+			if ($ar_props['PROPERTY_TYPE'] == PropertyTable::TYPE_STRING && isset($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE'])) {
 				$ar_props['VALUE']['TEXT'] = FormatText($ar_props['VALUE']['TEXT'], $ar_props['VALUE']['TYPE']);
 			}
-			if ($ar_props['PROPERTY_TYPE'] == 'F') {
+			if ($ar_props['PROPERTY_TYPE'] == PropertyTable::TYPE_FILE) {
 				$ar_props['FILE_PARAMS'] = CFile::GetFileArray($ar_props['VALUE']);
 			}
 
@@ -588,9 +592,9 @@ trait Element
 
 	/**
 	 * Получить минимальную цену из $priceCodes у элемента $element.
-	 * Чтобы максимально сократить число запросов - передавать уже выбранный элемент с полями: ID, IBLOCK_ID, 'CATALOG_GROUP_*'
+	 * Чтобы максимально сократить число запросов - передавать уже выбранный элемент с полями: ID, IBLOCK_ID, 'PRICE_*', 'CURRENCY_*'
 	 *
-	 * @param array{'ID': int} &$element У элемента заполняются массивы с ценами 'PRICES', 'MIN_PRICE' и данными по каталогу 'CATALOG_GROUP_*'
+	 * @param array{'ID': int, 'IBLOCK_ID': int} &$element У элемента заполняются массивы с ценами 'PRICES', 'MIN_PRICE' и данными по каталогу 'PRICE_*', 'CURRENCY_*'
 	 * @param array             $priceCodes = ['BASE']
 	 * @param bool              $bVATInclude = true
 	 *
@@ -622,15 +626,15 @@ trait Element
 		$arSelect = ['ID', 'IBLOCK_ID'];
 		foreach ($prices as $value) {
 			$arSelect[] = $value['SELECT'];
-			$catalogPriceValue = 'CATALOG_PRICE_'.$value['ID'];
-			$catalogCurrencyValue = 'CATALOG_CURRENCY_'.$value['ID'];
+			$catalogPriceValue = 'PRICE_'.$value['ID'];
+			$catalogCurrencyValue = 'CURRENCY_'.$value['ID'];
 			if (isset($element[$catalogPriceValue], $element[$catalogCurrencyValue])) {
 				$bNeedSelect = false;
 			}
 		}
 
 		if ($bNeedSelect) {
-			$element = self::selectElementsByFilterArray(['ID' => 'ASC'], [
+			$element = (array)self::selectElementsByFilterArray(['ID' => 'ASC'], [
 				'ID'        => $element['ID'],
 				'IBLOCK_ID' => $element['IBLOCK_ID']
 			], false, false, $arSelect);

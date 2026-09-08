@@ -36,7 +36,7 @@ final class UpdateResult extends ObjectArItem
 	{
 		if (is_array($result)) {
 			foreach ($result as $k => $v) {
-				$this->offsetSet($k, $v);
+				$this->{$k} = $v;
 			}
 		}
 	}
