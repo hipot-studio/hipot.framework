@@ -16,7 +16,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
   - [объектная модель-обертка над инфоблоками](docs/ABSTRACT_IBLOCK_ELEMENT_LAYER.MD) <code>Hipot\IbAbstractLayer\IblockElemLinkedChains</code>. Наследует весь функционал от <code>Hipot\BitrixUtils\Iblock</code> (Abstract Iblock Elements Layer, см. ниже)
   - класс для работы с инфоблоками <code>Hipot\BitrixUtils\Iblock (aka IblockUtils)</code>
   - класс для работы с hightload-блоками <code>Hipot\BitrixUtils\HiBlock</code> и приложение реестра настроек на его основе <code>Hipot\BitrixUtils\HiBlockApps</code>
-  - [ReadModel для highload-блоков](../hipot.framework/docs/read_model.md): базовая модель <code>Hipot\Model\HiBaseModel</code>, декоратор <code>Hipot\Model\DataManagerReadModel</code>, backend-контроллер <code>HipotAjaxController</code> и клиентская библиотека <code>hi_model.js</code>
+  - ReadModel для highload-блоков: базовая модель <code>Hipot\Model\HiBaseModel</code>, декоратор <code>Hipot\Model\DataManagerReadModel</code>, backend-контроллер <code>HipotAjaxController</code> и клиентская библиотека <code>hi_model.js</code>
   - api для трансформации изображений и наложения водных знаков [<code>Hipot\Utils\Img</code>](docs/img.md)
   - класс для работы с кешированием [<code>Hipot\BitrixUtils\PhpCacher</code>](docs/cacher.md)
     ```php
