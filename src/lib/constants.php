@@ -17,9 +17,14 @@ $be      = BitrixEngine::getInstance();
 $request = $be->request;
 
 /**
+ * На сайте разработчик
+ */
+define('IS_DEVELOPER', $be->user->getLogin() == 'hipot@ya.ru' || str_contains($be->user->getLogin(), '@hipot-studio.com'));
+
+/**
  * На сайте бета-тестировщик
  */
-define('IS_BETA_TESTER', $be->user->isAdmin() || $be->user->getLogin() == 'hipot@ya.ru' || str_contains($be->user->getLogin(), '@hipot-studio.com'));
+define('IS_BETA_TESTER', IS_DEVELOPER || $be->user->isAdmin());
 
 /**
  * Символьный код группы контент редактора
