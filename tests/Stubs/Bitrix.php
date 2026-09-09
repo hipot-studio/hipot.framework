@@ -8,13 +8,135 @@ namespace Bitrix\Main {
 	use Bitrix\Main\DB\Connection;
 	use Bitrix\Main\Session\SessionInterface;
 
-	class Request
+	final class Loader
+	{
+		/** @var array<string, bool> */
+		public static array $modules = ['form' => true, 'iblock' => true, 'highloadblock' => true];
+		public static array $includedModules = [];
+		public static string $documentRoot = '';
+
+		public static function includeModule(string $module): bool
+		{
+			self::$includedModules[] = $module;
+			return self::$modules[$module] ?? false;
+		}
+
+		public static function requireModule(string $module): bool
+		{
+			return self::includeModule($module);
+		}
+
+		public static function getDocumentRoot(): string
+		{
+			return self::$documentRoot;
+		}
+	}
+
+	final class UserFieldResult
+	{
+		public function __construct(private array $rows)
+		{
+		}
+
+		public function fetch(): array|false
+		{
+			return array_shift($this->rows) ?? false;
+		}
+	}
+
+	final class UserFieldTable
+	{
+		public static array $rows = [];
+		public static array $lastQuery = [];
+
+		public static function getList(array $query): UserFieldResult
+		{
+			self::$lastQuery = $query;
+			$rows = self::$rows;
+			foreach ($query['filter'] ?? [] as $field => $value) {
+				$field = ltrim($field, '=');
+				if ($field === 'MAIN_USER_FIELD_TITLE_LANGUAGE_ID') {
+					continue;
+				}
+				$rows = array_values(array_filter(
+					$rows,
+					static fn(array $row): bool => ($row[$field] ?? null) === $value,
+				));
+			}
+			return new UserFieldResult($rows);
+		}
+	}
+
+	class ParameterDictionary
+	{
+		public function __construct(private array $values = [])
+		{
+		}
+
+		public function get(string $name): mixed
+		{
+			return $this->values[$name] ?? null;
+		}
+	}
+
+	class Request implements \ArrayAccess
 	{
 		public function __construct(
 			private readonly bool $adminSection = false,
 			private readonly string $httpHost = 'example.test',
 			private readonly string $requestedPageDirectory = '/',
+			private readonly array $values = [],
+			private readonly array $serverValues = [],
+			private readonly array $postValues = [],
+			private readonly array $queryValues = [],
+			private readonly bool $ajaxRequest = false,
+			private readonly string $requestUri = '/',
 		) {
+		}
+
+		public function getServer(): ParameterDictionary
+		{
+			return new ParameterDictionary($this->serverValues);
+		}
+
+		public function getPost(string $name): mixed
+		{
+			return $this->postValues[$name] ?? null;
+		}
+
+		public function getQuery(string $name): mixed
+		{
+			return $this->queryValues[$name] ?? null;
+		}
+
+		public function isAjaxRequest(): bool
+		{
+			return $this->ajaxRequest;
+		}
+
+		public function getRequestUri(): string
+		{
+			return $this->requestUri;
+		}
+
+		public function offsetExists(mixed $offset): bool
+		{
+			return array_key_exists($offset, $this->values);
+		}
+
+		public function offsetGet(mixed $offset): mixed
+		{
+			return $this->values[$offset] ?? null;
+		}
+
+		public function offsetSet(mixed $offset, mixed $value): void
+		{
+			throw new \LogicException('Request stub is immutable.');
+		}
+
+		public function offsetUnset(mixed $offset): void
+		{
+			throw new \LogicException('Request stub is immutable.');
 		}
 
 		public function isAdminSection(): bool
@@ -79,6 +201,7 @@ namespace Bitrix\Main {
 			private readonly SessionInterface $session,
 			private readonly SessionLocalStorageManager $sessionLocalStorageManager,
 			private readonly ConnectionPool $connectionPool,
+			private readonly mixed $exceptionHandler = null,
 		) {
 		}
 
@@ -122,6 +245,11 @@ namespace Bitrix\Main {
 			return $this->connectionPool;
 		}
 
+		public function getExceptionHandler(): mixed
+		{
+			return $this->exceptionHandler;
+		}
+
 		public static function getConnection(): Connection
 		{
 			return self::$connection;
@@ -131,10 +259,46 @@ namespace Bitrix\Main {
 	final class EventManager
 	{
 		private static ?self $instance = null;
+		public array $handlers = [];
 
 		public static function getInstance(): self
 		{
 			return self::$instance ??= new self();
+		}
+
+		public function addEventHandler(string $module, string $event, callable $handler, bool $includeFile = false, int $sort = 100): int
+		{
+			$this->handlers[$module][$event][] = $handler;
+			return array_key_last($this->handlers[$module][$event]);
+		}
+
+		public function addEventHandlerCompatible(string $module, string $event, callable $handler): int
+		{
+			return $this->addEventHandler($module, $event, $handler);
+		}
+
+		public function findEventHandlers(string $module, string $event): array
+		{
+			return $this->handlers[$module][$event] ?? [];
+		}
+
+		public function removeEventHandler(string $module, string $event, int $key): void
+		{
+			unset($this->handlers[$module][$event][$key]);
+		}
+
+		public function send(string $module, string $event, mixed &$argument = null): array
+		{
+			$results = [];
+			foreach ($this->findEventHandlers($module, $event) as $handler) {
+				$results[] = $handler($argument);
+			}
+			return $results;
+		}
+
+		public function reset(): void
+		{
+			$this->handlers = [];
 		}
 	}
 
@@ -172,8 +336,26 @@ namespace Bitrix\Main {
 namespace Bitrix\Main\DB {
 	class Connection
 	{
+		public bool $queryExecuting = true;
+		public ?array $disabledQueryDump = null;
+
 		public function __construct(public readonly string $name = '')
 		{
+		}
+
+		public function disableQueryExecuting(): void
+		{
+			$this->queryExecuting = false;
+		}
+
+		public function enableQueryExecuting(): void
+		{
+			$this->queryExecuting = true;
+		}
+
+		public function getDisabledQueryExecutingDump(): ?array
+		{
+			return $this->disabledQueryDump;
 		}
 	}
 }
@@ -229,10 +411,33 @@ namespace Bitrix\Main\Page {
 	class Asset
 	{
 		private static ?self $instance = null;
+		public bool $optimizeCss = true;
+		public bool $optimizeJs = true;
+		public bool $jsToBody = true;
 
 		public static function getInstance(): self
 		{
 			return self::$instance ??= new self();
+		}
+
+		public function disableOptimizeCss(): void
+		{
+			$this->optimizeCss = false;
+		}
+
+		public function disableOptimizeJs(): void
+		{
+			$this->optimizeJs = false;
+		}
+
+		public function setJsToBody(bool $value): void
+		{
+			$this->jsToBody = $value;
+		}
+
+		public static function canUseMinifiedAssets(): bool
+		{
+			return \Bitrix\Main\Config\Option::get('main', 'use_minified_assets', 'Y') === 'Y';
 		}
 	}
 }
@@ -281,6 +486,50 @@ namespace {
 	{
 	}
 
+	final class CUserFieldEnumResult extends CDBResult
+	{
+		public function __construct(private array $rows)
+		{
+		}
+
+		public function Fetch(): array|false
+		{
+			return array_shift($this->rows) ?? false;
+		}
+	}
+
+	class CUserFieldEnum
+	{
+		/** @var array<int, array<int, string>> */
+		public static array $values = [];
+		public static array $rows = [];
+		public static array $lastOrder = [];
+		public static array $lastFilter = [];
+
+		public static function GetList(array $order, array $filter): CUserFieldEnumResult
+		{
+			self::$lastOrder = $order;
+			self::$lastFilter = $filter;
+			$rows = self::$rows;
+			if ($rows === []) {
+				foreach (self::$values[(int)$filter['USER_FIELD_ID']] ?? [] as $id => $value) {
+					$rows[] = ['ID' => $id, 'VALUE' => $value];
+				}
+			}
+			return new CUserFieldEnumResult($rows);
+		}
+
+		public function SetEnumValues(int $fieldId, array $values): bool
+		{
+			foreach ($values as $value) {
+				$currentValues = self::$values[$fieldId] ?? [];
+				$nextId = $currentValues === [] ? 1 : max(array_keys($currentValues)) + 1;
+				self::$values[$fieldId][$nextId] = $value['VALUE'];
+			}
+			return true;
+		}
+	}
+
 	if (!class_exists('Memcache')) {
 		class Memcache
 		{
@@ -293,6 +542,45 @@ namespace {
 
 	class CMain
 	{
+		public bool $showIncludeAreas = true;
+		public string $currentPage = '/';
+		public array $lastCurPageParam = [];
+		public array $includedComponents = [];
+		public array $includedFiles = [];
+
+		public function GetShowIncludeAreas(): bool
+		{
+			return $this->showIncludeAreas;
+		}
+
+		public function GetPublicShowMode(): string
+		{
+			return 'view';
+		}
+
+		public function SetCurPage(string $page): void
+		{
+			$this->currentPage = $page;
+		}
+
+		public function GetCurPageParam(string $addParams, array $deleteParams, bool $getIndexPage): string
+		{
+			$this->lastCurPageParam = compact('addParams', 'deleteParams', 'getIndexPage');
+			return $this->currentPage . ($addParams === '' ? '' : '?' . $addParams);
+		}
+
+		public function IncludeComponent(string $name, string $template, array $params, mixed $component = null, array $options = [], bool $returnResult = false): mixed
+		{
+			$this->includedComponents[] = compact('name', 'template', 'params', 'component', 'options', 'returnResult');
+			echo "component:{$name}";
+			return ['name' => $name, 'params' => $params];
+		}
+
+		public function IncludeFile(string $path, array $params = [], array $functionParams = []): void
+		{
+			$this->includedFiles[] = compact('path', 'params', 'functionParams');
+			echo "include:{$path}";
+		}
 	}
 
 	class CUserTypeManager
