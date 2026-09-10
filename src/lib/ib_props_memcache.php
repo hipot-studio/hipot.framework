@@ -163,5 +163,4 @@ use Bitrix\Main\Loader,
 		exit;
 	}
 	*/
-	
 })();
