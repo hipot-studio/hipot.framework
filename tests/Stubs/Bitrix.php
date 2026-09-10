@@ -361,6 +361,27 @@ namespace Bitrix\Main\DB {
 }
 
 namespace Bitrix\Main\Data {
+	class ManagedCache
+	{
+		public function read($ttl, $uniqueId, $tableId = false): bool
+		{
+			return false;
+		}
+
+		public function get($uniqueId): mixed
+		{
+			return false;
+		}
+
+		public function set($uniqueId, $value): void
+		{
+		}
+
+		public function clean($uniqueId, $tableId = false): void
+		{
+		}
+	}
+
 	class Cache
 	{
 		/** @param array<string, mixed> $options */

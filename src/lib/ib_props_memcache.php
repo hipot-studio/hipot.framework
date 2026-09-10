@@ -58,7 +58,8 @@
  *      ],
  * ]],
  * 2/ add need classes within autoloader
- *    (GlobalsCacher, MemcacheWrapper, MemcacheNestedArrayWrapper, MemcacheWrapperError, UUtils)
+ *    (GlobalsCacher, StaticPropertiesCacher, ManagedCacheArrayWrapper,
+ *     MemcacheWrapper, MemcacheNestedArrayWrapper, MemcacheWrapperError, UUtils)
  * 3/ require file in init.php
  * require __DIR__ . '/include/ib_props_memcache.php';
  *
@@ -77,12 +78,45 @@ use Bitrix\Main\Loader,
 	Bitrix\Main\Data\MemcacheConnection,
 	Bitrix\Iblock\IblockTable,
 	Hipot\Services\GlobalsCacher,
+	Hipot\Services\ManagedCacheArrayWrapper,
 	Hipot\Services\MemcacheNestedArrayWrapper,
 	Hipot\Services\MemcacheWrapper,
+	Hipot\Services\StaticPropertiesCacher,
 	Hipot\Utils\UUtils,
 	Hipot\Services\BitrixEngine;
 
 (static function () {
+	try {
+		if (
+			class_exists(ManagedCacheArrayWrapper::class)
+			&& class_exists(StaticPropertiesCacher::class)
+			&& Loader::includeModule('catalog')
+		) {
+			$managedCache = Application::getInstance()->getManagedCache();
+			$cacheTtl = 3600 * 24 * 30;
+			$cacheTableId = 'orm_b_catalog_iblock';
+			$wrapper = static fn(string $property): ManagedCacheArrayWrapper => new ManagedCacheArrayWrapper(
+				'hipot.ccatalogsku.' . $property . '.v1.',
+				$managedCache,
+				$cacheTtl,
+				$cacheTableId,
+			);
+
+			(new StaticPropertiesCacher([
+				CCatalogSku::class => [
+					'arOfferCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('offer'),
+					'arProductCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('product'),
+					'arPropertyCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('property'),
+					'arIBlockCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('iblock'),
+				],
+			]))->cache();
+		}
+	} catch (Throwable $exception) {
+		if (class_exists(UUtils::class)) {
+			UUtils::logException($exception);
+		}
+	}
+
 	if (
 		!class_exists('Memcache')
 		|| !class_exists(MemcacheWrapper::class)

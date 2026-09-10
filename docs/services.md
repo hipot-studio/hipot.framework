@@ -97,6 +97,11 @@ try {
 <code>\Hipot\Services\GlobalsCacher</code>. По умолчанию использует <code>MemcacheWrapper</code>;
 другой движок можно подключить через третий аргумент — фабрику обёртки с интерфейсом <code>ArrayAccess</code>.
 
+Для статических array-like свойств классов используется отдельный помощник
+<code>\Hipot\Services\StaticPropertiesCacher</code>. Обёртка
+<code>\Hipot\Services\ManagedCacheArrayWrapper</code> хранит каждый ключ в Bitrix Managed Cache и корректно
+отличает сохранённое значение <code>false</code> от отсутствующего ключа.
+
 6/ Класс для хранения различных значений (реестр значений), чтобы не использовать $GLOBALS
 <code>\Hipot\Services\Registry</code>
 
