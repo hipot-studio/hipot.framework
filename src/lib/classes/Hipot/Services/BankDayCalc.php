@@ -1,231 +1,128 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Hipot\Services;
 
-/**
- * Работаем с банковскими (рабочими) днями
- * Класс позволяет получить кол-во рабочий дней диапазона дат, либо проверить еще некоторые моменты
- *
- * @see http://habrahabr.ru/blogs/php/67092/
- *
- * @example
- * $oBankDay = new BankDayCalc($arNoWorkCustomDays, $arWorkHollydays);<br />
- * // можно передавать таймштампы<br />
- * $countWorkDays = $oBankDay->getNumDays($arTask['Start'], $arTask['Finish']);<br />
- *
- */
-class BankDayCalc
+use DateInterval;
+use DateTimeImmutable;
+use DateTimeInterface;
+
+/** Calculates working days using explicit calendar exceptions. */
+final class BankDayCalc
 {
+	/** @var array<string, true> */
+	private array $holidays;
+	
+	/** @var array<string, true> */
+	private array $workdays;
+	
+	/** @var array<int, true> ISO-8601 weekday numbers. */
+	private array $weekends;
+	
 	/**
-	 * Массив выходных (формат m-d)
-	 *
-	 * 1, 2, 3, 4 и 5 января - Новогодние каникулы;
-	 * 7 января - Рождество Христово;
-	 * 23 февраля - День защитника Отечества;
-	 * 8 марта - Международный женский день;
-	 * 1 мая - Праздник Весны и Труда;
-	 * 9 мая - День Победы;
-	 * 12 июня - День России;
-	 * 4 ноября - День народного единств
-	 *
-	 *
-	 * @var array
+	 * @param list<string|DateTimeInterface> $holidays Explicit non-working dates in Y-m-d format.
+	 * @param list<string|DateTimeInterface> $workdays Explicit working dates in Y-m-d format.
+	 * @param list<int> $weekends ISO-8601 weekday numbers, 1 (Monday) through 7 (Sunday).
 	 */
-	public static $def_holidays = ['01-01', '01-02', '01-03', '01-04', '01-05', '01-07', '02-23', '03-08', '05-01', '05-09', '06-12', '11-04'];
-
-	/**
-	 * Выходные в неделе
-	 * 0 - Воскресенье
-	 * 6 - Суббота
-	 *
-	 * @var array
-	 */
-	public static $def_weekends = [0, 6];
-
-	/**
-	 * массив рабочих выходных (исключения, формат Y-m-d)
-	 *
-	 * @var array
-	 */
-	private $work_exceptions;
-
-	/**
-	 * Текущие выходные, либо берется значение по умолчанию из $def_holidays
-	 * @var array
-	 */
-	private $holidays;
-
-	/**
-	 * Держит настройку выходных
-	 * @var array
-	 */
-	private $weekends;
-
-	/**
-	 * Конструктор
-	 *
-	 * @param array $holidays массив выходных, если false, то берется из $def_holidays
-	 * @param array $work_exceptions массив рабочих дней (исключения)
-	 */
-	public function __construct($holidays = false, $work_exceptions = [])
-	{
-		if ($holidays === false) {
-			$this->holidays = self::$def_holidays;
-		} else {
-			$this->holidays = $holidays;
-		}
-		$this->work_exceptions = $work_exceptions;
-
-		$this->weekends = self::$def_weekends;
-	}
-
-	/**
-	 * Подготавливает дату для дальнейшей работы
-	 *
-	 * @param string $date Дата отсчета
-	 * @return integer
-	 * @throws \Exception
-	 */
-	public function prepareDate($s)
-	{
-		if ($s !== null && !is_int($s)) {
-			$ts = strtotime($s);
-			if ($ts === -1 || $ts === false) {
-				throw new \Exception('Unable to parse date/time value from input: ' . var_export($s, true));
+	public function __construct(
+		array $holidays = [],
+		array $workdays = [],
+		array $weekends = [6, 7],
+	) {
+		$this->holidays = $this->normalizeDates($holidays);
+		$this->workdays = $this->normalizeDates($workdays);
+		$this->weekends = [];
+		foreach ($weekends as $weekday) {
+			if ($weekday < 1 || $weekday > 7) {
+				throw new \InvalidArgumentException('Weekend day must be between 1 and 7.');
 			}
-		} else {
-			$ts = $s;
+			$this->weekends[$weekday] = true;
 		}
-		return $ts;
 	}
-
-	/**
-	 * Определяет выходной ли день
-	 *
-	 * @param string $date Дата
-	 * @return boolean
-	 * @throws \Exception
-	 */
-	public function isWeekend($date)
+	
+	/** @param list<int> $weekends */
+	public static function fromProvider(WorkCalendarProvider $provider, array $weekends = [6, 7]): self
 	{
-		$ts = $this->prepareDate($date);
-		return in_array(date('w', $ts), $this->weekends) && !in_array(date('Y-m-d', $ts), $this->work_exceptions);
+		return new self($provider->getHolidays(), $provider->getWorkdays(), $weekends);
 	}
-
-	/**
-	 * Определяет праздничный ли день
-	 * @param string $date Дата
-	 * @return boolean
-	 * @throws \Exception
-	 */
-	public function isHoliday($date)
+	
+	public function isWeekend(DateTimeInterface $date): bool
 	{
-		$ts = $this->prepareDate($date);
-		return in_array(date('m-d', $ts), $this->holidays);
+		return isset($this->weekends[(int)$date->format('N')]);
 	}
-
-	/**
-	 * Определяет рабочий ли день
-	 * @param string $date Дата
-	 * @return boolean
-	 * @throws \Exception
-	 */
-	public function isWorkDay($date)
+	
+	public function isHoliday(DateTimeInterface $date): bool
 	{
-		$ts = $this->prepareDate($date);
-		$holidays = $this->getHolidays($ts);
-		return !in_array(date('Y-m-d', $ts), $holidays);
+		return isset($this->holidays[$date->format('Y-m-d')]);
 	}
-
-	/**
-	 * Возвращает массив выходных дней с учетом праздников
-	 *
-	 * @param string  $date Дата отсчета
-	 * @param integer $interval Интервал (дней)
-	 * @return array
-	 * @throws \Exception
-	 */
-	public function getHolidays($date, $interval = 30)
+	
+	public function isWorkDay(DateTimeInterface $date): bool
 	{
-		$ts = $this->prepareDate($date);
-		$holidays = [];
-		for ($i = -$interval; $i <= $interval; $i++) {
-			$curr = strtotime($i . ' days', $ts);
-
-			if ($this->isWeekend($curr) || $this->isHoliday($curr)) {
-				$holidays[] = date('Y-m-d', $curr);
+		$key = $date->format('Y-m-d');
+		if (isset($this->workdays[$key])) {
+			return true;
+		}
+		
+		return !isset($this->holidays[$key]) && !$this->isWeekend($date);
+	}
+	
+	/** Returns the date reached after moving by the requested number of working days. */
+	public function getEndDate(DateTimeInterface $start, int $days): DateTimeImmutable
+	{
+		$current = DateTimeImmutable::createFromInterface($start);
+		$remaining = abs($days);
+		$day = new DateInterval('P1D');
+		
+		while ($remaining > 0) {
+			$current = $days < 0 ? $current->sub($day) : $current->add($day);
+			if ($this->isWorkDay($current)) {
+				$remaining--;
 			}
 		}
-		// Перенос праздников
-		foreach ($holidays as $dateIt) {
-			$ts = $this->prepareDate($dateIt);
-			if ($this->isHoliday($ts) && $this->isWeekend($ts)) {
-				$i = 0;
-				while (in_array(date('Y-m-d', strtotime($i . ' days', $ts)), $holidays)) {
-					$i++;
-				}
-				$holidays[] = date('Y-m-d', strtotime($i . ' days', $ts));
-			}
-		}
-		return $holidays;
+		
+		return $current;
 	}
-
-	/**
-	 * Возвращает дату +$days банковских дней
-	 *
-	 * @param string  $start Дата отсчета
-	 * @param integer $days Кол-во банковских дней
-	 * @param string  $format Формат date()
-	 * @return integer|string
-	 * @throws \Exception
-	 */
-	public function getEndDate($start, $days, $format = null)
+	
+	/** Counts working dates in the half-open interval [start, end]. */
+	public function getNumDays(DateTimeInterface $start, DateTimeInterface $end): int
 	{
-		$ts = $this->prepareDate($start);
-		$holidays = $this->getHolidays($start);
-
-		for ($i = 0; $i <= $days; $i++) {
-			$curr = strtotime('+' . $i . ' days', $ts);
-			if (in_array(date('Y-m-d', $curr), $holidays)) {
-				$days++;
+		$current = DateTimeImmutable::createFromInterface($start)->setTime(0, 0);
+		$end = DateTimeImmutable::createFromInterface($end)->setTime(0, 0);
+		if ($current > $end) {
+			throw new \InvalidArgumentException('Start date must not be later than end date.');
+		}
+		
+		$count = 0;
+		$day = new DateInterval('P1D');
+		while ($current < $end) {
+			if ($this->isWorkDay($current)) {
+				$count++;
 			}
+			$current = $current->add($day);
 		}
-
-		if ($format) {
-			return date($format, strtotime('+' . $days . ' days', $ts));
-		} else {
-			return strtotime('+' . $days . ' days', $ts);
-		}
+		
+		return $count;
 	}
-
-	/**
-	 * Возвращает кол-во банковских дней заданном периоде
-	 *
-	 * @param string $start_in Дата отсчета
-	 * @param string $end_in Кол-во банковских дней
-	 * @return integer
-	 * @throws \Exception
-	 */
-	public function getNumDays($start_in, $end_in)
+	
+	/** @param list<string|DateTimeInterface> $dates @return array<string, true> */
+	private function normalizeDates(array $dates): array
 	{
-		$start = $this->prepareDate($start_in);
-		$end = $this->prepareDate($end_in);
-
-		if ($start > $end) {
-			throw new \Exception(sprintf('Start date ("%s") bust be greater then end date ("%s"). ', $start_in, $end_in));
-		}
-
-		$bank_days = 0;
-		$days = ceil(($end - $start) / 3600 / 24);
-
-		$holidays = $this->getHolidays($start, $days);
-
-		for ($i = 0; $i < $days; $i++) {
-			$curr = strtotime('+' . $i . ' days', $start);
-			if (!in_array(date('Y-m-d', $curr), $holidays)) {
-				$bank_days++;
+		$result = [];
+		foreach ($dates as $date) {
+			if ($date instanceof DateTimeInterface) {
+				$result[$date->format('Y-m-d')] = true;
+				continue;
 			}
+			
+			$parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+			$errors = DateTimeImmutable::getLastErrors();
+			if ($parsed === false || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
+				throw new \InvalidArgumentException(sprintf('Invalid calendar date "%s"; expected Y-m-d.', $date));
+			}
+			$result[$parsed->format('Y-m-d')] = true;
 		}
-
-		return $bank_days;
+		
+		return $result;
 	}
 }
