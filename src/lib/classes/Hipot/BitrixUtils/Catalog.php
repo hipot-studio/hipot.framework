@@ -3,7 +3,11 @@
 namespace Hipot\BitrixUtils;
 
 use Bitrix\Catalog\ProductTable;
+use Bitrix\Catalog\PriceTable;
+use Bitrix\Catalog\StoreProductTable;
+use Bitrix\Catalog\Model\Price;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Result;
 use Bitrix\Iblock;
 use Hipot\BitrixUtils\Iblock as IblockUtils;
 
@@ -17,6 +21,100 @@ Loader::includeModule('catalog');
  */
 final class Catalog
 {
+	/**
+	 * Returns product quantities indexed by store ID.
+	 *
+	 * An empty store list means all stores. Invalid store IDs are ignored; if the
+	 * supplied list contains no valid IDs, an empty result is returned.
+	 *
+	 * @param int[] $storeIds
+	 * @return array<int, float>
+	 */
+	public static function getStoreAmounts(int $productId, array $storeIds = []): array
+	{
+		if ($productId <= 0) {
+			return [];
+		}
+
+		$filterByStores = $storeIds !== [];
+		$storeIds = array_values(array_unique(array_filter(
+			array_map('intval', $storeIds),
+			static fn(int $storeId): bool => $storeId > 0,
+		)));
+		if ($filterByStores && $storeIds === []) {
+			return [];
+		}
+
+		$query = StoreProductTable::query()
+			->setSelect(['STORE_ID', 'AMOUNT'])
+			->where('PRODUCT_ID', $productId)
+			->setOrder(['STORE_ID' => 'ASC']);
+		if ($storeIds !== []) {
+			$query->whereIn('STORE_ID', $storeIds);
+		}
+
+		$amounts = [];
+		foreach ($query->fetchAll() as $row) {
+			$amounts[(int)$row['STORE_ID']] = (float)$row['AMOUNT'];
+		}
+
+		return $amounts;
+	}
+
+	/**
+	 * Returns the total product quantity in selected stores.
+	 *
+	 * @param int[] $storeIds
+	 */
+	public static function getStoreQuantity(int $productId, array $storeIds = []): float
+	{
+		return array_sum(self::getStoreAmounts($productId, $storeIds));
+	}
+
+	/**
+	 * Creates a price or updates the existing price for a product and price type.
+	 */
+	public static function upsertPrice(
+		int $productId,
+		int $priceTypeId,
+		float $price,
+		string $currency,
+	): Result {
+		if ($productId <= 0) {
+			throw new \InvalidArgumentException('Product ID must be greater than zero.');
+		}
+		if ($priceTypeId <= 0) {
+			throw new \InvalidArgumentException('Price type ID must be greater than zero.');
+		}
+		if ($price < 0) {
+			throw new \InvalidArgumentException('Price must not be negative.');
+		}
+
+		$currency = strtoupper(trim($currency));
+		if ($currency === '') {
+			throw new \InvalidArgumentException('Currency must not be empty.');
+		}
+
+		$fields = [
+			'PRODUCT_ID' => $productId,
+			'CATALOG_GROUP_ID' => $priceTypeId,
+			'PRICE' => $price,
+			'CURRENCY' => $currency,
+		];
+		$existingPrice = PriceTable::query()
+			->setSelect(['ID'])
+			->where('PRODUCT_ID', $productId)
+			->where('CATALOG_GROUP_ID', $priceTypeId)
+			->setLimit(1)
+			->fetch();
+
+		if ($existingPrice === false) {
+			return Price::add($fields);
+		}
+
+		return Price::update((int)$existingPrice['ID'], $fields);
+	}
+
 	/**
 	 * Retrieves the barcode for a given product.
 	 * @param int $productId The ID of the product.
