@@ -253,15 +253,19 @@ foreach ($items as $item) {
 
 echo count($items);       // 3
 echo $items->lastKey();   // 2
+echo $items->first()['NAME']; // Первый
+echo $items->last()['NAME'];  // Третий
 ```
 
-`lastKey(): int` рассчитан на непустую коллекцию с целочисленными ключами. Для пустой коллекции `array_key_last()` возвращает `null`, а для ассоциативной может вернуть строку; оба варианта не соответствуют объявленному `int`. Перед вызовом проверяйте структуру:
+`first()` и `last()` возвращают значения в порядке элементов, поэтому работают и с числовыми, и со строковыми ключами. Для пустой коллекции оба метода возвращают `null`; состояние можно проверить через `isEmpty()`.
 
 ```php
-if (count($items) > 0) {
-    $lastItem = $items[$items->lastKey()];
+if (!$items->isEmpty()) {
+    $lastItem = $items->last();
 }
 ```
+
+`lastKey()` возвращает последний ключ как `int|string|null` и нужен, когда вместе со значением важен сам ключ.
 
 ## `Collection\TypeSafeCollection`
 

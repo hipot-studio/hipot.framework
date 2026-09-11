@@ -226,7 +226,11 @@ foreach ($resultChains as $ibItem) {
     // link element params via getList
     d($ibItem->PROPERTY_CML2_LINK_PROPERTY_NEWPRODUCT_ENUM_ID);
     // file params
-    $f = $ibItem->PROPERTIES->MORE_PHOTO[0]->FILE_PARAMS->SRC;
+    $file = $ibItem->PROPERTIES->MORE_PHOTO[0]->FILE_PARAMS;
+    $path = $file->getPath();
+    $absolutePath = $file->getAbsolutePath();
+    $mimeType = $file->getMimeType();
+    $isImage = $file->isImage();
     // has functional of Container
     d($ibItem->PROPERTIES->count(), $ibItem->PROPERTIES->CML2_LINK->CHAIN->toArray());
 

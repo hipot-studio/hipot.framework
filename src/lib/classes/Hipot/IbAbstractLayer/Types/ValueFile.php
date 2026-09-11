@@ -7,6 +7,9 @@
  */
 namespace Hipot\IbAbstractLayer\Types;
 
+use Bitrix\Main\Loader;
+use Bitrix\Main\Web\MimeType;
+
 /**
  * Объект информации о файле, полученный через CFile::GetFileArray()
  * @author hipot
@@ -35,13 +38,55 @@ final class ValueFile extends Base
 	 * Создание объекта информации о файле
 	 * @param array $arPropFlds результат, полученный через CFile::GetFileArray()
 	 */
-	public function __construct($arPropFlds)
+	public function __construct(array $arPropFields)
 	{
-		foreach ($arPropFlds as $fld => $value) {
+		foreach ($arPropFields as $fld => $value) {
 			if ($this->isEmptyValue($value)) {
 				continue;
 			}
 			$this->{$fld} = $value;
 		}
+	}
+
+	public function getId(): ?int
+	{
+		return isset($this->ID) ? (int)$this->ID : null;
+	}
+
+	public function getPath(): string
+	{
+		return (string)($this->SRC ?? '');
+	}
+
+	public function getAbsolutePath(): string
+	{
+		$path = $this->getPath();
+		if ($path === '') {
+			return '';
+		}
+
+		return rtrim(Loader::getDocumentRoot(), '/\\') . '/' . ltrim($path, '/\\');
+	}
+
+	public function getMimeType(): string
+	{
+		$mimeType = (string)($this->CONTENT_TYPE ?? '');
+		if ($mimeType !== '') {
+			return $mimeType;
+		}
+
+		$path = $this->getPath();
+
+		return $path === '' ? '' : MimeType::getByFilename($path);
+	}
+
+	public function isImage(): bool
+	{
+		return str_starts_with(strtolower($this->getMimeType()), 'image/');
+	}
+
+	public function toArray(): array
+	{
+		return parent::toArray();
 	}
 }

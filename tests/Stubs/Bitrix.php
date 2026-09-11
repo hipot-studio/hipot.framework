@@ -333,6 +333,26 @@ namespace Bitrix\Main {
 	}
 }
 
+namespace Bitrix\Main\Web {
+	final class MimeType
+	{
+		private const TYPES = [
+			'gif' => 'image/gif',
+			'jpeg' => 'image/jpeg',
+			'jpg' => 'image/jpeg',
+			'pdf' => 'application/pdf',
+			'png' => 'image/png',
+		];
+
+		public static function getByFilename(string $filename): string
+		{
+			$extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+			return self::TYPES[$extension] ?? 'application/octet-stream';
+		}
+	}
+}
+
 namespace Bitrix\Main\DB {
 	class Connection
 	{
