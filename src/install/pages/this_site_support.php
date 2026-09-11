@@ -461,5 +461,5 @@ Q 670.4 140.7 667.1 141 Z"/>
 					</g>
 				</g>
 			</g>
-		</svg>studio</nobr> &mdash; разработка, поддержка и сопровождение интернет-проектов</a> &nbsp;|&nbsp;
-<a href="https://www.hipot-studio.com/" target="_blank" class="adm-main-support-link">Техподдержка</a>
+		</svg>studio</nobr> &mdash; разработка, развитие и поддержка веб-проектов</a> &nbsp;|&nbsp;
+<a href="https://t.me/hipot" target="_blank" class="adm-main-support-link">Техподдержка</a>
