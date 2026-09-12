@@ -20,39 +20,6 @@ use Bitrix\Main\Loader,
 	Hipot\Services\BitrixEngine;
 
 (static function () {
-	// region CCatalogSku managed cache
-	try {
-		if (
-			class_exists(ManagedCacheArrayWrapper::class)
-			&& class_exists(StaticPropertiesCacher::class)
-			&& Loader::includeModule('catalog')
-		) {
-			$managedCache = Application::getInstance()->getManagedCache();
-			$cacheTtl = 3600 * 24 * 30;
-			$cacheTableId = 'orm_hipot_b_catalog_iblock';
-			$wrapper = static fn(string $property): ManagedCacheArrayWrapper => new ManagedCacheArrayWrapper(
-				'hipot.ccatalogsku.' . $property . '.v1.',
-				$managedCache,
-				$cacheTtl,
-				$cacheTableId,
-			);
-			
-			(new StaticPropertiesCacher([
-				CCatalogSku::class => [
-					'arOfferCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('offer'),
-					'arProductCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('product'),
-					'arPropertyCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('property'),
-					'arIBlockCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('iblock'),
-				],
-			]))->cache();
-		}
-	} catch (Throwable $exception) {
-		if (class_exists(UUtils::class)) {
-			UUtils::logException($exception);
-		}
-	}
-	// endregion
-	
 	// region Speed up \CIBlockProperty::GetPropertyArray and \CIblockElement::SetPropertyValues(Ex) wia memcache
 	if (
 		!class_exists('Memcache')
@@ -60,7 +27,9 @@ use Bitrix\Main\Loader,
 		|| !class_exists(MemcacheNestedArrayWrapper::class)
 		|| !class_exists(GlobalsCacher::class)
 	) {
-		UUtils::logException(new \Bitrix\Main\SystemException('no memcache classes to ' . basename(__FILE__)));
+		if (class_exists(UUtils::class)) {
+			UUtils::logException(new \Bitrix\Main\SystemException('no memcache classes to ' . basename(__FILE__)));
+		}
 		return;
 	}
 	
@@ -145,10 +114,50 @@ use Bitrix\Main\Loader,
 			);
 		}
 	} catch (Error $e) {
-		UUtils::logException($e);
+		if (class_exists(UUtils::class)) {
+			UUtils::logException($e);
+		}
 	}
-	unset($mc);
 	// endregion
+	
+	// region CCatalogSku/CIBlockElement managed cache
+	try {
+		if (
+			class_exists(ManagedCacheArrayWrapper::class)
+			&& class_exists(StaticPropertiesCacher::class)
+			&& Loader::includeModule('iblock')
+			&& Loader::includeModule('catalog')
+		) {
+			$managedCache = Application::getInstance()->getManagedCache();
+			$cacheTtl = 3600 * 24 * 30;
+			$cacheTableId = 'orm_hipot_b_catalog_iblock';
+			$wrapper = static fn(string $property): ManagedCacheArrayWrapper => new ManagedCacheArrayWrapper(
+				'hipot.static.property.cacher.' . $property . '.v1.',
+				$managedCache,
+				$cacheTtl,
+				$cacheTableId,
+			);
+			
+			(new StaticPropertiesCacher([
+				CCatalogSku::class => [
+					'arOfferCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('offer'),
+					'arProductCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('product'),
+					'arPropertyCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('property'),
+					'arIBlockCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('iblock'),
+				],
+				CIBlockElement::class => [
+					'elementIblock' => static fn(): MemcacheWrapper => new MemcacheWrapper('CIBlockElement_elementIblock_', $mc->getResource()),
+				],
+			]))->cache();
+		}
+	} catch (Throwable $exception) {
+		if (class_exists(UUtils::class)) {
+			UUtils::logException($exception);
+		}
+	}
+	// endregion
+	
+	unset($mc);
 	
 	// _tests:
 	/*
@@ -160,6 +169,8 @@ use Bitrix\Main\Loader,
 			echo $k;
 			\Bitrix\Main\Diag\Debug::dump($GLOBALS['IBLOCK_CACHE_PROPERTY'][$k]);
 		}
+	
+		\Bitrix\Main\Diag\Debug::dump( UUtils::getPrivateProperty(new CIBlockElement(), 'elementIblock') );
 		exit;
 	}
 	*/

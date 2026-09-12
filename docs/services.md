@@ -128,6 +128,29 @@ $value = Registry::get('key');
 <code>\Hipot\Services\FfmpegExec</code>
 
 12/ Класс для работы с календарем и рабочими (банковскими) днями
-<code>\Hipot\Services\BankDayCalc</code>
+<code>\Hipot\Services\BankDayCalc</code>. Календарь принимает полные даты в формате
+`Y-m-d`; явно заданный рабочий день имеет приоритет над выходным и праздником.
+
+```php
+use Hipot\Services\BankDayCalc;
+use Hipot\Services\IblockWorkCalendarProvider;
+
+$provider = new IblockWorkCalendarProvider(
+	iblockId: 17,
+	datePropertyCode: 'DATE',
+	typePropertyCode: 'TYPE',
+	holidayType: 'выходной',
+	workdayType: 'рабочий',
+	sourceDateFormat: 'd.m.Y',
+);
+$calendar = BankDayCalc::fromProvider($provider);
+
+$deliveryDate = $calendar->getEndDate(new DateTimeImmutable('2026-09-11'), 2);
+$isWorkingSaturday = $calendar->isWorkDay(new DateTimeImmutable('2026-09-19'));
+```
+
+`IblockWorkCalendarProvider` читает только активные элементы и один раз загружает
+данные на экземпляр. Значения свойств типа сопоставляются без учёта регистра и
+могут начинаться с переданной строки, например `выходной день`.
 
 13/ Сервис для работы с AI <code>\Hipot\Services\OpenAI</code>

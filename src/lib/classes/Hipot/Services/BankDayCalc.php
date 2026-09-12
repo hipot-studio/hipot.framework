@@ -42,7 +42,7 @@ final class BankDayCalc
 	}
 	
 	/** @param list<int> $weekends */
-	public static function fromProvider(WorkCalendarProvider $provider, array $weekends = [6, 7]): self
+	public static function fromProvider(WorkCalendarProviderInterface $provider, array $weekends = [6, 7]): self
 	{
 		return new self($provider->getHolidays(), $provider->getWorkdays(), $weekends);
 	}
@@ -84,7 +84,7 @@ final class BankDayCalc
 		return $current;
 	}
 	
-	/** Counts working dates in the half-open interval [start, end]. */
+	/** Counts working dates in the half-open interval [start, end). */
 	public function getNumDays(DateTimeInterface $start, DateTimeInterface $end): int
 	{
 		$current = DateTimeImmutable::createFromInterface($start)->setTime(0, 0);
