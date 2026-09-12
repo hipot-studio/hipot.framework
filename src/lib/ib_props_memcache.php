@@ -145,9 +145,12 @@ use Bitrix\Main\Loader,
 					'arPropertyCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('property'),
 					'arIBlockCache' => static fn(): ManagedCacheArrayWrapper => $wrapper('iblock'),
 				],
+				/*
+				// not tested:
 				CIBlockElement::class => [
 					'elementIblock' => static fn(): MemcacheWrapper => new MemcacheWrapper('CIBlockElement_elementIblock_', $mc->getResource()),
 				],
+				*/
 			]))->cache();
 		}
 	} catch (Throwable $exception) {
