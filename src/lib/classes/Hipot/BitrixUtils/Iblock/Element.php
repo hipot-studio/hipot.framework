@@ -429,6 +429,90 @@ trait Element
 	}
 
 	/**
+	 * Returns the enum value ID by its XML_ID.
+	 *
+	 * A null XML_ID selects the default enum value.
+	 */
+	public static function getEnumIdByXmlId(int $iblockId, ?string $xmlId, string $propertyCode): ?int
+	{
+		$enum = self::findPropertyEnum($iblockId, $propertyCode, xmlId: $xmlId);
+		$id = (int)($enum['ID'] ?? 0);
+
+		return $id > 0 ? $id : null;
+	}
+
+	/**
+	 * Returns the enum XML_ID by its ID.
+	 *
+	 * A null ID selects the default enum value.
+	 */
+	public static function getEnumXmlIdById(int $iblockId, ?int $id, string $propertyCode): ?string
+	{
+		$enum = self::findPropertyEnum($iblockId, $propertyCode, id: $id);
+		if (!array_key_exists('XML_ID', $enum ?? [])) {
+			return null;
+		}
+
+		return (string)$enum['XML_ID'];
+	}
+
+	/**
+	 * Returns the enum display value by its XML_ID.
+	 *
+	 * A null XML_ID selects the default enum value.
+	 */
+	public static function getEnumValueByXmlId(int $iblockId, ?string $xmlId, string $propertyCode): ?string
+	{
+		$enum = self::findPropertyEnum($iblockId, $propertyCode, xmlId: $xmlId);
+		if (!array_key_exists('VALUE', $enum ?? [])) {
+			return null;
+		}
+
+		return (string)$enum['VALUE'];
+	}
+
+	/** @return array<string, mixed>|null */
+	private static function findPropertyEnum(
+		int $iblockId,
+		string $propertyCode,
+		?int $id = null,
+		?string $xmlId = null,
+	): ?array {
+		$propertyCode = trim($propertyCode);
+		if ($iblockId <= 0 || $propertyCode === '') {
+			return null;
+		}
+		if ($id !== null && $id <= 0) {
+			return null;
+		}
+		if ($xmlId !== null && trim($xmlId) === '') {
+			return null;
+		}
+		if ($xmlId !== null) {
+			$xmlId = trim($xmlId);
+		}
+
+		$filter = [
+			'IBLOCK_ID' => $iblockId,
+			'PROPERTY_CODE' => $propertyCode,
+		];
+		if ($id !== null) {
+			$filter['ID'] = $id;
+		} elseif ($xmlId !== null) {
+			$filter['XML_ID'] = $xmlId;
+		} else {
+			$filter['DEF'] = 'Y';
+		}
+
+		$enum = CIBlockPropertyEnum::GetList(
+			['DEF' => 'DESC', 'SORT' => 'ASC', 'ID' => 'ASC'],
+			$filter,
+		)->Fetch();
+
+		return is_array($enum) ? $enum : null;
+	}
+
+	/**
 	 * Вернуть атрибуты товара из множественного свойства 1с
 	 * @param array $propCml2Value
 	 * @return array
@@ -495,7 +579,7 @@ trait Element
 	 *
 	 * @return bool|string
 	 */
-	public function addMultipleFileValue(int $ID, int $IBLOCK_ID, $arFiles = [], string $prop_code)
+	public function addMultipleFileValue(int $ID, int $IBLOCK_ID, $arFiles = [], string $prop_code = '')
 	{
 		$result = true;
 		$ar = [];

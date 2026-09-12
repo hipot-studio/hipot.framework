@@ -29,6 +29,8 @@ it('loads and normalizes calendar exceptions from an iblock once', function (): 
 		->and(CIBlockElement::$lastQuery['select'])->toBe([
 			'PROPERTY_DATE',
 			'PROPERTY_TYPE',
+			'ID',
+			'IBLOCK_ID',
 		]);
 });
 
