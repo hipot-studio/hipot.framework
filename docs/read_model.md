@@ -7,9 +7,9 @@ ReadModel подходит для экранов, которым нужно чи
 Основные исходники:
 
 - [`Hipot\Model`](../src/lib/classes/Hipot/Model/);
-- [`HipotAjaxController`](../../hipot.framework2/src/install/components/hipot/ajax/ajax.php);
-- [`HipotAjaxComponent`](../../hipot.framework2/src/install/components/hipot/ajax/class.php);
-- [`hi_model.js`](../../hipot.framework2/src/install/components/hipot/ajax/js/hi_model.js).
+- [`HipotAjaxController`](../src/install/components/hipot/ajax/ajax.php);
+- [`HipotAjaxComponent`](../src/install/components/hipot/ajax/class.php);
+- [`hi_model.js`](../src/install/components/hipot/ajax/js/hi_model.js).
 
 ## Участники и их ответственность
 
