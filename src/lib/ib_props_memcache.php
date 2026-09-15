@@ -11,6 +11,7 @@ use Bitrix\Main\Loader,
 	Bitrix\Main\Application,
 	Bitrix\Main\Data\MemcacheConnection,
 	Bitrix\Iblock\IblockTable,
+	Hipot\Services\ApcuNestedArrayWrapper,
 	Hipot\Services\GlobalsCacher,
 	Hipot\Services\ManagedCacheArrayWrapper,
 	Hipot\Services\MemcacheNestedArrayWrapper,
@@ -93,6 +94,13 @@ use Bitrix\Main\Loader,
 					}
 					
 					if (str_starts_with($prefix, 'BX_IBLOCK_PROP_CACHE_')) {
+						if (
+							class_exists(ApcuNestedArrayWrapper::class)
+							&& ApcuNestedArrayWrapper::isAvailable()
+						) {
+							return new ApcuNestedArrayWrapper($prefix);
+						}
+						
 						return new MemcacheNestedArrayWrapper($prefix, $connection);
 					}
 					

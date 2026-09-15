@@ -1,6 +1,6 @@
 ## Сервисный слой для коммуникации с внешними системами
 
-1/ Движок битрикса, как самый большой и тотальный монолитный сервис для фрейморка, класс 
+1/ Движок битрикса, как самый большой и тотальный монолитный сервис для фрейморка, класс
 <code>\Hipot\Services\BitrixEngine</code>
 
 ```php
@@ -50,7 +50,7 @@ foreach (new DbResultGenerator($rs, returnObjects: true) as $ar) {
 $allList = (new DbResultGenerator($rs, returnObjects: true))->fetchAll();
 ```
 
-3/ Класс для удобства взаимодействия с файловой системой 
+3/ Класс для удобства взаимодействия с файловой системой
 <code>\Hipot\Services\FileSystem</code>
 
 ```php
@@ -96,6 +96,12 @@ try {
 5/ Класс для переноса array-like глобальных справочников Bitrix во внешний кеш
 <code>\Hipot\Services\GlobalsCacher</code>. По умолчанию использует <code>MemcacheWrapper</code>;
 другой движок можно подключить через третий аргумент — фабрику обёртки с интерфейсом <code>ArrayAccess</code>.
+
+Для вложенного глобального кеша `BX_IBLOCK_PROP_CACHE`, который используется
+`CIBlockElement::SetPropertyValuesEx()`, применяется
+`Hipot\Services\ApcuNestedArrayWrapper`, если APCu доступен. Между запросами сохраняется
+готовая структура свойств каждого инфоблока; при отсутствии APCu используется
+`MemcacheNestedArrayWrapper`.
 
 Для статических array-like свойств классов используется отдельный помощник
 <code>\Hipot\Services\StaticPropertiesCacher</code>. Обёртка
