@@ -94,14 +94,26 @@ try {
 ```
 
 5/ Класс для переноса array-like глобальных справочников Bitrix во внешний кеш
-<code>\Hipot\Services\GlobalsCacher</code>. По умолчанию использует <code>MemcacheWrapper</code>;
-другой движок можно подключить через третий аргумент — фабрику обёртки с интерфейсом <code>ArrayAccess</code>.
+<code>\Hipot\Services\GlobalsCacher</code>. Для каждого глобала передаются инициализатор
+и фабрика его обёртки с интерфейсом <code>ArrayAccess</code>. Благодаря этому разные
+глобалы могут использовать разные кеширующие движки.
 
 Для вложенного глобального кеша `BX_IBLOCK_PROP_CACHE`, который используется
 `CIBlockElement::SetPropertyValuesEx()`, применяется
 `Hipot\Services\ApcuNestedArrayWrapper`, если APCu доступен. Между запросами сохраняется
 готовая структура свойств каждого инфоблока; при отсутствии APCu используется
 `MemcacheNestedArrayWrapper`.
+
+Чтобы включить только этот кеш через APCu, до подключения фреймворка отключите
+отдельный кеш `CIBlockProperty::GetPropertyArray()`:
+
+```php
+define('HIPOT_IBLOCK_CACHE_PROPERTY_ENABLED', false);
+```
+
+Сам `BX_IBLOCK_PROP_CACHE` можно отключить константой
+`HIPOT_BX_IBLOCK_PROP_CACHE_ENABLED=false`. Оба кеша по умолчанию включены при
+наличии подходящего движка.
 
 Для статических array-like свойств классов используется отдельный помощник
 <code>\Hipot\Services\StaticPropertiesCacher</code>. Обёртка

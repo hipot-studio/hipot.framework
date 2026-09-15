@@ -2,7 +2,10 @@
 /**
  * @see https://dev.1c-bitrix.ru/community/webdev/user/17890/blog/8910/?commentId=49110#com49110
  * @see iblock 23.200.0 https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=iblock
- * @version 2.1
+ * Define HIPOT_IBLOCK_CACHE_PROPERTY_ENABLED=false before including the framework
+ * to keep only BX_IBLOCK_PROP_CACHE enabled.
+ *
+ * @version 2.2
  * @author hipot, 2026
  */
 defined('B_PROLOG_INCLUDED') || die();
@@ -21,93 +24,120 @@ use Bitrix\Main\Loader,
 	Hipot\Services\BitrixEngine;
 
 (static function () {
-	// region Speed up \CIBlockProperty::GetPropertyArray and \CIblockElement::SetPropertyValues(Ex) wia memcache
-	if (
-		!class_exists('Memcache')
-		|| !class_exists(MemcacheWrapper::class)
-		|| !class_exists(MemcacheNestedArrayWrapper::class)
-		|| !class_exists(GlobalsCacher::class)
-	) {
+	// region Speed up \CIBlockProperty::GetPropertyArray and \CIblockElement::SetPropertyValues(Ex)
+	if (!class_exists(GlobalsCacher::class)) {
 		if (class_exists(UUtils::class)) {
-			UUtils::logException(new \Bitrix\Main\SystemException('no memcache classes to ' . basename(__FILE__)));
+			UUtils::logException(new \Bitrix\Main\SystemException('No GlobalsCacher class for ' . basename(__FILE__)));
 		}
 		return;
 	}
 	
 	try {
-		/** @var MemcacheConnection $mc */
-		$mc = Application::getConnection('memcache');
-		if (null !== $mc) {
-			
-			$namespaceProvider = static function (): string {
-				static $cacheNamespace = null;
-				if ($cacheNamespace !== null) {
-					return $cacheNamespace;
-				}
-				
-				// Keep caches for different iblock storage versions isolated.
-				$iblockVersions = [];
-				$result = IblockTable::query()
-				                     ->setSelect(['ID', 'VERSION'])
-				                     ->setOrder(['ID' => 'ASC'])
-				                     ->setCacheTtl(3600 * 24 * 3)
-				                     ->exec();
-				while ($iblock = $result->fetch()) {
-					$iblockVersions[$iblock['ID']] = $iblock['VERSION'];
-				}
-				
-				$serverName = (string)Application::getInstance()
-				                                 ->getContext()
-				                                 ->getServer()
-				                                 ->getServerName();
-				
-				$cacheNamespace = md5(serialize($iblockVersions) . $serverName);
-				
+		$namespaceProvider = static function (): string {
+			static $cacheNamespace = null;
+			if ($cacheNamespace !== null) {
 				return $cacheNamespace;
-			};
+			}
 			
-			(new GlobalsCacher(
-				$mc->getResource(),
-				[
-					'IBLOCK_CACHE_PROPERTY' => [
-						static function (): void {
-							Loader::includeModule('iblock');
-							// Initialize the global in iblock/classes/general/iblockproperty.php by autoload.
-							$property = new CIBlockProperty();
-							unset($property);
-						},
-						static fn(): string => 'IBLOCK_CACHE_PROPERTY_' . $namespaceProvider(),
-					],
-					'BX_IBLOCK_PROP_CACHE' => [
-						static function (): void {
-							Loader::includeModule('iblock');
-							// Initialize the global in iblock/classes/general/iblockelement.php by autoload.
-							$element = new CIBlockElement();
-							unset($element);
-						},
-						static fn(): string => 'BX_IBLOCK_PROP_CACHE_' . $namespaceProvider(),
-					],
-				],
-				static function (string $prefix, object $connection): \ArrayAccess {
-					if (!$connection instanceof Memcache) {
-						throw new InvalidArgumentException('Memcache connection expected.');
+			// Keep caches for different iblock storage versions isolated.
+			$iblockVersions = [];
+			$result = IblockTable::query()
+			                     ->setSelect(['ID', 'VERSION'])
+			                     ->setOrder(['ID' => 'ASC'])
+			                     ->setCacheTtl(3600 * 24 * 3)
+			                     ->exec();
+			while ($iblock = $result->fetch()) {
+				$iblockVersions[$iblock['ID']] = $iblock['VERSION'];
+			}
+			
+			$serverName = (string)Application::getInstance()
+			                                 ->getContext()
+			                                 ->getServer()
+			                                 ->getServerName();
+			
+			$cacheNamespace = md5(serialize($iblockVersions) . $serverName);
+			
+			return $cacheNamespace;
+		};
+		
+		$cacheIblockProperties = !defined('HIPOT_IBLOCK_CACHE_PROPERTY_ENABLED')
+			|| HIPOT_IBLOCK_CACHE_PROPERTY_ENABLED === true;
+		$cacheElementProperties = !defined('HIPOT_BX_IBLOCK_PROP_CACHE_ENABLED')
+			|| HIPOT_BX_IBLOCK_PROP_CACHE_ENABLED === true;
+		$apcuAvailable = $cacheElementProperties
+			&& class_exists(ApcuNestedArrayWrapper::class)
+			&& ApcuNestedArrayWrapper::isAvailable();
+		$memcache = null;
+		
+		if ($cacheIblockProperties || ($cacheElementProperties && !$apcuAvailable)) {
+			try {
+				if (class_exists('Memcache')) {
+					/** @var MemcacheConnection $connection */
+					$connection = Application::getConnection('memcache');
+					$resource = $connection->getResource();
+					if ($resource instanceof Memcache) {
+						$memcache = $resource;
 					}
-					
-					if (str_starts_with($prefix, 'BX_IBLOCK_PROP_CACHE_')) {
-						if (
-							class_exists(ApcuNestedArrayWrapper::class)
-							&& ApcuNestedArrayWrapper::isAvailable()
-						) {
-							return new ApcuNestedArrayWrapper($prefix);
-						}
-						
-						return new MemcacheNestedArrayWrapper($prefix, $connection);
-					}
-					
-					return new MemcacheWrapper($prefix, $connection);
+				}
+			} catch (Throwable $e) {
+				if (class_exists(UUtils::class)) {
+					UUtils::logException($e);
+				}
+				// APCu can still be used independently for BX_IBLOCK_PROP_CACHE.
+			}
+		}
+		
+		$globals = [];
+		if ($cacheIblockProperties && $memcache instanceof Memcache && class_exists(MemcacheWrapper::class)) {
+			$globals['IBLOCK_CACHE_PROPERTY'] = [
+				static function (): void {
+					Loader::includeModule('iblock');
+					// Initialize the global in iblock/classes/general/iblockproperty.php by autoload.
+					$property = new CIBlockProperty();
+					unset($property);
 				},
-			))->cache();
-			
+				static fn(): \ArrayAccess => new MemcacheWrapper(
+					'IBLOCK_CACHE_PROPERTY_' . $namespaceProvider(),
+					$memcache,
+				),
+			];
+		}
+		
+		if ($cacheElementProperties && $apcuAvailable) {
+			$globals['BX_IBLOCK_PROP_CACHE'] = [
+				static function (): void {
+					Loader::includeModule('iblock');
+					// Initialize the global in iblock/classes/general/iblockelement.php by autoload.
+					$element = new CIBlockElement();
+					unset($element);
+				},
+				static fn(): \ArrayAccess => new ApcuNestedArrayWrapper(
+					'BX_IBLOCK_PROP_CACHE_' . $namespaceProvider(),
+				),
+			];
+		} elseif (
+			$cacheElementProperties
+			&& $memcache instanceof Memcache
+			&& class_exists(MemcacheNestedArrayWrapper::class)
+		) {
+			$globals['BX_IBLOCK_PROP_CACHE'] = [
+				static function (): void {
+					Loader::includeModule('iblock');
+					$element = new CIBlockElement();
+					unset($element);
+				},
+				static fn(): \ArrayAccess => new MemcacheNestedArrayWrapper(
+					'BX_IBLOCK_PROP_CACHE_' . $namespaceProvider(),
+					$memcache,
+				),
+			];
+		}
+		
+		if ($globals !== []) {
+			(new GlobalsCacher($globals))->cache();
+		}
+		
+		if (isset($globals['BX_IBLOCK_PROP_CACHE'])) {
 			BitrixEngine::getInstance()->eventManager->addEventHandler(
 				'iblock',
 				'OnAfterIBlockPropertyDelete',
@@ -121,7 +151,7 @@ use Bitrix\Main\Loader,
 				},
 			);
 		}
-	} catch (Error $e) {
+	} catch (Throwable $e) {
 		if (class_exists(UUtils::class)) {
 			UUtils::logException($e);
 		}
@@ -167,8 +197,6 @@ use Bitrix\Main\Loader,
 		}
 	}
 	// endregion
-	
-	unset($mc);
 	
 	// _tests:
 	/*
