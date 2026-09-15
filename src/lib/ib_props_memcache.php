@@ -128,7 +128,7 @@ use Bitrix\Main\Loader,
 			&& Loader::includeModule('iblock')
 			&& Loader::includeModule('catalog')
 		) {
-			$managedCache = Application::getInstance()->getManagedCache();
+			$managedCache = BitrixEngine::getInstance()->getManagedCache();
 			$cacheTtl = 3600 * 24 * 30;
 			$cacheTableId = 'orm_hipot_b_catalog_iblock';
 			$wrapper = static fn(string $property): ManagedCacheArrayWrapper => new ManagedCacheArrayWrapper(

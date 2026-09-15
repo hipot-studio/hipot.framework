@@ -16,10 +16,15 @@ use Bitrix\Main\Data\LocalStorage\SessionLocalStorageManager;
 use Bitrix\Main\SiteTable;
 use Hipot\Types\Singleton;
 
+/**
+ * Final class representing the BitrixEngine.
+ * This class serves as the core entry point for interacting with various Bitrix components,
+ * such as requests, caching, and database connections.
+ */
 final class BitrixEngine
 {
 	use Singleton;
-
+	
 	public function __construct(
 		public ?Application                $app = null,
 		/**
@@ -38,7 +43,7 @@ final class BitrixEngine
 	)
 	{
 	}
-
+	
 	public static function initInstance(): self
 	{
 		return new self(
@@ -55,14 +60,14 @@ final class BitrixEngine
 			Application::getInstance()->getSessionLocalStorageManager()
 		);
 	}
-
+	
 	/**
 	 * CurrentUser::get()->isAdmin() вызывает ошибку Uncaught Error: Call to a member function isAdmin() on null, когда нет $USER
-	 * (везде в порядке выполнения страницы https://dev.1c-bitrix.ru/api_help/main/general/pageplan.php до п.1.9) и агентах.<br><br>
+	 * (везде в порядке выполнения страницы https://dev.1c-bitrix.ru/api_help/main/general/pageplan.php до п.1.9) и агентах.<br>
 	 *
-	 * геттера к внутреннему приватному полю нет, чтобы можно было проверять так:<br><br>
+	 * геттера к внутреннему приватному полю нет, чтобы можно было проверять так:<br>
 	 *
-	 * <code>CurrentUser::getCUser() !== null && CurrentUser::get()->isAdmin()</code><br><br>
+	 * <code>CurrentUser::getCUser() !== null && CurrentUser::get()->isAdmin()</code><br>
 	 *
 	 * а по хорошему сделать проверку на инварианты: не создавать объект CurrentUser в методе get(), если global $USER === null
 	 * тогда можно было бы использовать nullsafe-operator:<br><br>
@@ -76,7 +81,7 @@ final class BitrixEngine
 			})->bindTo(CurrentUser::get(), CurrentUser::get()) )() !== null;
 		return $bInternalUserExists ? CurrentUser::get() : null;
 	}
-
+	
 	/**
 	 * Retrieves the current user from the global $USER variable.
 	 *
@@ -115,7 +120,7 @@ final class BitrixEngine
 		}
 		return $APPLICATION;
 	}
-
+	
 	/**
 	 * Retrieves a service by its name from the service locator.
 	 *
@@ -126,7 +131,7 @@ final class BitrixEngine
 	{
 		return $this->serviceLocator->has($serviceName) ? $this->serviceLocator->get($serviceName) : null;
 	}
-
+	
 	/**
 	 * Static method returns database connection for the specified name.
 	 * If name is empty - default connection is returned.
@@ -137,7 +142,7 @@ final class BitrixEngine
 	{
 		return $this->app->getConnectionPool()->getConnection($name);
 	}
-
+	
 	/**
 	 * Retrieves the site identifier based on the current request context.
 	 * @return string The site ID determined from the admin section or application context.
@@ -151,5 +156,15 @@ final class BitrixEngine
 			return SiteTable::wakeUpObject($site)->getLid();
 		}
 		return $this->app->getContext()->getSite();
+	}
+	
+	/**
+	 * Retrieves the managed cache instance.
+	 *
+	 * @return \Bitrix\Main\Data\ManagedCache The managed cache object.
+	 */
+	public function getManagedCache(): \Bitrix\Main\Data\ManagedCache
+	{
+		return self::getInstance()->app->getManagedCache();
 	}
 }
