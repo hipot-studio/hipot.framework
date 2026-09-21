@@ -6,7 +6,9 @@ use Hipot\BitrixUtils\Iblock\Section;
 use Hipot\Services\BitrixEngine;
 use Hipot\Model\EntityHelper;
 
-use	Bitrix\Main\Loader,
+use Bitrix\Iblock\IblockTable,
+	Bitrix\Iblock\PropertyTable,
+	Bitrix\Main\Loader,
 	Bitrix\Iblock\PropertyIndex\Manager,
 	CIblock,
 	_CIBElement;
@@ -27,6 +29,96 @@ class Iblock extends _CIBElement
 	use Element;
 
 	use Section;
+
+	/**
+	 * Returns the first iblock ID matching its symbolic code.
+	 */
+	public static function getIdByCode(string $code, ?string $type = null): ?int
+	{
+		$iblock = self::getInfoByCode($code, $type);
+		$id = (int)($iblock['ID'] ?? 0);
+
+		return $id > 0 ? $id : null;
+	}
+
+	/**
+	 * Returns basic iblock metadata by symbolic code.
+	 *
+	 * When codes are duplicated across iblock types, pass $type to make the lookup unambiguous.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	public static function getInfoByCode(string $code, ?string $type = null): ?array
+	{
+		$code = trim($code);
+		$type = $type !== null ? trim($type) : null;
+		if ($code === '' || $type === '') {
+			return null;
+		}
+
+		$query = IblockTable::query()
+			->setSelect(['ID', 'IBLOCK_TYPE_ID', 'CODE', 'XML_ID', 'NAME', 'ACTIVE', 'SORT', 'VERSION'])
+			->where('CODE', $code)
+			->setOrder(['ID' => 'ASC'])
+			->setLimit(1);
+		if ($type !== null) {
+			$query->where('IBLOCK_TYPE_ID', $type);
+		}
+
+		$iblock = $query->fetch();
+		if ($iblock === false) {
+			return null;
+		}
+
+		$iblock['ID'] = (int)$iblock['ID'];
+		$iblock['SORT'] = (int)$iblock['SORT'];
+		$iblock['VERSION'] = (int)$iblock['VERSION'];
+
+		return $iblock;
+	}
+
+	/**
+	 * Returns iblock properties indexed by their symbolic codes.
+	 *
+	 * Properties without a symbolic code are omitted because they cannot be represented by this contract.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public static function getPropertiesByCode(int $iblockId, bool $activeOnly = true): array
+	{
+		if ($iblockId <= 0) {
+			return [];
+		}
+
+		$query = PropertyTable::query()
+			->setSelect([
+				'ID', 'IBLOCK_ID', 'CODE', 'NAME', 'ACTIVE', 'SORT', 'PROPERTY_TYPE', 'USER_TYPE',
+				'MULTIPLE', 'IS_REQUIRED', 'LINK_IBLOCK_ID', 'WITH_DESCRIPTION', 'DEFAULT_VALUE', 'XML_ID',
+			])
+			->where('IBLOCK_ID', $iblockId)
+			->setOrder(['SORT' => 'ASC', 'ID' => 'ASC']);
+		if ($activeOnly) {
+			$query->where('ACTIVE', 'Y');
+		}
+
+		$properties = [];
+		foreach ($query->fetchAll() as $property) {
+			$code = trim((string)($property['CODE'] ?? ''));
+			if ($code === '') {
+				continue;
+			}
+
+			$property['ID'] = (int)$property['ID'];
+			$property['IBLOCK_ID'] = (int)$property['IBLOCK_ID'];
+			$property['SORT'] = (int)$property['SORT'];
+			$property['LINK_IBLOCK_ID'] = ($property['LINK_IBLOCK_ID'] ?? null) !== null
+				? (int)$property['LINK_IBLOCK_ID']
+				: null;
+			$properties[$code] = $property;
+		}
+
+		return $properties;
+	}
 
 	// region /*********************** cache and tag cache performance tweaks **************************/
 
@@ -184,4 +276,3 @@ class Iblock extends _CIBElement
 	}
 
 } // end class
-

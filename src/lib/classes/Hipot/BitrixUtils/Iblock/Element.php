@@ -6,7 +6,11 @@ use Bitrix\Iblock\InheritedProperty\ElementTemplates;
 use Bitrix\Iblock\InheritedProperty\ElementValues;
 use Bitrix\Iblock\PropertyIndex\Manager;
 use Bitrix\Iblock\PropertyTable;
+use Bitrix\Iblock\SectionElementTable;
+use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Error;
+use Bitrix\Main\Result;
 use Hipot\IbAbstractLayer\IblockElemLinkedChains;
 use Hipot\Types\UpdateResult;
 use Hipot\Utils\UUtils;
@@ -295,6 +299,83 @@ trait Element
 	}
 
 	/**
+	 * Returns sections directly assigned to an element.
+	 *
+	 * Bindings created by section-link properties are not element section membership and are omitted.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	public static function getElementSections(int $elementId): array
+	{
+		if ($elementId <= 0) {
+			return [];
+		}
+
+		$bindings = SectionElementTable::query()
+			->setSelect(['IBLOCK_SECTION_ID'])
+			->where('IBLOCK_ELEMENT_ID', $elementId)
+			->whereNull('ADDITIONAL_PROPERTY_ID')
+			->fetchAll();
+		$sectionIds = array_values(array_unique(array_filter(
+			array_map(static fn(array $binding): int => (int)$binding['IBLOCK_SECTION_ID'], $bindings),
+			static fn(int $sectionId): bool => $sectionId > 0,
+		)));
+		if ($sectionIds === []) {
+			return [];
+		}
+
+		$sections = SectionTable::query()
+			->setSelect([
+				'ID', 'IBLOCK_ID', 'IBLOCK_SECTION_ID', 'NAME', 'CODE', 'XML_ID',
+				'ACTIVE', 'GLOBAL_ACTIVE', 'SORT', 'DEPTH_LEVEL', 'LEFT_MARGIN', 'RIGHT_MARGIN',
+			])
+			->whereIn('ID', $sectionIds)
+			->setOrder(['SORT' => 'ASC', 'ID' => 'ASC'])
+			->fetchAll();
+
+		foreach ($sections as &$section) {
+			$section['ID'] = (int)$section['ID'];
+			$section['IBLOCK_ID'] = (int)$section['IBLOCK_ID'];
+			$section['IBLOCK_SECTION_ID'] = ($section['IBLOCK_SECTION_ID'] ?? null) !== null
+				? (int)$section['IBLOCK_SECTION_ID']
+				: null;
+			$section['SORT'] = (int)$section['SORT'];
+			$section['DEPTH_LEVEL'] = (int)$section['DEPTH_LEVEL'];
+			$section['LEFT_MARGIN'] = (int)$section['LEFT_MARGIN'];
+			$section['RIGHT_MARGIN'] = (int)$section['RIGHT_MARGIN'];
+		}
+		unset($section);
+
+		return $sections;
+	}
+
+	/**
+	 * Returns one root-to-section ID path for each direct section binding of an element.
+	 *
+	 * @return list<list<int>>
+	 */
+	public static function getElementSectionPaths(int $elementId): array
+	{
+		$paths = [];
+		foreach (self::getElementSections($elementId) as $section) {
+			$ancestors = SectionTable::query()
+				->setSelect(['ID'])
+				->where('IBLOCK_ID', $section['IBLOCK_ID'])
+				->where('LEFT_MARGIN', '<=', $section['LEFT_MARGIN'])
+				->where('RIGHT_MARGIN', '>=', $section['RIGHT_MARGIN'])
+				->setOrder(['DEPTH_LEVEL' => 'ASC', 'ID' => 'ASC'])
+				->fetchAll();
+
+			$paths[] = array_map(
+				static fn(array $ancestor): int => (int)$ancestor['ID'],
+				$ancestors,
+			);
+		}
+
+		return $paths;
+	}
+
+	/**
 	 * Выбрать следующие/предыдущие $cntSelect штук относительно $elId
 	 *
 	 * @param int        $ELEMENT_ID относительно какого элемента выбрать след/предыдущие $cntSelect штук
@@ -469,6 +550,56 @@ trait Element
 		}
 
 		return (string)$enum['VALUE'];
+	}
+
+	/**
+	 * Sets a single list property by enum XML_ID. A null XML_ID clears the property.
+	 */
+	public static function setEnumPropertyByXmlId(
+		int $elementId,
+		int $iblockId,
+		string $propertyCode,
+		?string $xmlId,
+	): Result {
+		$result = new Result();
+		$propertyCode = trim($propertyCode);
+		$xmlId = $xmlId !== null ? trim($xmlId) : null;
+		if ($elementId <= 0 || $iblockId <= 0 || $propertyCode === '' || $xmlId === '') {
+			return $result->addError(new Error(
+				'Element ID, iblock ID, property code and enum XML_ID must be valid.',
+				'INVALID_ENUM_PROPERTY_ARGUMENT',
+			));
+		}
+
+		$actualIblockId = self::getElementIblockId($elementId);
+		if ($actualIblockId <= 0) {
+			return $result->addError(new Error('Iblock element was not found.', 'IBLOCK_ELEMENT_NOT_FOUND'));
+		}
+		if ($actualIblockId !== $iblockId) {
+			return $result->addError(new Error(
+				'The element does not belong to the supplied iblock.',
+				'IBLOCK_ELEMENT_MISMATCH',
+			));
+		}
+
+		$enumId = null;
+		if ($xmlId !== null) {
+			$enumId = self::getEnumIdByXmlId($iblockId, $xmlId, $propertyCode);
+			if ($enumId === null) {
+				return $result->addError(new Error('Enum value was not found.', 'IBLOCK_ENUM_VALUE_NOT_FOUND'));
+			}
+		}
+
+		CIBlockElement::SetPropertyValuesEx($elementId, $iblockId, [
+			$propertyCode => $enumId ?? false,
+		]);
+		$result->setData([
+			'elementId' => $elementId,
+			'propertyCode' => $propertyCode,
+			'enumId' => $enumId,
+		]);
+
+		return $result;
 	}
 
 	/** @return array<string, mixed>|null */

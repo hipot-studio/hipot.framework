@@ -22,6 +22,75 @@ Loader::includeModule('catalog');
 final class Catalog
 {
 	/**
+	 * Returns SKU iblock metadata for a product iblock.
+	 *
+	 * @return array{IBLOCK_ID:int, PRODUCT_IBLOCK_ID:int, SKU_PROPERTY_ID:int, VERSION:int}|null
+	 */
+	public static function getOffersIblockInfo(int $productIblockId): ?array
+	{
+		if ($productIblockId <= 0) {
+			return null;
+		}
+
+		Loader::requireModule('catalog');
+		$info = \CCatalogSku::GetInfoByProductIBlock($productIblockId);
+		if (!is_array($info)) {
+			return null;
+		}
+
+		return [
+			'IBLOCK_ID' => (int)$info['IBLOCK_ID'],
+			'PRODUCT_IBLOCK_ID' => (int)$info['PRODUCT_IBLOCK_ID'],
+			'SKU_PROPERTY_ID' => (int)$info['SKU_PROPERTY_ID'],
+			'VERSION' => (int)$info['VERSION'],
+		];
+	}
+
+	/**
+	 * Returns the SKU iblock ID for a product iblock.
+	 */
+	public static function getOffersIblockId(int $productIblockId): ?int
+	{
+		$info = self::getOffersIblockInfo($productIblockId);
+		$id = (int)($info['IBLOCK_ID'] ?? 0);
+
+		return $id > 0 ? $id : null;
+	}
+
+	/**
+	 * Returns SKU properties indexed by code, excluding the product link property.
+	 *
+	 * @param string[] $excludeCodes
+	 * @return array<string, array<string, mixed>>
+	 */
+	public static function getOfferProperties(
+		int $productIblockId,
+		array $excludeCodes = ['CML2_LINK'],
+	): array {
+		$info = self::getOffersIblockInfo($productIblockId);
+		if ($info === null) {
+			return [];
+		}
+
+		$excludedCodes = [];
+		foreach ($excludeCodes as $code) {
+			$code = trim((string)$code);
+			if ($code !== '') {
+				$excludedCodes[$code] = true;
+			}
+		}
+
+		$properties = IblockUtils::getPropertiesByCode($info['IBLOCK_ID']);
+		foreach ($properties as $code => $property) {
+			if ((int)$property['ID'] === $info['SKU_PROPERTY_ID'] || isset($excludedCodes[$code])) {
+				unset($properties[$code]);
+			}
+		}
+
+		return $properties;
+	}
+
+	/**
 	 * Returns product quantities indexed by store ID.
 	 *
 	 * An empty store list means all stores. Invalid store IDs are ignored; if the

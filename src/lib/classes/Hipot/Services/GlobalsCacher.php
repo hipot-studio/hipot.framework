@@ -16,7 +16,7 @@ final class GlobalsCacher
 {
 	/** @var array<string, array{0: Closure(): void, 1: Closure(): ArrayAccess}> */
 	private array $globals;
-	
+
 	/**
 	 * @param array<string, array{0: callable(): void, 1: callable(): ArrayAccess}> $globals
 	 *        Global name => [initializer called before replacement, wrapper factory]
@@ -25,25 +25,25 @@ final class GlobalsCacher
 	{
 		$this->globals = $this->normalizeGlobals($globals);
 	}
-	
+
 	public function cache(): void
 	{
 		foreach ($this->globals as $globalName => [$beforeReplace, $wrapperFactory]) {
 			$beforeReplace();
 			$wrapper = $wrapperFactory();
-			
+
 			if (!$wrapper instanceof ArrayAccess) {
 				throw new UnexpectedValueException(sprintf(
 					'The cache wrapper factory for $GLOBALS[\'%s\'] must return an ArrayAccess instance.',
 					$globalName,
 				));
 			}
-			
+
 			/** @noinspection GlobalVariableUsageInspection */
 			$GLOBALS[$globalName] = $wrapper;
 		}
 	}
-	
+
 	/**
 	 * @param array<string, array{0: callable(): void, 1: callable(): ArrayAccess}> $globals
 	 * @return array<string, array{0: Closure(): void, 1: Closure(): ArrayAccess}>
@@ -51,7 +51,7 @@ final class GlobalsCacher
 	private function normalizeGlobals(array $globals): array
 	{
 		$normalized = [];
-		
+
 		foreach ($globals as $globalName => $configuration) {
 			if (!is_string($globalName) || $globalName === '') {
 				throw new InvalidArgumentException('A cached global name must be a non-empty string.');
@@ -67,13 +67,13 @@ final class GlobalsCacher
 					'Each cached global must contain an initializer and an ArrayAccess wrapper factory.'
 				);
 			}
-			
+
 			$normalized[$globalName] = [
 				($configuration[0])(...),
 				($configuration[1])(...),
 			];
 		}
-		
+
 		return $normalized;
 	}
 }
