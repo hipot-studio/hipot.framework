@@ -14,8 +14,8 @@
 
 ## Тестирование
 
-Запуск вручную с подключением битрикса:\
+Запуск вручную интеграционного теста с подключением битрикса:\
 `vendor\bin\pest.bat --configuration phpunit.integration.xml`
 
-И без ядра битрикса с заместителями из Subs:\
+И без ядра битрикса unit-тестов с заместителями из Subs:\
 `vendor\bin\pest.bat --configuration phpunit.xml`
