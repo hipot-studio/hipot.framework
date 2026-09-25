@@ -24,6 +24,8 @@ beforeEach(function (): void {
 	UserFieldTable::$rows = [];
 	UserFieldTable::$lastQuery = [];
 	CUserTypeEntity::$listRows = [];
+	CUserTypeEntity::$lastListOrder = [];
+	CUserTypeEntity::$lastListFilter = [];
 	CUserTypeEntity::$lastAddedFields = [];
 	CUserTypeEntity::$deletedIds = [];
 	CUserTypeEntity::$addResult = 501;
@@ -115,6 +117,24 @@ it('keeps explicitly supplied user-field settings and name', function (): void {
 		->and(CUserTypeEntity::$lastAddedFields['EDIT_FORM_LABEL'])->toBe(['en' => 'Description']);
 });
 
+it('returns false when Bitrix cannot create a user field', function (): void {
+	CUserTypeEntity::$addResult = false;
+
+	$result = HiBlock::addHiBlockField([
+		'HLBLOCK_ID' => 3,
+		'CODE' => 'FAILED',
+		'SORT' => 400,
+		'REQUIRED' => 'N',
+		'IS_SEARCHABLE' => 'N',
+		'NAME' => 'Failed field',
+		'HELP' => '',
+	]);
+
+	expect($result)->toBeFalse()
+		->and(CUserTypeEntity::$lastAddedFields['ENTITY_ID'])->toBe('HLBLOCK_3')
+		->and(CUserTypeEntity::$lastAddedFields['FIELD_NAME'])->toBe('UF_FAILED');
+});
+
 it('deletes an existing user field and ignores a missing one', function (): void {
 	UserFieldTable::$rows = [['ID' => 77, 'ENTITY_ID' => 'HLBLOCK_3', 'FIELD_NAME' => 'UF_TITLE']];
 	HiBlock::deleteUserField(3, 'UF_TITLE');
@@ -166,6 +186,19 @@ it('can list blocks without properties and without cache', function (): void {
 	expect(HighloadBlockTable::$lastListQuery['cache'])->toBe([])
 		->and(HighloadBlockLangTable::$lastListQuery['cache'])->toBe([])
 		->and($list[0])->not->toHaveKey('PROPERTIES');
+});
+
+it('returns an empty list when no highload blocks match', function (): void {
+	HighloadBlockTable::$rows = [];
+
+	$list = HiBlock::getList(['=NAME' => 'Missing'], ['ID', 'NAME']);
+
+	expect($list)->toBe([])
+		->and(HighloadBlockLangTable::$lastListQuery['filter'])->toBe([
+			'ID' => [],
+			'LID' => 'en',
+		])
+		->and(CUserTypeEntity::$lastListFilter)->toBe([]);
 });
 
 it('returns sorted enumeration values and current language id', function (): void {

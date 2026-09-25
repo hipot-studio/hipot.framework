@@ -148,3 +148,28 @@ it('creates and uses a highload block with string and enumeration fields', funct
 		}
 	}
 });
+
+it('uses the technical name when localization and properties are not requested', function () use (&$fixtureHiBlockId): void {
+	$suffix = bin2hex(random_bytes(6));
+	$name = 'UnlocalizedHiBlock' . $suffix;
+
+	$addResult = HiBlock::addHiBlock($name, 'b_hlbd_unlocalized_' . $suffix);
+	expect($addResult->isSuccess())->toBeTrue(implode('; ', $addResult->getErrorMessages()));
+	$fixtureHiBlockId = (int)$addResult->getId();
+
+	$list = HiBlock::getList(
+		filter: ['=ID' => $fixtureHiBlockId],
+		select: ['ID', 'NAME', 'TABLE_NAME'],
+		getProps: false,
+		useCache: true,
+	);
+
+	expect($list)->toHaveCount(1)
+		->and((int)$list[0]['ID'])->toBe($fixtureHiBlockId)
+		->and($list[0]['NAME'])->toBe($name)
+		->and($list[0]['LOC'])->toBe(['NAME' => $name])
+		->and($list[0])->not->toHaveKey('PROPERTIES')
+		->and(HiBlock::getDataManagerByHiId(0))->toBeFalse()
+		->and(HiBlock::getDataManagerByHiCode('   '))->toBeFalse()
+		->and(HiBlock::getHightloadBlockTable(0, ''))->toBeNull();
+});
