@@ -31,11 +31,12 @@ class MedialibraryCollectionList extends \CBitrixComponent
 	{
 		global $APPLICATION;
 
-		if (!Loader::includeModule('fileman')) {
-			return false;
-		}
 		if (!$this->startResultCache(false)) {
 			return $this->arResult;
+		}
+		
+		if (!Loader::includeModule('fileman')) {
+			return false;
 		}
 
 		$itemsByCollection = [];

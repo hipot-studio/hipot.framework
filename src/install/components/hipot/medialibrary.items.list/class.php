@@ -31,14 +31,15 @@ class MedialibraryItemsList extends \CBitrixComponent
 
 	public function executeComponent(): array|false
 	{
-		if (!Loader::includeModule('fileman')) {
-			return false;
-		}
 		if (!$this->startResultCache(false)) {
 			return $this->arResult;
 		}
-
+		
+		if (!Loader::includeModule('fileman')) {
+			return false;
+		}
 		\CMedialib::Init();
+		
 		$query = $this->arParams['COLLECTION_IDS']
 			? ['arCollections' => $this->arParams['COLLECTION_IDS']]
 			: [];
