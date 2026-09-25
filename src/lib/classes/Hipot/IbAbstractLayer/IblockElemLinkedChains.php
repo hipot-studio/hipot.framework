@@ -46,8 +46,8 @@ final class IblockElemLinkedChains extends Iblock
 	private int $__level;
 	
 	/**
-	 * Уже выбранные элементы, чтобы не выбирать их вновь (кеш)
-	 * в ключе - ID элемента, в значении весь элемент с цепочкой ниже
+	 * Уже выбранные элементы, чтобы не выбирать их вновь (кеш).
+	 * Ключ учитывает корневой элемент, ID элемента и доступную глубину цепочки.
 	 * @var array
 	 */
 	private array $__cacheItems;
@@ -85,40 +85,46 @@ final class IblockElemLinkedChains extends Iblock
 	{
 		$elementId = (int)$elementId;
 		
-		if ($this->__topLevelId == $elementId || $this->__maxLevel == $this->__level) {
+		if ($this->__topLevelId == $elementId || $this->__level >= $this->__maxLevel) {
 			return;
 		}
 		if (! $this->__topLevelId) {
 			$this->__topLevelId = $elementId;
 		}
+		$cacheKey = $this->__topLevelId . ':' . $elementId . ':' . ($this->__maxLevel - $this->__level);
 		$this->__level++;
 
-		// если элемент еще не выбирался
-		if (! isset($this->__cacheItems[ $elementId ])) {
-		
-			$arSelectDef = ["ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME"];
-			$arSelect = array_merge($arSelect, $arSelectDef);
-			$arFilter = ['ID' => $elementId];
-			// QUERY 1
-			$rsItems = self::selectElementsByFilter([], $arFilter, false, false, $arSelect);
-	
-			if ($arItem = $rsItems->GetNext()) {
-				// QUERY 2
-				$arItem['PROPERTIES'] = self::selectElementProperties(
-					$arItem['ID'],
-					$arItem["IBLOCK_ID"],
-					false,
-					["EMPTY" => "N"],
-					$this
-				);
-			}
-			$this->__cacheItems[ $elementId ] = $arItem;
-			
-		} else {
-			$arItem = $this->__cacheItems[ $elementId ];
-		}
+		try {
+			// если элемент еще не выбирался с такой доступной глубиной
+			if (! isset($this->__cacheItems[$cacheKey])) {
+				$arSelectDef = ["ID", "IBLOCK_ID", "DETAIL_PAGE_URL", "NAME"];
+				$arSelect = array_merge($arSelect, $arSelectDef);
+				$arFilter = ['ID' => $elementId];
+				// QUERY 1
+				$rsItems = self::selectElementsByFilter([], $arFilter, false, false, $arSelect);
 
-		return $arItem;
+				$arItem = false;
+				if ($arItem = $rsItems->GetNext()) {
+					// QUERY 2
+					$arItem['PROPERTIES'] = self::selectElementProperties(
+						$arItem['ID'],
+						$arItem["IBLOCK_ID"],
+						false,
+						["EMPTY" => "N"],
+						$this,
+						$this->__maxLevel,
+						false
+					);
+				}
+				$this->__cacheItems[$cacheKey] = $arItem;
+			} else {
+				$arItem = $this->__cacheItems[$cacheKey];
+			}
+
+			return $arItem;
+		} finally {
+			$this->__level--;
+		}
 	}
 	
 	/**

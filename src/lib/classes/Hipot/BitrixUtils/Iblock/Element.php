@@ -231,11 +231,13 @@ trait Element
 	 * @param array $exFilter = [] дополнительный фильтр при выборке свойств через CIBlockElement::GetProperty()
 	 * @param null | \Hipot\IbAbstractLayer\IblockElemLinkedChains $obChainBuilder = null
 	 * @param int $selectChainsDepth = 3 глубина вложенности выборки вложенных свойств
+	 * @param bool $initializeChainBuilder инициализировать глубину перед выборкой корневого свойства связи
 	 *
 	 * @return array | bool
 	 */
 	public static function selectElementProperties($ID, $IBLOCK_ID = 0, $onlyValue = false, $exFilter = [],
-	                                               $obChainBuilder = null, int $selectChainsDepth = IblockElemLinkedChains::DEFAULT_SELECT_LEVEL)
+	                                               $obChainBuilder = null, int $selectChainsDepth = IblockElemLinkedChains::DEFAULT_SELECT_LEVEL,
+	                                               bool $initializeChainBuilder = true)
 	{
 		$IBLOCK_ID	= (int)$IBLOCK_ID;
 		$ID			= (int)$ID;
@@ -261,9 +263,9 @@ trait Element
 
 			// довыборка цепочек глубиной 3, магия цепочек в ключе CHAIN
 			if (is_object($obChainBuilder) && $ar_props['PROPERTY_TYPE'] == PropertyTable::TYPE_ELEMENT) {
-				// инициализация должна происходить перед каждым вызовом getChains_r
-				// с указанием выбираемой вложенности
-				$obChainBuilder->init( $selectChainsDepth );
+				if ($initializeChainBuilder) {
+					$obChainBuilder->init($selectChainsDepth);
+				}
 				$ar_props['CHAIN'] = $obChainBuilder->getChains_r($ar_props['VALUE']);
 			}
 

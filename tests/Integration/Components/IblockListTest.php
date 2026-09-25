@@ -273,12 +273,17 @@ it('selects linked element chains at the configured depth', function () use (
 		return [$result, $rendered];
 	};
 	
-	[$result, $rendered] = $runComponent(2);
+	[$depthOneResult, $depthOneOutput] = $runComponent(1);
+	[$depthTwoResult, $depthTwoOutput] = $runComponent(2);
 	
-	expect($result['CNT_ITEMS'])
+	expect($depthOneResult['CNT_ITEMS'])
 		->toBe(1)
-		->and($rendered)->toContain(
+		->and($depthOneOutput)->toContain(
+			"Linked chain offer {$suffix}|level1:{$firstCatalogElementId}|level2:missing",
+		)
+		->and($depthTwoResult['CNT_ITEMS'])->toBe(1)
+		->and($depthTwoOutput)->toContain(
 			"Linked chain offer {$suffix}|level1:{$firstCatalogElementId}|level2:{$lastCatalogElementId}",
 		)
-		->and($rendered)->not->toContain('level1:missing', 'level2:missing');
+		->and($depthTwoOutput)->not->toContain('level1:missing', 'level2:missing');
 });
