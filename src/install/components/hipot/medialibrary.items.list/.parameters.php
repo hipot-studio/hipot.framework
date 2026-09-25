@@ -1,9 +1,12 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+use Bitrix\Main\Loader;
+
+defined('B_PROLOG_INCLUDED') || die();
 
 $arTypesEx = [];
 
-CModule::IncludeModule("fileman");
+Loader::includeModule('fileman');
 CMedialib::Init();
 
 $rsCol = CMedialibCollection::GetList([
@@ -59,4 +62,3 @@ $arComponentParameters = [
 		"CACHE_TIME"  =>  ["DEFAULT"=>36000],
 	],
 ];
-?>

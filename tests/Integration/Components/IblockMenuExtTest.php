@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Loader;
+use Hipot\Components\IblockMenuExt;
 
 $fixtureCacheDirs = [];
 $fixtureSectionIds = [];
@@ -111,7 +112,9 @@ it('builds and caches an iblock menu from active catalog sections', function () 
 		['HIDE_ICONS' => 'Y'],
 	);
 
-	expect($menu)
+	expect(class_exists(IblockMenuExt::class, false))
+		->toBeTrue()
+		->and($menu)
 		->toBeArray()
 		->toHaveCount(2)
 		->and($menu[0][0])->toBe("B menu child {$suffix}")

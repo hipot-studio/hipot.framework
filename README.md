@@ -47,8 +47,9 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
   - <code>Hipot\Components\HiblockList</code> - список hightload блока <code>hipot:hiblock.list</code>
   - <code>HipotAjaxController контроллер</code>, позволяющий получать readModel-сущности в js через DataManagerReadModel и <code>HipotAjaxComponent</code>, позволяющей загружать динамичные блоки, когда они попадают в viewport, а также для создания любой ajax-логики: <code>hipot.ajax</code>
   - <code>Hipot\Components\Includer</code> элементарный компонент, позволяющий писать включения как шаблоны компонента битрикс (со своим стилем и скриптом, подключаемые вендором): <code>hipot:includer</code>
-  - <code>hipot:iblock.menu_ext</code> для создания динамичных _ext-меню по элементам или по секциям инфоблоков
-  - <code>hipot:medialibrary.items.list</code> для вывода списка элементов медиабиблиотеки (напр. определенного альбома) в публичную часть
+  - <code>Hipot\Components\IblockMenuExt</code> для создания динамичных _ext-меню по элементам или по секциям инфоблоков: <code>hipot:iblock.menu_ext</code>
+  - <code>Hipot\Components\MedialibraryCollectionList</code> для вывода коллекций медиабиблиотеки: <code>hipot:medialibrary.collection.list</code>
+  - <code>Hipot\Components\MedialibraryItemsList</code> для вывода списка элементов медиабиблиотеки (напр. определенного альбома) в публичную часть: <code>hipot:medialibrary.items.list</code>
   - <code>Hipot\Components\CommentsBlog</code> для реализации комментариев из модуля блогов к детальным страницам элементов инфоблоков
 - пример файла <code>/local/php_interface/init.php</code> с подключением деталей фреймворка к битриксу
 можно найти в файле [include.php](src/include.php)
