@@ -7,6 +7,8 @@
 
 namespace Hipot\Utils\Helper;
 
+use Hipot\Types\Enums\UserFieldTypes;
+
 /**
  * Trait UserFieldUtils
  *
@@ -14,29 +16,6 @@ namespace Hipot\Utils\Helper;
  */
 trait UserFieldUtils
 {
-	public static $arDefaultUserFieldTypes = [
-		'string', // строка;
-		'string_formatted', // Шаблон
-		'integer', // целое число;
-		'double', // число;
-		'date', // дата;
-		'datetime', // дата со временем;
-		'boolean', // Да / Нет;
-		'file', // файл;
-		'enumeration', //список;
-		'url', // ссылка;
-		'address', // адрес;
-		'video', // Видео
-		'iblock_section', // раздел инфоблока;
-		'iblock_element', // элемент инфоблока;
-		'hlblock', // привязка к HL-блоку
-		'employee', // сотрудник;
-		'crm', // элемент CRM;
-		'crm_status', // привязка к справочнику CRM.
-		'crm', // Привязка к элементам CRM
-		'crm_status' // Привязка к справочникам CRM
-	];
-
 	/**
 	 * @param array $filter = []
 	 * @param array $getList = []
@@ -81,7 +60,7 @@ trait UserFieldUtils
 				'=ENTITY_ID' => $entityId
 			]);
 			foreach ($list as $prop) {
-				if ($prop['USER_TYPE_ID'] == 'enumeration') {
+				if ($prop['USER_TYPE_ID'] === UserFieldTypes::ENUMERATION->value) {
 					$prop['VALUES'] = [];
 					$rs = \CUserFieldEnum::GetList(['VALUE' => 'ASC'], ['USER_FIELD_ID' => $prop['ID']]);
 					while ($enum = $rs->Fetch()) {
@@ -100,22 +79,22 @@ trait UserFieldUtils
 		// modification raw-value relay to prop type
 		$modificator = null;
 		switch ($propSettings['USER_TYPE_ID']) {
-			case 'integer':
+			case UserFieldTypes::INTEGER->value:
 				$modificator = static function ($val) {
 					return (int)str_replace([' '], [''], (string)$val);
 				};
 				break;
-			case 'double':
+			case UserFieldTypes::DOUBLE->value:
 				$modificator = static function ($val) {
 					return (float)str_replace([' ', ','], ['', '.'], (string)$val);
 				};
 				break;
-			case 'file':
+			case UserFieldTypes::FILE->value:
 				$modificator = static function ($val) {
 					return \CFile::MakeFileArray($val);
 				};
 				break;
-			case 'enumeration':
+			case UserFieldTypes::ENUMERATION->value:
 				$modificator = static function ($val) use ($propSettings, &$entityIdPropList) {
 					if (!in_array($val, $propSettings['VALUES'], false)) {
 						$obEnum = new \CUserFieldEnum();

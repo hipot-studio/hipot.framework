@@ -8,6 +8,7 @@ use Bitrix\Highloadblock\HighloadBlockTable;
 use Bitrix\Highloadblock\HighloadBlockLangTable;
 use Bitrix\Main\ORM\Data\AddResult;
 use Hipot\Services\DbResultGenerator;
+use Hipot\Types\Enums\UserFieldTypes;
 
 Loader::includeModule('highloadblock');
 
@@ -112,15 +113,20 @@ class HiBlock
 	}
 
 	/**
-	 * Добавить поле в таблицу в HL-блоком, пок поддерживаются только одиночные строки
+	 * Добавить пользовательское поле в HL-блок.
 	 *
 	 * @param array $arFields = [<pre>
 	 * HLBLOCK_ID
 	 * CODE (без UF_ в начале)
-	 * SORT
-	 * REQUIRED = Y/N
-	 * IS_SEARCHABLE = Y/N
-	 * SETTINGS = ["SIZE" => 60, "ROWS" => 3]
+	 * TYPE = UserFieldTypes|string, по умолчанию UserFieldTypes::STRING
+	 * SORT = 500
+	 * REQUIRED = Y/N, по умолчанию N
+	 * MULTIPLE = Y/N, по умолчанию N
+	 * SHOW_FILTER = Y/N, по умолчанию Y
+	 * SHOW_IN_LIST = Y/N, по умолчанию Y
+	 * EDIT_IN_LIST = Y/N, по умолчанию Y
+	 * IS_SEARCHABLE = Y/N, по умолчанию N
+	 * SETTINGS = ["SIZE" => 60, "ROWS" => 2]
 	 * NAME = DEF: CODE
 	 * HELP</pre>]
 	 *
@@ -128,34 +134,41 @@ class HiBlock
 	 */
 	public static function addHiBlockField(array $arFields)
 	{
+		$fieldType = $arFields['TYPE'] ?? UserFieldTypes::STRING;
+		if ($fieldType instanceof UserFieldTypes) {
+			$fieldType = $fieldType->value;
+		}
+		$fieldType = trim((string)$fieldType);
+		if ($fieldType === '') {
+			$fieldType = UserFieldTypes::STRING->value;
+		}
+
 		if (!isset($arFields['SETTINGS'])) {
 			$arFields['SETTINGS'] = ["SIZE" => 60, "ROWS" => 2];
 		}
-		if (trim($arFields['NAME']) == '') {
+		if (trim((string)($arFields['NAME'] ?? '')) == '') {
 			$arFields['NAME'] = $arFields['CODE'];
 		}
-
-		$arFields['TYPE'] = 'string';
 
 		$obUserField = new CUserTypeEntity();
 		return $obUserField->Add([
 			"ENTITY_ID"         => 'HLBLOCK_' . $arFields['HLBLOCK_ID'],
 			"FIELD_NAME"        => 'UF_' . $arFields['CODE'],
-			"USER_TYPE_ID"      => $arFields['TYPE'],
-			"XML_ID"            => '',
-			"SORT"              => $arFields["SORT"],
-			"MULTIPLE"          => 'N',
-			"MANDATORY"         => $arFields["REQUIRED"],
-			"SHOW_FILTER"       => 'Y',
-			"SHOW_IN_LIST"      => 'Y',
-			"EDIT_IN_LIST"      => 'Y',
-			"IS_SEARCHABLE"     => $arFields['IS_SEARCHABLE'],
+			"USER_TYPE_ID"      => $fieldType,
+			"XML_ID"            => $arFields['XML_ID'] ?? '',
+			"SORT"              => $arFields["SORT"] ?? 500,
+			"MULTIPLE"          => $arFields['MULTIPLE'] ?? 'N',
+			"MANDATORY"         => $arFields["REQUIRED"] ?? 'N',
+			"SHOW_FILTER"       => $arFields['SHOW_FILTER'] ?? 'Y',
+			"SHOW_IN_LIST"      => $arFields['SHOW_IN_LIST'] ?? 'Y',
+			"EDIT_IN_LIST"      => $arFields['EDIT_IN_LIST'] ?? 'Y',
+			"IS_SEARCHABLE"     => $arFields['IS_SEARCHABLE'] ?? 'N',
 			"SETTINGS"          => $arFields['SETTINGS'],
 			"EDIT_FORM_LABEL"   => [self::getLanguageId() => $arFields['NAME']],
 			"LIST_COLUMN_LABEL" => [self::getLanguageId() => $arFields['NAME']],
 			"LIST_FILTER_LABEL" => [self::getLanguageId() => $arFields['NAME']],
 			"ERROR_MESSAGE"     => [self::getLanguageId() => $arFields['NAME']],
-			"HELP_MESSAGE"      => [self::getLanguageId() => $arFields['HELP']],
+			"HELP_MESSAGE"      => [self::getLanguageId() => $arFields['HELP'] ?? ''],
 		]);
 	}
 	
@@ -248,5 +261,4 @@ class HiBlock
 	}
 
 } // end class
-
 

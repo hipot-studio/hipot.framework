@@ -12,6 +12,7 @@ use Bitrix\Main\Entity\Event;
 use Bitrix\Main\Composite\Data\MemcachedStorage;
 use Bitrix\Main\Composite\Page as CompositePage;
 use Bitrix\Main\EventResult;
+use Hipot\Types\Enums\UserFieldTypes;
 use RuntimeException;
 use Bitrix\Highloadblock\HighloadBlockLangTable;
 
@@ -31,6 +32,83 @@ final class HiBlockApps extends HiBlock
 	public const string SUPPORT_POSTER_HIBLOCK_NAME = 'SupportPoster';
 
 	/**
+	 * Создать HL-блок и его пользовательские поля.
+	 *
+	 * @param string $hiBlockName Системное имя HL-блока.
+	 * @param string $tableName Имя таблицы HL-блока.
+	 * @param array<int, array{
+	 *     CODE: string,
+	 *     TYPE?: UserFieldTypes|string,
+	 *     SORT?: int,
+	 *     REQUIRED?: string,
+	 *     MULTIPLE?: string,
+	 *     SHOW_FILTER?: string,
+	 *     SHOW_IN_LIST?: string,
+	 *     EDIT_IN_LIST?: string,
+	 *     IS_SEARCHABLE?: string,
+	 *     XML_ID?: string,
+	 *     SETTINGS?: array,
+	 *     NAME?: string,
+	 *     HELP?: string
+	 * }> $fields
+	 * @param string|null $displayName Отображаемое имя для текущего языка.
+	 *
+	 * @return array<string, int> Идентификаторы созданных полей по их кодам.
+	 * @throws RuntimeException
+	 */
+	public static function installHiBlock(
+		string $hiBlockName,
+		string $tableName,
+		array $fields,
+		?string $displayName = null,
+	): array
+	{
+		$hiBlockName = trim($hiBlockName);
+		$tableName = trim($tableName);
+
+		if ($hiBlockName === '') {
+			throw new RuntimeException('ERROR - VOID hiBlockName');
+		}
+
+		if ($tableName === '') {
+			throw new RuntimeException('ERROR - VOID tableName');
+		}
+
+		$result = self::addHiBlock($hiBlockName, $tableName);
+		$hiBlockId = (int)$result->getId();
+
+		if ($hiBlockId <= 0) {
+			throw new RuntimeException('ERROR - CREATE hiBlockName');
+		}
+
+		HighloadBlockLangTable::add([
+			'ID' => $hiBlockId,
+			'LID' => self::getLanguageId(),
+			'NAME' => trim((string)$displayName) ?: $hiBlockName,
+		]);
+
+		$fieldIds = [];
+		foreach ($fields as $field) {
+			$fieldCode = trim((string)($field['CODE'] ?? ''));
+			if ($fieldCode === '') {
+				throw new RuntimeException('ERROR - VOID field CODE');
+			}
+
+			$field['HLBLOCK_ID'] = $hiBlockId;
+			$field['CODE'] = $fieldCode;
+			$fieldId = self::addHiBlockField($field);
+
+			if ((int)$fieldId <= 0) {
+				throw new RuntimeException('ERROR - CREATE field ' . $fieldCode);
+			}
+
+			$fieldIds[$fieldCode] = (int)$fieldId;
+		}
+
+		return $fieldIds;
+	}
+
+	/**
 	 * Установить таблицу и HL-блок с произвольными настройками сайта
 	 *
 	 * @param string $tableName = 'we_custom_settings'
@@ -41,62 +119,28 @@ final class HiBlockApps extends HiBlock
 	 */
 	public static function installCustomSettingsHiBlock(string $tableName = self::CS_TABLE_NAME, string $hiBlockName = self::CS_HIBLOCK_NAME): array
 	{
-		$tableName   = trim($tableName);
-		$hiBlockName = trim($hiBlockName);
-
-		if ($tableName == '') {
-			throw new RuntimeException('ERROR - VOID tableName');
-		}
-
-		if ($hiBlockName == '') {
-			throw new RuntimeException('ERROR - VOID hiBlockName');
-		}
-
-		$result     = self::addHiBlock($hiBlockName, $tableName);
-		$ID_hiBlock = $result->getId();
-
-		if ((int)$ID_hiBlock <= 0) {
-			throw new RuntimeException('ERROR - CREATE hiBlockName');
-		}
-
-		$result = HighloadBlockLangTable::add([
-			'ID'   => $ID_hiBlock,
-			'LID'  => HiBlock::getLanguageId(),
-			'NAME' => 'Различные настройки сайта'
-		]);
-
 		$arUfFields = [
 			[
-				'CODE'     => 'NAME', 'SORT' => 100, 'NAME' => 'Имя параметра', 'HELP' => '',
+				'CODE'     => 'NAME', 'TYPE' => UserFieldTypes::STRING, 'SORT' => 100, 'NAME' => 'Имя параметра', 'HELP' => '',
 				'SETTINGS' => ["SIZE" => 60, "ROWS" => 1], 'REQUIRED' => 'Y'
 			],
 			[
-				'CODE'     => 'CODE', 'SORT' => 200,
+				'CODE'     => 'CODE', 'TYPE' => UserFieldTypes::STRING, 'SORT' => 200,
 				'NAME'     => 'Код параметра (не менять!)', 'HELP' => 'Используется для идентификации параметра',
 				'SETTINGS' => ["SIZE" => 60, "ROWS" => 1], 'REQUIRED' => 'Y'
 			],
 			[
-				'CODE'     => 'VALUE', 'SORT' => 300, 'NAME' => 'Значение параметра', 'HELP' => '',
+				'CODE'     => 'VALUE', 'TYPE' => UserFieldTypes::STRING, 'SORT' => 300, 'NAME' => 'Значение параметра', 'HELP' => '',
 				'SETTINGS' => ["SIZE" => 60, "ROWS" => 3], 'REQUIRED' => 'N'
 			],
 		];
 
-		$ID_props = [];
-
-		foreach ($arUfFields as $arFields) {
-			$ID_props[$arFields['CODE']] = self::addHiBlockField([
-				'HLBLOCK_ID'    => $ID_hiBlock,
-				'CODE'          => $arFields['CODE'],
-				'SORT'          => $arFields["SORT"],
-				'REQUIRED'      => $arFields["REQUIRED"],
-				'IS_SEARCHABLE' => 'N',
-				'SETTINGS'      => $arFields['SETTINGS'],
-				'NAME'          => $arFields['NAME'],
-				'HELP'          => $arFields['HELP']
-			]);
-		}
-
-		return $ID_props;
+		return self::installHiBlock(
+			$hiBlockName,
+			$tableName,
+			$arUfFields,
+			'Различные настройки сайта',
+		);
 	}
 
 	/**

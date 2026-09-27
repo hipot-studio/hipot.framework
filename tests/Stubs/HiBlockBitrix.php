@@ -71,11 +71,18 @@ namespace Bitrix\Highloadblock {
 	{
 		public static array $rows = [];
 		public static array $lastListQuery = [];
+		public static array $lastAddedFields = [];
 
 		public static function getList(array $query): \HiBlockOrmResult
 		{
 			self::$lastListQuery = $query;
 			return new \HiBlockOrmResult(self::$rows);
+		}
+
+		public static function add(array $fields): AddResult
+		{
+			self::$lastAddedFields = $fields;
+			return new AddResult((int)$fields['ID']);
 		}
 	}
 }
@@ -122,12 +129,14 @@ namespace {
 		public static array $lastListOrder = [];
 		public static array $lastListFilter = [];
 		public static array $lastAddedFields = [];
+		public static array $addedFields = [];
 		public static array $deletedIds = [];
 		public static int|false $addResult = 501;
 
 		public function Add(array $fields): int|false
 		{
 			self::$lastAddedFields = $fields;
+			self::$addedFields[] = $fields;
 			return self::$addResult;
 		}
 

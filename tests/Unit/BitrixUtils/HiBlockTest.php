@@ -8,6 +8,8 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Data\AddResult;
 use Bitrix\Main\UserFieldTable;
 use Hipot\BitrixUtils\HiBlock;
+use Hipot\BitrixUtils\HiBlockApps;
+use Hipot\Types\Enums\UserFieldTypes;
 
 require_once dirname(__DIR__, 2) . '/Stubs/HiBlockBitrix.php';
 
@@ -19,14 +21,17 @@ beforeEach(function (): void {
 	HighloadBlockTable::$lastPrimaryCall = [];
 	HighloadBlockTable::$lastListQuery = [];
 	HighloadBlockTable::$lastAddedFields = [];
+	HighloadBlockTable::$nextId = 100;
 	HighloadBlockLangTable::$rows = [];
 	HighloadBlockLangTable::$lastListQuery = [];
+	HighloadBlockLangTable::$lastAddedFields = [];
 	UserFieldTable::$rows = [];
 	UserFieldTable::$lastQuery = [];
 	CUserTypeEntity::$listRows = [];
 	CUserTypeEntity::$lastListOrder = [];
 	CUserTypeEntity::$lastListFilter = [];
 	CUserTypeEntity::$lastAddedFields = [];
+	CUserTypeEntity::$addedFields = [];
 	CUserTypeEntity::$deletedIds = [];
 	CUserTypeEntity::$addResult = 501;
 	CUserFieldEnum::$rows = [];
@@ -115,6 +120,69 @@ it('keeps explicitly supplied user-field settings and name', function (): void {
 
 	expect(CUserTypeEntity::$lastAddedFields['SETTINGS'])->toBe(['SIZE' => 90, 'ROWS' => 5])
 		->and(CUserTypeEntity::$lastAddedFields['EDIT_FORM_LABEL'])->toBe(['en' => 'Description']);
+});
+
+it('adds a user field with an enum type and custom list settings', function (): void {
+	HiBlock::addHiBlockField([
+		'HLBLOCK_ID' => 8,
+		'CODE' => 'PRIORITY',
+		'TYPE' => UserFieldTypes::INTEGER,
+		'MULTIPLE' => 'Y',
+		'SHOW_FILTER' => 'N',
+		'SHOW_IN_LIST' => 'N',
+		'EDIT_IN_LIST' => 'N',
+	]);
+
+	expect(CUserTypeEntity::$lastAddedFields)->toMatchArray([
+		'USER_TYPE_ID' => 'integer',
+		'SORT' => 500,
+		'MULTIPLE' => 'Y',
+		'MANDATORY' => 'N',
+		'SHOW_FILTER' => 'N',
+		'SHOW_IN_LIST' => 'N',
+		'EDIT_IN_LIST' => 'N',
+		'IS_SEARCHABLE' => 'N',
+		'EDIT_FORM_LABEL' => ['en' => 'PRIORITY'],
+		'HELP_MESSAGE' => ['en' => ''],
+	]);
+});
+
+it('installs a configured highload block and returns field ids by code', function (): void {
+	$fieldIds = HiBlockApps::installHiBlock(
+		'MigrationExample',
+		'hi_migration_example',
+		[
+			['CODE' => 'TITLE', 'NAME' => 'Title'],
+			['CODE' => 'SORT', 'TYPE' => UserFieldTypes::INTEGER],
+		],
+		'Migration example',
+	);
+
+	expect($fieldIds)->toBe(['TITLE' => 501, 'SORT' => 501])
+		->and(HighloadBlockTable::$lastAddedFields)->toBe([
+			'NAME' => 'MigrationExample',
+			'TABLE_NAME' => 'hi_migration_example',
+		])
+		->and(HighloadBlockLangTable::$lastAddedFields)->toBe([
+			'ID' => 100,
+			'LID' => 'en',
+			'NAME' => 'Migration example',
+		])
+		->and(CUserTypeEntity::$addedFields)->toHaveCount(2)
+		->and(CUserTypeEntity::$addedFields[0]['FIELD_NAME'])->toBe('UF_TITLE')
+		->and(CUserTypeEntity::$addedFields[0]['USER_TYPE_ID'])->toBe('string')
+		->and(CUserTypeEntity::$addedFields[1]['FIELD_NAME'])->toBe('UF_SORT')
+		->and(CUserTypeEntity::$addedFields[1]['USER_TYPE_ID'])->toBe('integer');
+});
+
+it('builds custom settings through the universal installer', function (): void {
+	$fieldIds = HiBlockApps::installCustomSettingsHiBlock();
+
+	expect(array_keys($fieldIds))->toBe(['NAME', 'CODE', 'VALUE'])
+		->and(HighloadBlockTable::$lastAddedFields['NAME'])->toBe(HiBlockApps::CS_HIBLOCK_NAME)
+		->and(HighloadBlockTable::$lastAddedFields['TABLE_NAME'])->toBe(HiBlockApps::CS_TABLE_NAME)
+		->and(HighloadBlockLangTable::$lastAddedFields['NAME'])->toBe('Различные настройки сайта')
+		->and(CUserTypeEntity::$addedFields)->toHaveCount(3);
 });
 
 it('returns false when Bitrix cannot create a user field', function (): void {
