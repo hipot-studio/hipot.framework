@@ -2,7 +2,6 @@
 namespace Hipot\Utils;
 
 use Intervention\Image\ImageManagerStatic as iiImage,
-	Opis\Closure\SerializableClosure,
 	JetBrains\PhpStorm\ExpectedValues,
 	Bitrix\Main\Loader,
 	Bitrix\Main\Config\Option,
@@ -13,17 +12,19 @@ use Intervention\Image\ImageManagerStatic as iiImage,
 	Bitrix\Main\Request,
 	Hipot\Services\BitrixEngine;
 
+use function Opis\Closure\serialize as serializeClosure;
+
 /**
  * Обработка изображений
  * Использует библиотеку трансформации \Intervention\Image 2.X* (переписать под 3)
  *
- * Необходимо: php 8.1, Extensions: fileinfo, GD (лучше Imagick)
+ * Необходимо: php 8.3, Extensions: fileinfo, GD (лучше Imagick)
  *
  * @see https://image.intervention.io/v2
  * @see https://www.hipot-studio.com/Codex/cimg-constantly-integrable-modifier-of-graphics/
  *
  * @author		(c) hipot studio
- * @version		5.5.0, 2024
+ * @version		5.6.0, 2026
  *
  * @method static void setTag(string $tag) Установка тега, ставить тег перед каждой трансформацией. Для структурирования
  *     /upload/himg_cache/<$tagName>/aaa/aaaaaaaaaaaaaaaaaaa/... При этом можно удобно удалять кеш через удаление папки /upload/himg_cache/<$tagName>
@@ -421,8 +422,8 @@ final class Img
 	{
 		foreach ($resizeArgs as $arg => &$argVal) {
 			if (is_a($argVal, \Closure::class)) {
-				if (class_exists(SerializableClosure::class)) {
-					$argVal = new SerializableClosure($argVal);
+				if (function_exists('Opis\\Closure\\serialize')) {
+					$argVal = serializeClosure($argVal);
 				} else {
 					$debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)[1];
 					$argVal = 'Closure_' . $debug['file'] . ':' . $debug['line'];
@@ -625,7 +626,7 @@ final class Img
 	 * @throws \RuntimeException|\Exception
 	 */
 	public function doResizeOverlay($f, string $to,
-	                                #[ExpectedValues(Img::OVERLAY_POSITION_TYPES)]
+	                                #[ExpectedValues(self::OVERLAY_POSITION_TYPES)]
 	                                string $pos = 'center',
 	                                ?int $w = null, ?int $h = null, string $m = self::M_PROPORTIONAL, bool $retAr = false): string|array
 	{
@@ -702,5 +703,3 @@ final class Img
 	// endregion
 
 } // end class
-
-

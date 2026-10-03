@@ -68,4 +68,17 @@ trait StringUtils
 		}
 		return $value;
 	}
+
+	/**
+	 * To validate a RegExp just run it against null (no need to know the data you want to
+	 * test against upfront). If it returns explicit false (=== false), it's broken.
+	 * Otherwise it's valid though it need not match anything.
+	 *
+	 * @param string $regx
+	 * @return bool
+	 */
+	public static function isValidRegx(string $regx): bool
+	{
+		return preg_match($regx, null) !== false;
+	}
 }

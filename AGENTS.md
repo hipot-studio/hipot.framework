@@ -19,3 +19,5 @@
 
 И без ядра битрикса unit-тестов с заместителями из Subs:\
 `vendor\bin\pest.bat --configuration phpunit.xml`
+
+Интеграционные тесты для traits из пространства имен `\Hipot\Utils\Helper` делать через анонимный класс.

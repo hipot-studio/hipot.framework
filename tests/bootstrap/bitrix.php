@@ -37,3 +37,5 @@ while (ob_get_level() > $initialOutputBufferLevel) {
 // for integration tests
 const CATALOG_IBLOCK_ID = 2;
 const OFFERS_IBLOCK_ID = 3;
+
+const WEB_FORM_ID = 1;
