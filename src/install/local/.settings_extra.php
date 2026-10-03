@@ -118,10 +118,12 @@ return [
 		'value' => [
 			'default' => $defaultSettings['connections']['value']['default'],
 			'memcache' => [
-				'className' => MemcacheConnection::class,
-				'port'      => 0,
-				'host'      => 'unix:///home/bitrix/memcached.sock',
-				'sid'       => $sid
+				'className'         => MemcacheConnection::class,
+				'host'              => 'unix:///home/bitrix/memcached.sock',
+				'port'              => 0,
+				'sid'               => $sid,
+				'persistent'        => true,
+				'connectionTimeout' => 1,
 			]
 		]
 	],

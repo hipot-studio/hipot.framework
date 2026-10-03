@@ -1,6 +1,6 @@
 ## Сервисный слой для коммуникации с внешними системами
 
-1/ Движок битрикса, как самый большой и тотальный монолитный сервис для фрейморка, класс
+1/ Движок битрикса, как самый большой и тотальный монолитный сервис для фрейморка, класс 
 <code>\Hipot\Services\BitrixEngine</code>
 
 ```php
@@ -50,7 +50,7 @@ foreach (new DbResultGenerator($rs, returnObjects: true) as $ar) {
 $allList = (new DbResultGenerator($rs, returnObjects: true))->fetchAll();
 ```
 
-3/ Класс для удобства взаимодействия с файловой системой
+3/ Класс для удобства взаимодействия с файловой системой 
 <code>\Hipot\Services\FileSystem</code>
 
 ```php

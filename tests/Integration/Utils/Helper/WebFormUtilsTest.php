@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 use Bitrix\Main\Loader;
 use Hipot\Types\UpdateResult;
+use Hipot\Utils\UUtils;
 use Hipot\Utils\Helper\WebFormUtils;
 
 function webFormUtilsFixture(): object
 {
-	return new class {
-		use WebFormUtils;
-	};
+	return UUtils::createObjectFromTrait(WebFormUtils::class);
 }
 
 $fixtureResultIds = [];

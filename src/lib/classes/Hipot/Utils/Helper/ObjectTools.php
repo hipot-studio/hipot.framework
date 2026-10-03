@@ -5,6 +5,30 @@ namespace Hipot\Utils\Helper;
 trait ObjectTools
 {
 	/**
+	 * Создает объект анонимного класса с указанным трейтом
+	 *
+	 * Трейт не должен требовать аргументы конструктора или реализацию абстрактных методов.
+	 *
+	 * @param class-string $traitName Имя трейта
+	 */
+	public static function createObjectFromTrait(string $traitName): object
+	{
+		if (!trait_exists($traitName)) {
+			throw new \InvalidArgumentException("The trait '{$traitName}' was not found.");
+		}
+
+		$traitName = (new \ReflectionClass($traitName))->getName();
+
+		/** @var array<class-string, \Closure(): object> $factories */
+		static $factories = [];
+		$factories[$traitName] ??= eval(
+			'return static fn (): object => new class { use \\' . $traitName . '; };'
+		);
+
+		return $factories[$traitName]();
+	}
+
+	/**
 	 * Устанавливает значение для приватного/защищенного поля объекта
 	 *
 	 * @param object|string $target Объект или имя класса
@@ -14,7 +38,7 @@ trait ObjectTools
 	public static function setPrivateProperty(object|string $target, string $propertyName, mixed $value): void
 	{
 		$property = self::getReflectionProperty($target, $propertyName);
-		$property->setValue($target, $value);
+		$property->setValue(is_object($target) ? $target : null, $value);
 	}
 
 	/**
@@ -27,7 +51,9 @@ trait ObjectTools
 	 */
 	public static function getPrivateProperty(object|string $target, string $propertyName): mixed
 	{
-		return self::getReflectionProperty($target, $propertyName)->getValue($target);
+		return self::getReflectionProperty($target, $propertyName)->getValue(
+			is_object($target) ? $target : null,
+		);
 	}
 
 	/**
@@ -44,7 +70,6 @@ trait ObjectTools
 			}
 		}
 		$property = $ref->getProperty($propertyName);
-		$property->setAccessible(true);
 		return $property;
 	}
 }

@@ -79,7 +79,7 @@ $installEmailType       = static function ($typeId = 'DEBUG_MESSAGE'): bool {
 	}
 	return false;
 };
-$sendEmailToSupport     = static function () use ($exception, $developerEmail, $request, $argv, $installEmailType) {
+$sendEmailToSupport     = static function () use ($exception, $developerEmail, $developerEmailMailTo, $request, $argv, $installEmailType) {
 	$dateStr = date('d.m.Y H:i:s');
 	
 	$html = sprintf('Данные об ошибке <code>[%s]</code>:', $dateStr) . "\n";
@@ -123,7 +123,7 @@ $sendEmailToSupport     = static function () use ($exception, $developerEmail, $
 			],
 		]);
 	} else {
-		mail($developerEmail, $subject, $html, 'From: ' . $developerEmail);
+		mail($developerEmail, $subject, $html, 'From: ' . $developerEmailMailTo);
 	}
 };
 $isAdmin                = static function (): bool {

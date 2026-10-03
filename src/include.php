@@ -7,22 +7,22 @@ defined('B_PROLOG_INCLUDED') || die();
 // region better use composer 'vendor/autoload.php'
 
 // autoloader (deprecated, better use composer PSR-4 autoloader)
-require __DIR__ . '/lib/simple_loader.php';
+require_once __DIR__ . '/lib/simple_loader.php';
 
 // плавающие функции
-require __DIR__ . '/lib/functions.php';
+require_once __DIR__ . '/lib/functions.php';
 
 // endregion
 
 // iblock props in memcache (deprecated from iblock 23.200.0)
 if (file_exists(__DIR__ . '/lib/ib_props_memcache.php')) {
-	require __DIR__ . '/lib/ib_props_memcache.php';
+	require_once  __DIR__ . '/lib/ib_props_memcache.php';
 }
 
 // Abstract Iblock Elements Layer (deprecated, better use d7 orm iblock api)
 if (file_exists(__DIR__ . '/lib/iblock_layer_model.php')) {
-	require __DIR__ . '/lib/iblock_layer_model.php';
+	require_once __DIR__ . '/lib/iblock_layer_model.php';
 }
 
 // добавление обработчиков (без определения, определения писать лучше в отдельном классе)
-require __DIR__ . '/lib/handlers_add.php';
+require_once  __DIR__ . '/lib/handlers_add.php';

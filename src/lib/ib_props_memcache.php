@@ -31,14 +31,14 @@ use Bitrix\Main\Loader,
 		}
 		return;
 	}
-	
+
 	try {
 		$namespaceProvider = static function (): string {
 			static $cacheNamespace = null;
 			if ($cacheNamespace !== null) {
 				return $cacheNamespace;
 			}
-			
+
 			// Keep caches for different iblock storage versions isolated.
 			$iblockVersions = [];
 			$result = IblockTable::query()
@@ -49,17 +49,17 @@ use Bitrix\Main\Loader,
 			while ($iblock = $result->fetch()) {
 				$iblockVersions[$iblock['ID']] = $iblock['VERSION'];
 			}
-			
+
 			$serverName = (string)Application::getInstance()
 			                                 ->getContext()
 			                                 ->getServer()
 			                                 ->getServerName();
-			
+
 			$cacheNamespace = md5(serialize($iblockVersions) . $serverName);
-			
+
 			return $cacheNamespace;
 		};
-		
+
 		$cacheIblockProperties = !defined('HIPOT_IBLOCK_CACHE_PROPERTY_ENABLED')
 			|| HIPOT_IBLOCK_CACHE_PROPERTY_ENABLED === true;
 		$cacheElementProperties = !defined('HIPOT_BX_IBLOCK_PROP_CACHE_ENABLED')
@@ -68,7 +68,7 @@ use Bitrix\Main\Loader,
 			&& class_exists(ApcuNestedArrayWrapper::class)
 			&& ApcuNestedArrayWrapper::isAvailable();
 		$memcache = null;
-		
+
 		if ($cacheIblockProperties || ($cacheElementProperties && !$apcuAvailable)) {
 			try {
 				if (class_exists('Memcache')) {
@@ -86,7 +86,7 @@ use Bitrix\Main\Loader,
 				// APCu can still be used independently for BX_IBLOCK_PROP_CACHE.
 			}
 		}
-		
+
 		$globals = [];
 		if ($cacheIblockProperties && $memcache instanceof Memcache && class_exists(MemcacheWrapper::class)) {
 			$globals['IBLOCK_CACHE_PROPERTY'] = [
@@ -102,7 +102,7 @@ use Bitrix\Main\Loader,
 				),
 			];
 		}
-		
+
 		if ($cacheElementProperties && $apcuAvailable) {
 			$globals['BX_IBLOCK_PROP_CACHE'] = [
 				static function (): void {
@@ -132,11 +132,11 @@ use Bitrix\Main\Loader,
 				),
 			];
 		}
-		
+
 		if ($globals !== []) {
 			(new GlobalsCacher($globals))->cache();
 		}
-		
+
 		if (isset($globals['BX_IBLOCK_PROP_CACHE'])) {
 			BitrixEngine::getInstance()->eventManager->addEventHandler(
 				'iblock',
@@ -201,15 +201,19 @@ use Bitrix\Main\Loader,
 	// _tests:
 	/*
 	if (isset($_REQUEST['IBLOCK_CACHE_PROPERTY'])) {
+		var_dump( $GLOBALS['IBLOCK_CACHE_PROPERTY'] );
+		var_dump( $GLOBALS['BX_IBLOCK_PROP_CACHE'] );
+		var_dump( Hipot\Utils\UUtils::getPrivateProperty(new CCatalogSku(), 'arPropertyCache') );
+		
 		// var_dump( $GLOBALS['IBLOCK_CACHE_PROPERTY']->getMc()->getExtendedStats() );
-	
+		
 		$keys = $GLOBALS['IBLOCK_CACHE_PROPERTY']->getMemcachedKeys( $mc->getConfiguration() );
 		foreach ($keys as $k) {
 			echo $k;
 			\Bitrix\Main\Diag\Debug::dump($GLOBALS['IBLOCK_CACHE_PROPERTY'][$k]);
 		}
 	
-		\Bitrix\Main\Diag\Debug::dump( UUtils::getPrivateProperty(new CIBlockElement(), 'elementIblock') );
+		// \Bitrix\Main\Diag\Debug::dump( UUtils::getPrivateProperty(new CIBlockElement(), 'elementIblock') );
 		exit;
 	}
 	*/
