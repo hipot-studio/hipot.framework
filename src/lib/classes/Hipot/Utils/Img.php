@@ -247,7 +247,7 @@ final class Img
 				throw new RuntimeException('wrong_input_img_type');
 			}
 			$this->path_type		= self::FILEPATH_ABS_PATH;
-			$this->r_src			= str_replace(Loader::getDocumentRoot(), '', $this->src);
+			$this->r_src			= str_replace(Loader::getDocumentRoot(), '', $img);
 			$this->src				= $img;
 		} elseif (is_file(Loader::getDocumentRoot() . $img)) {
 			// если входит путь к картинке относительно корня сайта

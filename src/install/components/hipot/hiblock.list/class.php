@@ -26,6 +26,7 @@ use function ShowError;
  * ORDER DEF: ["ID" => "DESC"]
  * SELECT DEF: [ID, *]
  * FILTER
+ * ID_FIRST_QUERY Y/N DEF:N
  * PAGESIZE DEF:10 or
  * NTOPCOUNT (set both PAGESIZE and NTOPCOUNT has not sense)
  * GROUP_BY
@@ -47,6 +48,7 @@ use function ShowError;
  * 'SELECT'       => ['ID', 'UF_*'],
  * 'FILTER'       => [],
  * 'GROUP_BY'     => [],
+ * 'ID_FIRST_QUERY' => 'N',
  *
  * 'PAGESIZE'                => 10, // or
  * 'NTOPCOUNT'               => 10, // (set both PAGESIZE and NTOPCOUNT has not sensed)
@@ -89,6 +91,7 @@ class HiblockList extends \CBitrixComponent
 		$arParams['SHOWALL_1']			    = (int)$_REQUEST['SHOWALL_1'];
 		$arParams['NAV_TEMPLATE']		    = (trim($arParams['NAV_TEMPLATE']) != '') ? $arParams['NAV_TEMPLATE'] : '';
 		$arParams['NAV_SHOW_ALWAYS']	    = (trim($arParams['NAV_SHOW_ALWAYS']) == 'Y') ? 'Y' : 'N';
+		$arParams['ID_FIRST_QUERY']       = (trim($arParams['ID_FIRST_QUERY'] ?? '') === 'Y') ? 'Y' : 'N';
 		$arParams['CACHE_TIME_ORM']         = (int)$arParams['CACHE_TIME_ORM'];
 
 		return $arParams;
@@ -156,13 +159,14 @@ class HiblockList extends \CBitrixComponent
 			}
 			// endregion
 
+			$queryCache = ["ttl" => $arParams['CACHE_TIME_ORM'], "cache_joins" => true];
 			$result = $entityClass::getList([
 				"order"  => $arOrder,
-				"select" => $arSelect,
+				"select" => $this->usesIdFirstQuery() ? ['ID'] : $arSelect,
 				"filter" => $arFilter,
 				"group"  => $arGroupBy,
 				"limit"  => ($limit["nPageTop"] > 0) ? $limit["nPageTop"] : 0,
-				"cache"  => ["ttl" => $arParams['CACHE_TIME_ORM'], "cache_joins" => true]
+				"cache"  => $queryCache
 			]);
 
 			// region pager
@@ -182,11 +186,14 @@ class HiblockList extends \CBitrixComponent
 
 			// build results
 			$arResult["ITEMS"] = [];
+			$rows = $this->usesIdFirstQuery()
+				? $this->hydrateRowsByIds($entityClass, $this->fetchRowIds($result), $arSelect, $queryCache)
+				: $result;
 
 			// uf info
 			$fields = $USER_FIELD_MANAGER->GetUserFields('HLBLOCK_' . $hlblock['ID'], 0, LANGUAGE_ID);
 
-			while ($row = $result->Fetch()) {
+			foreach ($this->iterateRows($rows) as $row) {
 				$row = $this->prepareRow($row, $fields);
 
 				$row['fields'] = $USER_FIELD_MANAGER->getUserFieldsWithReadyData(
@@ -259,6 +266,10 @@ class HiblockList extends \CBitrixComponent
 		return is_array($hlblock) ? $hlblock : null;
 	}
 
+	/**
+	 * @return class-string<\Bitrix\Main\ORM\Data\DataManager>|null
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	private function resolveEntityClass(array $hlblock): ?string
 	{
 		$obEntity = HighloadBlockTable::compileEntity($hlblock);
@@ -273,6 +284,75 @@ class HiblockList extends \CBitrixComponent
 		}
 
 		return $this->entity_class;
+	}
+
+	private function usesIdFirstQuery(): bool
+	{
+		return $this->arParams['ID_FIRST_QUERY'] === 'Y';
+	}
+
+	/**
+	 * @param \CDBResult|\Bitrix\Main\DB\Result $result
+	 * @return int[]
+	 */
+	private function fetchRowIds($result): array
+	{
+		$ids = [];
+		while ($row = $result->Fetch()) {
+			$id = (int)$row['ID'];
+			if ($id > 0) {
+				$ids[$id] = $id;
+			}
+		}
+
+		return array_values($ids);
+	}
+
+	/**
+	 * @param class-string<\Bitrix\Main\ORM\Data\DataManager> $entityClass
+	 * @param int[] $ids
+	 * @return array<int, array>
+	 */
+	private function hydrateRowsByIds(string $entityClass, array $ids, array $select, array $cache): array
+	{
+		if (empty($ids)) {
+			return [];
+		}
+
+		$result = $entityClass::getList([
+			'select' => $select,
+			'filter' => ['@ID' => $ids],
+			'cache' => $cache,
+		]);
+		$rowsById = [];
+		while ($row = $result->fetch()) {
+			$rowsById[(int)$row['ID']] = $row;
+		}
+
+		$rows = [];
+		foreach ($ids as $id) {
+			if (isset($rowsById[$id])) {
+				$rows[] = $rowsById[$id];
+			}
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * @param \CDBResult|\Bitrix\Main\DB\Result|array $rows
+	 * @return \Generator<int, array>
+	 */
+	private function iterateRows($rows): \Generator
+	{
+		if (is_array($rows)) {
+			yield from $rows;
+			return;
+		}
+
+		while ($row = $rows->Fetch()) {
+			yield $row;
+		}
 	}
 
 	private function prepareRow(array $row, array $fields): array

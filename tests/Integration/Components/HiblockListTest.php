@@ -115,6 +115,7 @@ it('selects filters sorts and modifies highload-block rows by id', function () u
 				'SELECT' => ['UF_TITLE', 'UF_STATUS'],
 				'FILTER' => ['=UF_STATUS' => 'visible'],
 				'GROUP_BY' => [],
+				'ID_FIRST_QUERY' => 'Y',
 				'NTOPCOUNT' => 2,
 				'PAGESIZE' => 0,
 				'NAV_TEMPLATE' => '',
@@ -150,6 +151,107 @@ it('selects filters sorts and modifies highload-block rows by id', function () u
 			$result['ITEMS'][1]['~UF_TITLE'] . '|modified',
 		)
 		->and($rendered)->not->toContain('C hidden ', 'missing-title');
+});
+
+it('keeps pagination metadata and row order in id-first mode', function () use (
+	&$fixtureHiBlockId,
+	&$fixtureRowIds,
+): void {
+	/** @var CMain $APPLICATION */
+	global $APPLICATION;
+
+	ob_start();
+	try {
+		$result = $APPLICATION->IncludeComponent(
+			'hipot:hiblock.list',
+			'.default',
+			[
+				'HLBLOCK_ID' => $fixtureHiBlockId,
+				'ORDER' => ['ID' => 'ASC'],
+				'SELECT' => ['UF_TITLE'],
+				'FILTER' => [],
+				'GROUP_BY' => [],
+				'ID_FIRST_QUERY' => 'Y',
+				'NTOPCOUNT' => 0,
+				'PAGESIZE' => 2,
+				'NAV_TEMPLATE' => '',
+				'NAV_SHOW_ALWAYS' => 'N',
+				'NAV_SHOW_ALL' => 'N',
+				'NAV_TITLE' => '',
+				'SET_404' => 'N',
+				'ALWAYS_INCLUDE_TEMPLATE' => 'Y',
+				'SET_CACHE_KEYS' => ['ITEMS', 'NAV_RESULT'],
+				'CACHE_TYPE' => 'N',
+				'CACHE_TIME' => 0,
+				'CACHE_TIME_ORM' => 0,
+			],
+			false,
+			['HIDE_ICONS' => 'Y'],
+			true,
+		);
+	} finally {
+		ob_end_clean();
+	}
+
+	expect($result['ITEMS'])->toHaveCount(2)
+		->and(array_map(static fn(array $row): int => (int)$row['ID'], $result['ITEMS']))
+		->toBe(array_slice($fixtureRowIds, 0, 2))
+		->and($result['NAV_RESULT'])->toBeInstanceOf(CDBResult::class)
+		->and((int)$result['NAV_RESULT']->NavRecordCount)->toBe(3)
+		->and((int)$result['NAV_RESULT']->NavPageCount)->toBe(2);
+});
+
+it('returns the same selected rows in single-query and id-first modes', function () use (
+	&$fixtureHiBlockId,
+): void {
+	/** @var CMain $APPLICATION */
+	global $APPLICATION;
+
+	$runComponent = static function (string $idFirstQuery) use ($APPLICATION, &$fixtureHiBlockId): array {
+		ob_start();
+		try {
+			$result = $APPLICATION->IncludeComponent(
+				'hipot:hiblock.list',
+				'.default',
+				[
+					'HLBLOCK_ID' => $fixtureHiBlockId,
+					'ORDER' => ['UF_TITLE' => 'DESC'],
+					'SELECT' => ['UF_TITLE', 'UF_STATUS'],
+					'FILTER' => ['=UF_STATUS' => 'visible'],
+					'GROUP_BY' => [],
+					'ID_FIRST_QUERY' => $idFirstQuery,
+					'NTOPCOUNT' => 2,
+					'PAGESIZE' => 0,
+					'NAV_TEMPLATE' => '',
+					'NAV_SHOW_ALWAYS' => 'N',
+					'NAV_SHOW_ALL' => 'N',
+					'NAV_TITLE' => '',
+					'SET_404' => 'N',
+					'ALWAYS_INCLUDE_TEMPLATE' => 'Y',
+					'SET_CACHE_KEYS' => ['ITEMS'],
+					'CACHE_TYPE' => 'N',
+					'CACHE_TIME' => 0,
+					'CACHE_TIME_ORM' => 0,
+				],
+				false,
+				['HIDE_ICONS' => 'Y'],
+				true,
+			);
+		} finally {
+			ob_end_clean();
+		}
+
+		return array_map(
+			static fn(array $row): array => [
+				'ID' => (int)$row['ID'],
+				'UF_TITLE' => $row['~UF_TITLE'],
+				'UF_STATUS' => $row['~UF_STATUS'],
+			],
+			$result['ITEMS'],
+		);
+	};
+
+	expect($runComponent('Y'))->toBe($runComponent('N'));
 });
 
 it('resolves a highload block by symbolic code', function () use (&$fixtureHiBlockName, &$fixtureRowIds): void {

@@ -9,6 +9,8 @@
 
 namespace Hipot\Components;
 
+use Bitrix\Iblock\SectionTable;
+use Bitrix\Main\Loader;
 use Hipot\Services\BitrixEngine;
 use Hipot\Utils\UUtils;
 
@@ -24,7 +26,8 @@ use Hipot\Utils\UUtils;
  * / SECTION_CODE_PATH = Y если используется SECTION_CODE_PATH в настройках ИБ
  * / CACHE_TIME - понятно
  * / ORDER - сортировка выбираемых секций
- * / FILTER - дополнительный фильтр для выбираемых секций (не документированный параметр SECTION_ID обрабатывается, выбор подсекций секции)
+ * / FILTER - дополнительный фильтр; SECTION_ID выбирает все вложенные разделы указанного родителя
+ * / ID_FIRST_QUERY Y|N сначала выбрать ID, затем загрузить полные данные найденных разделов
  * / SELECT_COUNT Y|N выбрать ли кол-во элементов в секции, выбираются два кол-ва ELEMENT_CNT - стандартное поле секций
  * 		и ELEMENT_CNT_FROM_ELEMS - это кол-во элементов с заданнымы параметрами при помощи SELECT_COUNT_ELEM_FILTER
  * / SELECT_COUNT_ELEM_FILTER - дополнительный фильтр для определения кол-ва элементов в секции через
@@ -49,9 +52,9 @@ use Hipot\Utils\UUtils;
  * / CUR_SECTION - текущая секция со всеми полями, как и в массиве SECTIONS
  * </code>
  *
- * @see http://dev.1c-bitrix.ru/api_help/iblock/fields.php
- * @see http://dev.1c-bitrix.ru/api_help/iblock/classes/ciblocksection/getlist.php
- * @copyright 2023, hipot studio
+ * @see https://dev.1c-bitrix.ru/api_help/iblock/fields.php
+ * @see https://dev.1c-bitrix.ru/api_help/iblock/classes/ciblocksection/getlist.php
+ * @copyright 2026, hipot studio
  * @version 4.x, см. CHANGELOG.TXT
  */
 final class IblockSection extends \CBitrixComponent
@@ -68,6 +71,7 @@ final class IblockSection extends \CBitrixComponent
 		$arParams['SHOWALL_1']				= (int)$_REQUEST['SHOWALL_1'];
 		$arParams['NAV_TEMPLATE']			= (trim($arParams['NAV_TEMPLATE']) != '') ? $arParams['NAV_TEMPLATE'] : '';
 		$arParams['NAV_SHOW_ALWAYS']		= (trim($arParams['NAV_SHOW_ALWAYS']) == 'Y') ? 'Y' : 'N';
+		$arParams['ID_FIRST_QUERY']       = (trim($arParams['ID_FIRST_QUERY'] ?? '') === 'Y') ? 'Y' : 'N';
 
 		/**
 		 * проверяем выбранную секцию (для организации рубрикаторов)
@@ -94,145 +98,240 @@ final class IblockSection extends \CBitrixComponent
 
 	public function executeComponent()
 	{
-		$arParams =& $this->arParams;
-		$arResult =& $this->arResult;
-
 		if ($this->startResultCache(false)) {
+			Loader::requireModule('iblock');
+			$rsSections = \CIBlockSection::GetList(
+				$this->arParams['ORDER'] ?: ['SORT' => 'ASC'],
+				$this->getSectionFilter(),
+				false,
+				$this->usesIdFirstQuery() ? ['ID'] : $this->arParams['SELECT'],
+				$this->getNavigationParams(),
+			);
+			$rsNavigation = $rsSections;
+			$sections = $this->usesIdFirstQuery()
+				? $this->hydrateSectionsByIds($this->fetchSectionIds($rsSections))
+				: $rsSections;
 
-			\CModule::IncludeModule('iblock');
-
-			$arOrder = ['SORT' => 'ASC'];
-			if (! empty($arParams['ORDER'])) {
-				$arOrder = $arParams['ORDER'];
+			foreach ($this->iterateSections($sections) as $section) {
+				$this->arResult['SECTIONS'][] = $this->prepareSection($section);
 			}
 
-			$arFilter = ['IBLOCK_ID' => $arParams['IBLOCK_ID'], 'ACTIVE' => 'Y'];
-			if (count($arParams['FILTER']) > 0) {
-				$arFilter = array_merge($arFilter, $arParams['FILTER']);
-			}
-
-			// не реализованный выбор подсекций
-			if ((int)$arFilter['SECTION_ID'] > 0) {
-				$thisSection = \CIBlockSection::GetByID((int)$arFilter['SECTION_ID'])->Fetch();
-
-				if ((int)$thisSection['ID'] == 0) {
-					$arFilter['ID']			= false;
-				} else {
-					$arFilter = array_merge($arFilter, [
-						"<=LEFT_MARGIN"		=> $thisSection["LEFT_MARGIN"],
-						">=RIGHT_MARGIN"	=> $thisSection["RIGHT_MARGIN"],
-						">DEPTH_LEVEL"		=> $thisSection["DEPTH_LEVEL"],
-					]);
-				}
-				unset($arFilter['SECTION_ID'], $thisSection);
-			}
-
-			$arSelect = [];
-			if (count($arParams['SELECT']) > 0) {
-				$arSelect = array_merge($arSelect, $arParams['SELECT']);
-			}
-
-			/**
-			 * Фильтр для определения, сколько элементов в секции с такими параметрами
-			 * @var array
-			 */
-			$arElemCountFilter = ["IBLOCK_ID" => $arParams['IBLOCK_ID'],  'ACTIVE' => 'Y', 'INCLUDE_SUBSECTIONS' => 'N'];
-			if (count($arParams['SELECT_COUNT_ELEM_FILTER']) > 0) {
-				$arElemCountFilter = array_merge($arElemCountFilter, $arParams['SELECT_COUNT_ELEM_FILTER']);
-			}
-
-			$arNavStartParams = false;
-			if ($arParams["PAGESIZE"] > 0) {
-				$arNavStartParams["nPageSize"]	= $arParams["PAGESIZE"];
-				$arNavStartParams["bShowAll"]	= ($arParams['NAV_SHOW_ALL'] == 'Y');
-			}
-
-			/**
-			 * QUERY
-			 */
-			$rsSect = \CIBlockSection::GetList($arOrder, $arFilter, false, $arSelect, $arNavStartParams);
-			while ($arSect = $rsSect->GetNext()) {
-				if ($arParams['SELECT_COUNT']) {
-					$cntElemsRes = \CIBlockElement::GetList(
-						["SORT" => "ASC"],
-						array_merge($arElemCountFilter, ['SECTION_ID' => $arSect['ID']]),
-						[], false, ['ID']
-					);
-					$arSect['ELEMENT_CNT_FROM_ELEMS'] = (int)$cntElemsRes;
-				}
-
-				/**
-				 * выбираем текущую секцию, переданную через параметр
-				 */
-				if ($arSect['ID'] == $arParams['SELECTED_SECTION_ID']
-					|| (trim($arParams['SELECTED_SECTION_CODE']) != '' && trim($arSect['CODE']) != ''
-						&& $arSect['CODE'] == $arParams['SELECTED_SECTION_CODE'])
-				) {
-					$arResult['CUR_SECTION'] = $arSect;
-					$arSect['SELECTED'] = 'Y';
-				}
-
-				//
-				// TOFUTURE разнообразные мутаторы по секции тут (модификации, довыборки)
-				//
-				$arResult['SECTIONS'][] = $arSect;
-			}
-
-			//
-			// TOFUTURE разнообразные мутаторы по всем секциям тут (довыборки)
-			//
-
-			if (empty($arResult['SECTIONS'])) {
-				$this->abortResultCache();
-				if ($arParams["SET_404"] === "Y") {
-					UUtils::setStatusNotFound(true);
-				}
-				if ($arParams["INCLUDE_TEMPLATE_WITH_EMPTY_ITEMS"] === "Y") {
-					$this->includeComponentTemplate();
-				}
+			if (empty($this->arResult['SECTIONS'])) {
+				$this->handleEmptyResult();
 			} else {
-
-				if ($arParams["PAGESIZE"]) {
-					if ($arParams['NAV_PAGEWINDOW'] > 0) {
-						$rsSect->nPageWindow = $arParams['NAV_PAGEWINDOW'];
-					}
-					$arResult["NAV_STRING"] = $rsSect->GetPageNavStringEx(
-						$navComponentObject,
-						"",
-						$arParams['NAV_TEMPLATE'],
-						($arParams["NAV_SHOW_ALWAYS"] === 'Y'),
-						$this
-					);
-				}
-
+				$this->prepareNavigation($rsNavigation);
 				$this->setResultCacheKeys(['CUR_SECTION']);
 				$this->includeComponentTemplate();
 			}
 		}
 
-		if ($arParams['INCLUDE_SEO'] == 'Y' && !empty($arResult['CUR_SECTION'])) {
+		if ($this->arParams['INCLUDE_SEO'] == 'Y' && !empty($this->arResult['CUR_SECTION'])) {
 			$this->includeSectionSEO();
 		}
 
-		//
-		// TO FUTURE
-		//
-		return $arResult;
+		return $this->arResult;
+	}
+
+	private function usesIdFirstQuery(): bool
+	{
+		return $this->arParams['ID_FIRST_QUERY'] === 'Y';
+	}
+
+	/**
+	 * @param \CIBlockResult $sections
+	 * @return int[]
+	 */
+	private function fetchSectionIds($sections): array
+	{
+		$ids = [];
+		while ($section = $sections->Fetch()) {
+			$id = (int)$section['ID'];
+			if ($id > 0) {
+				$ids[$id] = $id;
+			}
+		}
+
+		return array_values($ids);
+	}
+
+	/**
+	 * @param int[] $ids
+	 * @return array<int, array>
+	 */
+	private function hydrateSectionsByIds(array $ids): array
+	{
+		if (empty($ids)) {
+			return [];
+		}
+
+		$select = $this->arParams['SELECT'];
+		if (!empty($select) && !in_array('ID', $select, true)) {
+			$select[] = 'ID';
+		}
+
+		$result = \CIBlockSection::GetList(
+			[],
+			[
+				'IBLOCK_ID' => $this->arParams['IBLOCK_ID'],
+				'ID' => $ids,
+			],
+			false,
+			$select,
+			['nTopCount' => count($ids)],
+		);
+		$sectionsById = [];
+		while ($section = $result->GetNext()) {
+			$sectionsById[(int)$section['ID']] = $section;
+		}
+
+		$sections = [];
+		foreach ($ids as $id) {
+			if (isset($sectionsById[$id])) {
+				$sections[] = $sectionsById[$id];
+			}
+		}
+
+		return $sections;
+	}
+
+	/**
+	 * @param \CIBlockResult|array $sections
+	 * @return \Generator<int, array>
+	 */
+	private function iterateSections($sections): \Generator
+	{
+		if (is_array($sections)) {
+			yield from $sections;
+			return;
+		}
+
+		while ($section = $sections->GetNext()) {
+			yield $section;
+		}
+	}
+
+	private function getSectionFilter(): array
+	{
+		$filter = array_merge(
+			['IBLOCK_ID' => $this->arParams['IBLOCK_ID'], 'ACTIVE' => 'Y'],
+			$this->arParams['FILTER'],
+		);
+		$parentSectionId = (int)($filter['SECTION_ID'] ?? 0);
+		if ($parentSectionId <= 0) {
+			return $filter;
+		}
+
+		$parentSection = SectionTable::query()
+			->setSelect(['ID', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'DEPTH_LEVEL'])
+			->where('ID', $parentSectionId)
+			->where('IBLOCK_ID', (int)$this->arParams['IBLOCK_ID'])
+			->setCacheTtl((int)$this->arParams['CACHE_TIME'])->cacheJoins(true)
+			->fetch();
+		unset($filter['SECTION_ID']);
+
+		if (!$parentSection) {
+			$filter['ID'] = false;
+			return $filter;
+		}
+
+		return array_merge($filter, [
+			'>LEFT_MARGIN' => $parentSection['LEFT_MARGIN'],
+			'<RIGHT_MARGIN' => $parentSection['RIGHT_MARGIN'],
+			'>DEPTH_LEVEL' => $parentSection['DEPTH_LEVEL'],
+		]);
+	}
+
+	private function getNavigationParams(): array|false
+	{
+		if ((int)$this->arParams['PAGESIZE'] <= 0) {
+			return false;
+		}
+
+		return [
+			'nPageSize' => (int)$this->arParams['PAGESIZE'],
+			'bShowAll' => $this->arParams['NAV_SHOW_ALL'] === 'Y',
+		];
+	}
+
+	private function prepareSection(array $section): array
+	{
+		if ($this->arParams['SELECT_COUNT']) {
+			$section['ELEMENT_CNT_FROM_ELEMS'] = $this->getSectionElementCount((int)$section['ID']);
+		}
+
+		if ($this->isCurrentSection($section)) {
+			$this->arResult['CUR_SECTION'] = $section;
+			$section['SELECTED'] = 'Y';
+		}
+
+		return $section;
+	}
+
+	private function getSectionElementCount(int $sectionId): int
+	{
+		$filter = array_merge(
+			[
+				'IBLOCK_ID' => $this->arParams['IBLOCK_ID'],
+				'ACTIVE' => 'Y',
+				'INCLUDE_SUBSECTIONS' => 'N',
+			],
+			$this->arParams['SELECT_COUNT_ELEM_FILTER'],
+			['SECTION_ID' => $sectionId],
+		);
+
+		return (int)\CIBlockElement::GetList(['SORT' => 'ASC'], $filter, [], false, ['ID']);
+	}
+
+	private function isCurrentSection(array $section): bool
+	{
+		return (int)$section['ID'] === (int)$this->arParams['SELECTED_SECTION_ID']
+			|| ($this->arParams['SELECTED_SECTION_CODE'] !== ''
+				&& $section['CODE'] !== ''
+				&& $section['CODE'] === $this->arParams['SELECTED_SECTION_CODE']);
+	}
+
+	private function handleEmptyResult(): void
+	{
+		$this->abortResultCache();
+		if ($this->arParams['SET_404'] === 'Y') {
+			UUtils::setStatusNotFound(true);
+		}
+		if ($this->arParams['INCLUDE_TEMPLATE_WITH_EMPTY_ITEMS'] === 'Y') {
+			$this->includeComponentTemplate();
+		}
+	}
+
+	/** @param \CIBlockResult $sections */
+	private function prepareNavigation($sections): void
+	{
+		if ((int)$this->arParams['PAGESIZE'] <= 0) {
+			return;
+		}
+		if ((int)$this->arParams['NAV_PAGEWINDOW'] > 0) {
+			$sections->nPageWindow = (int)$this->arParams['NAV_PAGEWINDOW'];
+		}
+
+		$this->arResult['NAV_STRING'] = $sections->GetPageNavStringEx(
+			$navComponentObject,
+			'',
+			$this->arParams['NAV_TEMPLATE'],
+			$this->arParams['NAV_SHOW_ALWAYS'] === 'Y',
+			$this,
+		);
 	}
 
 	public function includeSectionSEO()
 	{
-		global $APPLICATION;
 		$arParams =& $this->arParams;
 		$arResult =& $this->arResult;
 
-		$APPLICATION->SetTitle($arResult['CUR_SECTION']['NAME']);
+		BitrixEngine::getAppD0()->SetTitle($arResult['CUR_SECTION']['NAME']);
 		/**
 		 * иногда требуется добавить несколько ссылок в хлебные крошки до включения самого выбранного раздела
 		 */
 		foreach ($arParams['ADDON_PRE_CHAINS'] as $arPre) {
-			$APPLICATION->AddChainItem($arPre['TEXT'], $arPre['URL']);
+			BitrixEngine::getAppD0()->AddChainItem($arPre['TEXT'], $arPre['URL']);
 		}
-		$APPLICATION->AddChainItem($arResult['CUR_SECTION']['NAME'], $arResult['CUR_SECTION']['SECTION_PAGE_URL']);
+		BitrixEngine::getAppD0()->AddChainItem($arResult['CUR_SECTION']['NAME'], $arResult['CUR_SECTION']['SECTION_PAGE_URL']);
 	}
 }

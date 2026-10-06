@@ -28,6 +28,7 @@ use function Opis\Closure\unserialize as UnserializeClosure; // from 4.4 version
  *  PAGESIZE / сколько элементов на странице, при постраничной навигации
  *  SELECT / какие еще поля могут понадобиться по-умолчанию ["ID", "CODE", "DETAIL_PAGE_URL", "NAME"]
  *  GET_PROPERTY / Y – вывести все свойства
+ *  ID_FIRST_QUERY / Y – сначала выбрать ID, затем загрузить полные данные по найденным ID
  *  CACHE_TIME / время кеша
  *  CACHE_GROUPS / N - кешировать ли группы пользователей (для интерфейса эрмитаж)
  *
@@ -53,6 +54,7 @@ use function Opis\Closure\unserialize as UnserializeClosure; // from 4.4 version
  * 'FILTER'       => [],
  * 'SELECT'       => [],
  * 'GET_PROPERTY' => 'Y',
+ * 'ID_FIRST_QUERY' => 'N',
  * 'CACHE_TIME'   => 3600 * 3,
  * 'CACHE_GROUPS' => 'N',
  *
@@ -75,7 +77,7 @@ use function Opis\Closure\unserialize as UnserializeClosure; // from 4.4 version
  * </code>
  *
  * @version 6.x, см. CHANGELOG.TXT
- * @copyright 2025, hipot studio
+ * @copyright 2026, hipot studio
  */
 class IblockList extends \CBitrixComponent
 {
@@ -94,6 +96,7 @@ class IblockList extends \CBitrixComponent
 		$arParams['SHOWALL_1']			    = (int)$_REQUEST['SHOWALL_1'];
 		$arParams['NAV_TEMPLATE']		    = (trim($arParams['NAV_TEMPLATE']) != '') ? $arParams['NAV_TEMPLATE'] : '';
 		$arParams['NAV_SHOW_ALWAYS']	    = (trim($arParams['NAV_SHOW_ALWAYS']) == 'Y') ? 'Y' : 'N';
+		$arParams['ID_FIRST_QUERY']       = (trim($arParams['ID_FIRST_QUERY'] ?? '') === 'Y') ? 'Y' : 'N';
 		$arParams['SELECT_CHAINS']          = (trim($arParams['SELECT_CHAINS']) == 'Y') ? 'Y' : 'N';
 		$arParams['SELECT_CHAINS_DEPTH']    = (int)$arParams['SELECT_CHAINS_DEPTH'] > 0 ? (int)$arParams['SELECT_CHAINS_DEPTH'] : 3;
 		if (!is_array($arParams["FILTER"])) {
@@ -125,18 +128,22 @@ class IblockList extends \CBitrixComponent
 			$arResult["ITEMS"]     = [];
 			$arResult["CNT_ITEMS"] = 0;
 
-			// QUERY 1 MAIN
+			// QUERY 1 MAIN OR ID-FIRST
 			$rsItems = \CIBlockElement::GetList(
 				$this->getOrder(),
 				$this->getFilter(),
 				false,
 				$this->getNavParams(),
-				$this->getSelect()
+				$this->usesIdFirstQuery() ? ['ID'] : $this->getSelect()
 			);
+			$rsNavigation = $rsItems;
+			$items = $this->usesIdFirstQuery()
+				? $this->hydrateItemsByIds($this->fetchItemIds($rsItems))
+				: $rsItems;
 
 			$this->initChainBuilder();
 
-			while ($arItem = $rsItems->GetNext()) {
+			foreach ($this->iterateItems($items) as $arItem) {
 				$arResult["ITEMS"][] = $this->prepareItem($arItem);
 			}
 
@@ -151,7 +158,7 @@ class IblockList extends \CBitrixComponent
 			$arResult["CNT_ITEMS"] = is_countable($arResult["ITEMS"]) ? count($arResult["ITEMS"]) : 0;
 			if ($arResult["CNT_ITEMS"] > 0) {
 				if ($arParams["PAGESIZE"]) {
-					$this->setNavResult($rsItems);
+					$this->setNavResult($rsNavigation);
 				}
 				$this->setResultCacheKeys([
 					'NAV_RESULT',
@@ -224,6 +231,82 @@ class IblockList extends \CBitrixComponent
 		}
 
 		return $arSelect;
+	}
+
+	private function usesIdFirstQuery(): bool
+	{
+		return $this->arParams['ID_FIRST_QUERY'] === 'Y';
+	}
+
+	/**
+	 * @param \CIBlockResult $result
+	 * @return int[]
+	 */
+	private function fetchItemIds($result): array
+	{
+		$ids = [];
+		while ($row = $result->Fetch()) {
+			$id = (int)$row['ID'];
+			if ($id > 0) {
+				$ids[$id] = $id;
+			}
+		}
+
+		return array_values($ids);
+	}
+
+	/**
+	 * Полная выборка не повторяет дорогой фильтр и пагинацию первой фазы.
+	 * Порядок восстанавливается явно, поэтому не зависит от плана SQL-запроса.
+	 *
+	 * @param int[] $ids
+	 * @return array<int, array>
+	 */
+	private function hydrateItemsByIds(array $ids): array
+	{
+		if (empty($ids)) {
+			return [];
+		}
+
+		$result = \CIBlockElement::GetList(
+			['ID' => $ids],
+			[
+				'IBLOCK_ID' => $this->arParams['IBLOCK_ID'],
+				'ID' => $ids,
+			],
+			false,
+			['nTopCount' => count($ids)],
+			$this->getSelect()
+		);
+		$itemsById = [];
+		while ($item = $result->GetNext()) {
+			$itemsById[(int)$item['ID']][] = $item;
+		}
+
+		$items = [];
+		foreach ($ids as $id) {
+			foreach ($itemsById[$id] ?? [] as $item) {
+				$items[] = $item;
+			}
+		}
+
+		return $items;
+	}
+
+	/**
+	 * @param \CIBlockResult|array $items
+	 * @return \Generator<int, array>
+	 */
+	private function iterateItems($items): \Generator
+	{
+		if (is_array($items)) {
+			yield from $items;
+			return;
+		}
+
+		while ($item = $items->GetNext()) {
+			yield $item;
+		}
 	}
 
 	private function initChainBuilder(): void

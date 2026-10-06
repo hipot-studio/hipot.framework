@@ -2,11 +2,56 @@
 
 declare(strict_types=1);
 
+use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\Loader;
 use Hipot\Components\IblockSection;
 
 $fixtureElementIds = [];
 $fixtureSectionIds = [];
+
+function includeIblockSectionForIntegration(array $params): array
+{
+	/** @var CMain $APPLICATION */
+	global $APPLICATION;
+
+	ob_start();
+	try {
+		$result = $APPLICATION->IncludeComponent(
+			'hipot:iblock.section',
+			'edit_example',
+			array_merge([
+				'IBLOCK_ID' => CATALOG_IBLOCK_ID,
+				'ORDER' => ['SORT' => 'ASC'],
+				'FILTER' => [],
+				'SELECT' => [],
+				'ID_FIRST_QUERY' => 'N',
+				'SELECTED_SECTION_ID' => 0,
+				'SELECTED_SECTION_CODE' => '',
+				'SECTION_CODE_PATH' => 'N',
+				'SELECT_COUNT' => 'N',
+				'SELECT_COUNT_ELEM_FILTER' => [],
+				'PAGESIZE' => 0,
+				'NAV_TEMPLATE' => '',
+				'NAV_SHOW_ALWAYS' => 'N',
+				'NAV_SHOW_ALL' => 'N',
+				'NAV_PAGEWINDOW' => 3,
+				'INCLUDE_SEO' => 'N',
+				'ADDON_PRE_CHAINS' => [],
+				'SET_404' => 'N',
+				'INCLUDE_TEMPLATE_WITH_EMPTY_ITEMS' => 'Y',
+				'CACHE_TYPE' => 'N',
+				'CACHE_TIME' => 0,
+			], $params),
+			false,
+			['HIDE_ICONS' => 'Y'],
+			true,
+		);
+	} finally {
+		$rendered = (string)ob_get_clean();
+	}
+
+	return [$result, $rendered];
+}
 
 beforeAll(function (): void {
 	Loader::requireModule('iblock');
@@ -27,6 +72,73 @@ afterEach(function () use (&$fixtureElementIds, &$fixtureSectionIds): void {
 
 	$fixtureElementIds = [];
 	$fixtureSectionIds = [];
+});
+
+it('hydrates catalog sections by ids and keeps the first query order', function (): void {
+	$sections = SectionTable::query()
+		->setSelect(['ID', 'NAME', 'CODE'])
+		->where('IBLOCK_ID', CATALOG_IBLOCK_ID)
+		->where('ACTIVE', 'Y')
+		->where('DEPTH_LEVEL', 1)
+		->setOrder(['NAME' => 'DESC'])
+		->setLimit(3)
+		->fetchAll();
+	expect($sections)->toHaveCount(3);
+
+	[$result, $rendered] = includeIblockSectionForIntegration([
+		'ORDER' => ['NAME' => 'DESC'],
+		'FILTER' => ['ID' => array_column($sections, 'ID')],
+		'SELECT' => ['NAME', 'CODE'],
+		'ID_FIRST_QUERY' => 'Y',
+		'SELECTED_SECTION_ID' => (int)$sections[0]['ID'],
+	]);
+
+	expect((int)$result['CUR_SECTION']['ID'])->toBe((int)$sections[0]['ID'])
+		->and($result['CUR_SECTION']['CODE'])->toBe($sections[0]['CODE'])
+		->and($rendered)->toContain($sections[0]['NAME'], $sections[1]['NAME'], $sections[2]['NAME'])
+		->and(strpos($rendered, $sections[0]['NAME']))->toBeLessThan(strpos($rendered, $sections[1]['NAME']))
+		->and(strpos($rendered, $sections[1]['NAME']))->toBeLessThan(strpos($rendered, $sections[2]['NAME']));
+});
+
+it('selects nested catalog sections by their parent section id', function (): void {
+	$sections = SectionTable::query()
+		->setSelect(['ID', 'NAME', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'DEPTH_LEVEL'])
+		->where('IBLOCK_ID', CATALOG_IBLOCK_ID)
+		->where('ACTIVE', 'Y')
+		->setOrder(['LEFT_MARGIN' => 'ASC'])
+		->fetchAll();
+
+	$parent = null;
+	$descendants = [];
+	foreach ($sections as $candidate) {
+		$candidateDescendants = array_values(array_filter(
+			$sections,
+			static fn(array $section): bool => (int)$section['LEFT_MARGIN'] > (int)$candidate['LEFT_MARGIN']
+				&& (int)$section['RIGHT_MARGIN'] < (int)$candidate['RIGHT_MARGIN']
+				&& (int)$section['DEPTH_LEVEL'] > (int)$candidate['DEPTH_LEVEL'],
+		));
+		if (count($candidateDescendants) >= 2) {
+			$parent = $candidate;
+			$descendants = $candidateDescendants;
+			break;
+		}
+	}
+	expect($parent)->toBeArray()
+		->and($descendants)->not->toBeEmpty();
+
+	[$result, $rendered] = includeIblockSectionForIntegration([
+		'ORDER' => ['LEFT_MARGIN' => 'ASC'],
+		'FILTER' => ['SECTION_ID' => (int)$parent['ID']],
+		'SELECT' => ['ID', 'NAME', 'LEFT_MARGIN'],
+		'ID_FIRST_QUERY' => 'Y',
+		'SELECTED_SECTION_ID' => (int)$descendants[0]['ID'],
+	]);
+
+	expect((int)$result['CUR_SECTION']['ID'])->toBe((int)$descendants[0]['ID'])
+		->and($rendered)->not->toContain($parent['NAME']);
+	foreach ($descendants as $descendant) {
+		expect($rendered)->toContain($descendant['NAME']);
+	}
 });
 
 it('selects active iblock sections and prepares the current section', function () use (

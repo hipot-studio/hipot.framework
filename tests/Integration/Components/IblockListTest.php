@@ -36,6 +36,135 @@ afterEach(function () use (&$fixtureElementIds, &$fixturePropertyIds, &$fixtureS
 	$fixtureSectionIds = [];
 });
 
+it('hydrates iblock elements by ids and keeps the first query order', function (): void {
+	/** @var CMain $APPLICATION */
+	global $APPLICATION;
+
+	$expectedItems = [];
+	$idResult = CIBlockElement::GetList(
+		['ID' => 'DESC'],
+		['IBLOCK_ID' => CATALOG_IBLOCK_ID, 'ACTIVE' => 'Y'],
+		false,
+		['nTopCount' => 2],
+		['ID', 'NAME'],
+	);
+	while ($row = $idResult->Fetch()) {
+		$expectedItems[] = ['ID' => (int)$row['ID'], 'NAME' => (string)$row['NAME']];
+	}
+	expect($expectedItems)->toHaveCount(2);
+	$expectedIds = array_column($expectedItems, 'ID');
+
+	ob_start();
+	try {
+		$result = $APPLICATION->IncludeComponent(
+			'hipot:iblock.list',
+			'edit_example',
+			[
+				'IBLOCK_ID' => CATALOG_IBLOCK_ID,
+				'ORDER' => ['ID' => 'DESC'],
+				'FILTER' => ['ID' => $expectedIds],
+				'SELECT' => ['CODE'],
+				'GET_PROPERTY' => 'N',
+				'ID_FIRST_QUERY' => 'Y',
+				'NTOPCOUNT' => 2,
+				'PAGESIZE' => 0,
+				'NAV_TEMPLATE' => '',
+				'NAV_SHOW_ALWAYS' => 'N',
+				'NAV_SHOW_ALL' => 'N',
+				'NAV_PAGEWINDOW' => 3,
+				'SET_404' => 'N',
+				'ALWAYS_INCLUDE_TEMPLATE' => 'Y',
+				'SELECT_CHAINS' => 'N',
+				'CACHE_TYPE' => 'N',
+				'CACHE_TIME' => 0,
+				'CACHE_GROUPS' => 'N',
+			],
+			false,
+			['HIDE_ICONS' => 'Y'],
+			true,
+		);
+	} finally {
+		$rendered = (string)ob_get_clean();
+	}
+
+	expect($result)->toBeArray()
+		->and($result['CNT_ITEMS'])->toBe(2)
+		->and($rendered)->toContain($expectedItems[0]['NAME'], $expectedItems[1]['NAME'])
+		->and(strpos($rendered, $expectedItems[0]['NAME']))
+		->toBeLessThan(strpos($rendered, $expectedItems[1]['NAME']));
+});
+
+it('loads multiple properties separately from capped id-first hydration', function (): void {
+	/** @var CMain $APPLICATION */
+	global $APPLICATION;
+
+	$elementIds = [];
+	$idResult = CIBlockElement::GetList(
+		['ID' => 'ASC'],
+		[
+			'IBLOCK_ID' => CATALOG_IBLOCK_ID,
+			'ACTIVE' => 'Y',
+			'!PROPERTY_MORE_PHOTO' => false,
+		],
+		false,
+		['nTopCount' => 2],
+		['ID'],
+	);
+	while ($row = $idResult->Fetch()) {
+		$elementIds[] = (int)$row['ID'];
+	}
+	expect($elementIds)->toHaveCount(2);
+
+	$modifyItem = static function (array &$item): void {
+		$morePhotoCount = count(array_filter(
+			(array)($item['PROPERTIES']['MORE_PHOTO'] ?? []),
+		));
+		$item['NAME'] .= '|element-id:' . (int)$item['ID'] . '|more-photo:' . $morePhotoCount;
+	};
+
+	ob_start();
+	try {
+		$result = $APPLICATION->IncludeComponent(
+			'hipot:iblock.list',
+			'edit_example',
+			[
+				'IBLOCK_ID' => CATALOG_IBLOCK_ID,
+				'ORDER' => ['ID' => 'ASC'],
+				'FILTER' => ['ID' => $elementIds],
+				'SELECT' => [],
+				'GET_PROPERTY' => 'Y',
+				'ID_FIRST_QUERY' => 'Y',
+				'~MODIFY_ITEM' => serializeClosure($modifyItem),
+				'NTOPCOUNT' => 2,
+				'PAGESIZE' => 0,
+				'NAV_TEMPLATE' => '',
+				'NAV_SHOW_ALWAYS' => 'N',
+				'NAV_SHOW_ALL' => 'N',
+				'NAV_PAGEWINDOW' => 3,
+				'SET_404' => 'N',
+				'ALWAYS_INCLUDE_TEMPLATE' => 'Y',
+				'SELECT_CHAINS' => 'N',
+				'CACHE_TYPE' => 'N',
+				'CACHE_TIME' => 0,
+				'CACHE_GROUPS' => 'N',
+			],
+			false,
+			['HIDE_ICONS' => 'Y'],
+			true,
+		);
+	} finally {
+		$rendered = (string)ob_get_clean();
+	}
+
+	$firstMarker = '|element-id:' . $elementIds[0];
+	$secondMarker = '|element-id:' . $elementIds[1];
+	expect($result['CNT_ITEMS'])->toBe(2)
+		->and($rendered)->toContain($firstMarker, $secondMarker)
+		->and(preg_match('/' . preg_quote($firstMarker, '/') . '\|more-photo:[1-9]\d*/', $rendered))->toBe(1)
+		->and(preg_match('/' . preg_quote($secondMarker, '/') . '\|more-photo:[1-9]\d*/', $rendered))->toBe(1)
+		->and(strpos($rendered, $firstMarker))->toBeLessThan(strpos($rendered, $secondMarker));
+});
+
 it('selects active iblock elements and prepares their properties', function () use (
 	&$fixtureElementIds,
 	&$fixturePropertyIds,
@@ -111,6 +240,7 @@ it('selects active iblock elements and prepares their properties', function () u
 				],
 				'SELECT' => ['CODE'],
 				'GET_PROPERTY' => 'Y',
+				'ID_FIRST_QUERY' => 'Y',
 				'~MODIFY_ITEM' => serializeClosure($modifyItem),
 				'NTOPCOUNT' => 0,
 				'PAGESIZE' => 0,
