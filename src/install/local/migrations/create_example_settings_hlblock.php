@@ -1,5 +1,9 @@
 <?php
-
+/*
+// run create_example_settings_hlblock
+$result = require $_SERVER['DOCUMENT_ROOT'] . '/local/migrations/create_example_settings_hlblock.php';
+\Bitrix\Main\Diag\Debug::dump($result);
+*/
 declare(strict_types=1);
 
 use Hipot\BitrixUtils\HiBlockApps;

@@ -14,6 +14,11 @@ global $APPLICATION;
 if (!defined('ERROR_404')) {
 	define('ERROR_404', 'Y');
 }
+
+if (\Hipot\Services\BitrixEngine::getInstance()->request->get('last_page')) {
+	$_SERVER['REQUEST_URI'] = \Hipot\Services\BitrixEngine::getInstance()->request->get('last_page');
+	$_SERVER['REQUEST_URI'] = htmlspecialcharsEx($_SERVER['REQUEST_URI']);
+}
 ?>
 <?
 if (LANGUAGE_ID == 'en') {
@@ -28,7 +33,7 @@ if (LANGUAGE_ID == 'en') {
 	</ul>
 	<br>
 	Please go to <a href="<?=SITE_DIR?>">home page</a> site and try again or use <strong>site map</strong>:
-	
+
 	<?
 	/*\Bitrix\Main\Config\Option::set("main", "map_top_menu_type", 	"en_top");
 	\Bitrix\Main\Config\Option::set("main", "map_left_menu_type", 	"en_left,content");*/

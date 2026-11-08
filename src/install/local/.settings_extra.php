@@ -79,6 +79,8 @@ return [
 		'value' => [
 			'lifetime' => 14400,
 			'mode' => 'separated',
+			'regenerateIdAfterLogin' => false,
+            'ignoreSessionStartErrors' => true,
 			'handlers' => [
 				'kernel' => 'encrypted_cookies',
 				'general' => [

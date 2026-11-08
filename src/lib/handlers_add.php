@@ -1,10 +1,9 @@
 <?php
 defined('B_PROLOG_INCLUDED') || die();
 /**
- * Установка кастомных обработчиков и их описание.
- * Желательно описание (определение класса и метода) делать отдельно от данного файла
- *
- * Т.е. в данном файле пишем addEventHandler, а сам обработчик в файле с классом lib/classes/SiteEvents.php, lib/classes/CatalogEvents.php, ...
+ * Точка подключения обработчиков событий.
+ * Регистрацию событий группируем по функциональности в отдельных файлах lib/handlers/.
+ * Реализацию переиспользуемых обработчиков размещаем в классах lib/classes/Hipot/.
  */
 
 use Bitrix\Main\Loader;
@@ -81,6 +80,8 @@ require __DIR__ . '/handlers/js_and_seo.php';
 require __DIR__ . '/handlers/catalog_sale.php';
 
 require __DIR__ . '/handlers/hi_block.php';
+
+require __DIR__ . '/handlers/property_types.php';
 
 // disable basic auth in bitrix admin
 UUtils::disableHttpAuth();
