@@ -41,6 +41,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
 - универсальные обработчики событий <code>/lib/handlers_add.php</code> с подключением констант-рубильников из файла <code>/lib/constants.php</code>  
 - [Дополнительные типы свойств](docs/property_types.md): привязка к пользователю, HTML / визуальный редактор и привязка к элементам инфоблока с описанием.
 - скрипт [xhprof.php](docs/xhprof.md) для быстрого профилирования "боевых" проектов
+- [SQL-профилирование отдельной страницы](docs/sql_profile.md) через штатный Монитор производительности Bitrix, без внешних зависимостей
 - страница [<code>pages/error.php</code>](docs/error_php_monitoring.md) с перехватом фатальных php-ошибок и отправке их на почту разработчикам (размещается в DOCUMENT_ROOT проекта)
 - [компоненты](docs/components.md) в папке <code>install/components</code> для копирования в <code>/local/components</code>
   - [<code>Hipot\Components\IblockList</code>](docs/components/hipot_iblock_list.md) - универсальный компонент для работы с элементами инфоблоков <code>hipot:iblock.list</code>. Этот же компонент умеет использовать и Abstract Iblock Elements Layer. В [теории двух компонент](docs/bbc.md) - этот компонент можно использовать и для создания карточки (детальной страницы) элемента (товара, новости...)
