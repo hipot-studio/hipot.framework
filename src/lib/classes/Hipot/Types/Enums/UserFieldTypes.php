@@ -11,6 +11,7 @@ enum UserFieldTypes: string
 {
 	case STRING = 'string'; // Строка
 	case STRING_FORMATTED = 'string_formatted'; // Шаблон
+	case RICH_TEXT = 'rich_text'; // Форматированный текст
 	case INTEGER = 'integer'; // Целое число
 	case DOUBLE = 'double'; // Число
 	case DATE = 'date'; // Дата
