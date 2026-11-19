@@ -35,8 +35,8 @@ final class UpdateResult extends ObjectArItem
 	public function __construct($result = null)
 	{
 		if (is_array($result)) {
-			foreach ($result as $k => $v) {
-				$this->{$k} = $v;
+			foreach ($result as $fieldName => $fieldValue) {
+				$this->{$fieldName} = $fieldValue;
 			}
 		}
 	}

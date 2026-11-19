@@ -122,12 +122,12 @@ final class Sale
 		
 		$discounts = $order->getDiscount();
 		$discounts->setOrderRefresh(true);
-		$r = $discounts->calculate();
+		$calculationResult = $discounts->calculate();
 		
-		if ($r->isSuccess()) {
+		if ($calculationResult->isSuccess()) {
 			$result = $discounts->getApplyResult(true);
 		} else {
-			$errors[] = $r->getErrorMessages();
+			$errors[] = $calculationResult->getErrorMessages();
 		}
 		
 		$order->doFinalAction(true);
@@ -157,12 +157,12 @@ final class Sale
 			$context = new \Bitrix\Sale\Discount\Context\Fuser($basket->getFUserId());
 			$discounts = Discount::buildFromBasket($basket, $context);
 		}
-		$r = $discounts->calculate();
+		$calculationResult = $discounts->calculate();
 		
-		if ($r->isSuccess()) {
+		if ($calculationResult->isSuccess()) {
 			$result = $discounts->getApplyResult(true);
 		} else {
-			$errors[] = $r->getErrorMessages();
+			$errors[] = $calculationResult->getErrorMessages();
 		}
 		
 		return $errors;

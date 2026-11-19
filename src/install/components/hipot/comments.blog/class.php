@@ -209,8 +209,8 @@ class CommentsBlog extends \CBitrixComponent
 		Loader::includeModule("iblock");
 
 		$arFilledPosts = [];
-		$rs = \CIblockElement::GetList(['PROPERTY_' . $propertyCode => 'ASC'], ['IBLOCK_ID' => $iblockId], ['PROPERTY_' . $propertyCode]);
-		while ($el = $rs->GetNext()) {
+		$propertyQueryResult = \CIblockElement::GetList(['PROPERTY_' . $propertyCode => 'ASC'], ['IBLOCK_ID' => $iblockId], ['PROPERTY_' . $propertyCode]);
+		while ($el = $propertyQueryResult->GetNext()) {
 			$arFilledPosts[] = (int)$el['PROPERTY_' . strtoupper($propertyCode) . '_VALUE'];
 		}
 

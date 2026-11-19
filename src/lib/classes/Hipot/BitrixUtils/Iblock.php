@@ -250,9 +250,9 @@ class Iblock extends _CIBElement
 	 */
 	public static function queryIblockItemsSearch(string $query, $iblockId): array
 	{
-		$r = [];
+		$matchedSectionIds = [];
 		if (!Loader::includeModule('search')) {
-			return $r;
+			return $matchedSectionIds;
 		}
 
 		// TODO Can't group on 'RANK' (400) bitrix
@@ -270,9 +270,9 @@ class Iblock extends _CIBElement
 			"=PARAM2" => [(int)$iblockId],
 		]);
 		while ($arResult = $obSearch->GetNext()) {
-			$r[] = $arResult['ITEM_ID'];
+			$matchedSectionIds[] = $arResult['ITEM_ID'];
 		}
-		return $r;
+		return $matchedSectionIds;
 	}
 
 } // end class

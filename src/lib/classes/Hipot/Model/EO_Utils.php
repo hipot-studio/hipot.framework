@@ -355,7 +355,7 @@ trait EO_Utils
 				
 				case '@': // IN
 					$list = is_array($value) ? $value : [$value];
-					$list = array_map(static fn($v) => "'" . $sqlHelper->forSql((string)$v) . "'", $list);
+					$list = array_map(static fn($value) => "'" . $sqlHelper->forSql((string)$value) . "'", $list);
 					if (!empty($list)) {
 						$conditions[] = "{$fieldSql} IN (" . implode(', ', $list) . ")";
 					}
@@ -363,7 +363,7 @@ trait EO_Utils
 				
 				case '!@': // NOT IN
 					$list = is_array($value) ? $value : [$value];
-					$list = array_map(static fn($v) => "'" . $sqlHelper->forSql((string)$v) . "'", $list);
+					$list = array_map(static fn($value) => "'" . $sqlHelper->forSql((string)$value) . "'", $list);
 					if (!empty($list)) {
 						$conditions[] = "{$fieldSql} NOT IN (" . implode(', ', $list) . ")";
 					}

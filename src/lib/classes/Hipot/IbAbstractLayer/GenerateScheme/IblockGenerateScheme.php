@@ -484,13 +484,13 @@ class __HiblockItem_#ABSTRACT_LAYER_SAULT#_#HIBLOCK_ID#
 		$arPROPERTIES = $this->getPropertiesByIblock();
 
 		$arReturn = [];
-		$rs = \CIBlock::GetList(['ID' => 'ASC'], [], false);
-		while ($ar = $rs->Fetch()) {
-			$ar['PROPERTIES'] = [];
-			foreach ($arPROPERTIES[ $ar['ID'] ] as $prop) {
-				$ar['PROPERTIES'][] = $prop;
+		$iblockQueryResult = \CIBlock::GetList(['ID' => 'ASC'], [], false);
+		while ($iblockRow = $iblockQueryResult->Fetch()) {
+			$iblockRow['PROPERTIES'] = [];
+			foreach ($arPROPERTIES[ $iblockRow['ID'] ] as $prop) {
+				$iblockRow['PROPERTIES'][] = $prop;
 			}
-			$arReturn[] = $ar;
+			$arReturn[] = $iblockRow;
 		}
 		return $arReturn;
 	}
@@ -508,10 +508,10 @@ class __HiblockItem_#ABSTRACT_LAYER_SAULT#_#HIBLOCK_ID#
 		}
 
 		$props = new \CIBlockProperty();
-		$rs = $props::GetList(['IBLOCK_ID' => 'ASC', 'SORT' => 'ASC'], ['CHECK_PERMISSIONS' => 'N']);
+		$propertyQueryResult = $props::GetList(['IBLOCK_ID' => 'ASC', 'SORT' => 'ASC'], ['CHECK_PERMISSIONS' => 'N']);
 
 		$arReturn = [];
-		while ($prop = $rs->Fetch()) {
+		while ($prop = $propertyQueryResult->Fetch()) {
 			if ($prop['PROPERTY_TYPE'] == PropertyTable::TYPE_LIST) {
 				$prop['VALUE_LIST'] = [];
 				$iterator = \Bitrix\Iblock\PropertyEnumerationTable::getList([
@@ -541,8 +541,8 @@ class __HiblockItem_#ABSTRACT_LAYER_SAULT#_#HIBLOCK_ID#
 		$arHiblocks = HiBlock::getList();
 
 		$arIblocksIdsIndex = [];
-		foreach ($arIblocks as $k => $arIblock) {
-			$arIblocksIdsIndex[ $arIblock['ID'] ] = $k;
+		foreach ($arIblocks as $iblockIndex => $arIblock) {
+			$arIblocksIdsIndex[ $arIblock['ID'] ] = $iblockIndex;
 		}
 
 		// общий вывод
@@ -571,16 +571,16 @@ class __HiblockItem_#ABSTRACT_LAYER_SAULT#_#HIBLOCK_ID#
 				if ($prop['PROPERTY_TYPE'] == PropertyTable::TYPE_ELEMENT) {
 					$propType = '__IblockElementItemPropertyValueLinkElem_' . ABSTRACT_LAYER_SAULT . '_' . $arIblock['ID'] . '_' . $prop['CODE'];
 
-					$k = $arIblocksIdsIndex[ $prop['LINK_IBLOCK_ID'] ];
+					$linkedIblockIndex = $arIblocksIdsIndex[ $prop['LINK_IBLOCK_ID'] ];
 					if ($prop['LINK_IBLOCK_ID']) {
-						$linkIblockName = $arIblocks[$k]['NAME'] . ' / ' . $arIblocks[$k]['ELEMENT_NAME'];
+						$linkIblockName = $arIblocks[$linkedIblockIndex]['NAME'] . ' / ' . $arIblocks[$linkedIblockIndex]['ELEMENT_NAME'];
 						$chainType = str_replace(
 							["#LINK_IBLOCK_ID#", '#ABSTRACT_LAYER_SAULT#'],
 							[$prop['LINK_IBLOCK_ID'], ABSTRACT_LAYER_SAULT], '__IblockElementItem_#ABSTRACT_LAYER_SAULT#_#LINK_IBLOCK_ID#');
 
 						// список свойств у привязанных свойств вида PROPERTY_code_PROPERTY_code2_VALUE
 						$byElemsPropByProp = '';
-						foreach ($arIblocks[$k]['PROPERTIES'] as $propIter) {
+						foreach ($arIblocks[$linkedIblockIndex]['PROPERTIES'] as $propIter) {
 							$byElemsPropByProp .= str_replace(
 								['#PROPERTY_LINK_CODE#', '#PROPERTY_TITLE#', '#PROPERTY_CODE#'],
 								[strtoupper($prop['CODE']), rtrim($propIter['NAME'] . ' ' . $propIter['HINT']), strtoupper($propIter['CODE'])],

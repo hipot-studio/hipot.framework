@@ -68,8 +68,8 @@ class MemcacheWrapper implements \ArrayAccess
 		}
 
 		// retrieve distinct slab
-		$r = @fwrite($mem, 'stats items' . chr(10));
-		if ($r === false) {
+		$bytesWritten = @fwrite($mem, 'stats items' . chr(10));
+		if ($bytesWritten === false) {
 			return -2;
 		}
 
@@ -83,8 +83,8 @@ class MemcacheWrapper implements \ArrayAccess
 
 			$m = [];
 			// <STAT items:22:evicted_nonzero 0>
-			$r = preg_match('/^STAT\sitems\:(\d+)\:/', $l, $m);
-			if ($r != 1) {
+			$matchResult = preg_match('/^STAT\sitems\:(\d+)\:/', $l, $m);
+			if ($matchResult != 1) {
 				return -3;
 			}
 			$a_slab = $m[1];
@@ -96,8 +96,8 @@ class MemcacheWrapper implements \ArrayAccess
 
 		reset($slab);
 		foreach ($slab as $a_slab_key => &$a_slab) {
-			$r = @fwrite($mem, 'stats cachedump ' . $a_slab_key . ' 100' . chr(10));
-			if ($r === false) {
+			$bytesWritten = @fwrite($mem, 'stats cachedump ' . $a_slab_key . ' 100' . chr(10));
+			if ($bytesWritten === false) {
 				return -4;
 			}
 
@@ -110,8 +110,8 @@ class MemcacheWrapper implements \ArrayAccess
 
 				$m = [];
 				// ITEM 42 [118 b; 1354717302 s]
-				$r = preg_match('/^ITEM\s([^\s]+)\s/', $l, $m);
-				if ($r != 1) {
+				$matchResult = preg_match('/^ITEM\s([^\s]+)\s/', $l, $m);
+				if ($matchResult != 1) {
 					return -5;
 				}
 				$a_key = $m[1];
@@ -134,8 +134,8 @@ class MemcacheWrapper implements \ArrayAccess
 		}
 		unset($slab);
 
-		foreach ($keys as &$k) {
-			$k = str_replace($this->prefix, '', $k);
+		foreach ($keys as &$cacheKey) {
+			$cacheKey = str_replace($this->prefix, '', $cacheKey);
 		}
 		return $keys;
 	}

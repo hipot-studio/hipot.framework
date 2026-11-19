@@ -21,6 +21,7 @@ use Bitrix\Main\IO\Directory;
 use Hipot\BitrixUtils\Iblock as IblockUtils;
 use Bitrix\Main\ORM\Data\DataManager;
 use Hipot\Services\BitrixEngine;
+use Hipot\Types\UpdateResult;
 
 Loc::loadMessages(__FILE__);
 
@@ -106,7 +107,7 @@ class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Er
 			$this->errorCollection[] = new Error("Wrong value to set");
 			return null;
 		}
-		return 'OK';
+		return UpdateResult::STATUS_OK;
 	}
 
 	/**
@@ -166,13 +167,13 @@ class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Er
 			$this->errorCollection[] = new Error("Wrong type");
 			return null;
 		}
-		$r = [];
+		$likeTemplates = [];
 
 		Loader::includeModule('iblock');
-		$rs = CIBlockElement::GetList(['ID' => $ids], ['ID' => $ids, 'IBLOCK_ID' => self::IBLOCK_IDS[$type]], false, false, [
+		$elementQueryResult = CIBlockElement::GetList(['ID' => $ids], ['ID' => $ids, 'IBLOCK_ID' => self::IBLOCK_IDS[$type]], false, false, [
 			'ID', 'IBLOCK_ID', 'NAME', 'DETAIL_PAGE_URL', 'PROPERTY_' . self::IBLOCK_LIKE_PROP_CODE
 		]);
-		while ($item = $rs->GetNext()) {
+		while ($item = $elementQueryResult->GetNext()) {
 			$item['DETAIL_PAGE_URL'] = 'https://' . BitrixEngine::getInstance()->request->getServer()->getServerName() . $item['DETAIL_PAGE_URL'];
 			$item["DETAIL_PAGE_URL"] = htmlspecialcharsbx($item["DETAIL_PAGE_URL"]);
 			$item["NAME"]            = $item["~NAME"];
@@ -184,12 +185,12 @@ class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Er
 			], false, ["HIDE_ICONS" => "Y"]);
 			$html = ob_get_clean();
 
-			$r[ $item['ID'] ] = [
+			$likeTemplates[ $item['ID'] ] = [
 				'CNT_P'   => (int)$item['PROPERTY_' . self::IBLOCK_LIKE_PROP_CODE . '_VALUE'],
 				'HTML'    => $html
 			];
 		}
-		return $r;
+		return $likeTemplates;
 	}
 
 	/** @noinspection GlobalVariableUsageInspection */
@@ -206,19 +207,19 @@ class HipotAjaxComponent extends \CBitrixComponent implements Controllerable, Er
 		}
 
 		$prop = CIBlockElement::GetProperty(self::IBLOCK_IDS[$type], $id, 'sort', 'asc', ['CODE'  => self::IBLOCK_LIKE_PROP_CODE])->Fetch();
-		$v = (int)$prop['VALUE'];
+		$likeCount = (int)$prop['VALUE'];
 
 		if ($value === '+') {
-			$v++;
+			$likeCount++;
 		} else if ($value === '-') {
-			$v--;
+			$likeCount--;
 		}
 
 		CIBlockElement::SetPropertyValuesEx($id, self::IBLOCK_IDS[$type], [
-			self::IBLOCK_LIKE_PROP_CODE => $v
+			self::IBLOCK_LIKE_PROP_CODE => $likeCount
 		]);
 
-		$_SESSION['saveIblockLikeAction'][$id] = $v;
+		$_SESSION['saveIblockLikeAction'][$id] = $likeCount;
 
 		return [
 			'CNT_P' => (int)$_SESSION['saveIblockLikeAction'][$id]

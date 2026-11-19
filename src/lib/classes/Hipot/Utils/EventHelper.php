@@ -23,8 +23,8 @@ class EventHelper
 	public static function getIblockEventPropValue($propIdx)
 	{
 		if (is_array($propIdx)) {
-			$k = array_keys($propIdx);
-			return $propIdx[ $k[0] ]['VALUE'] ?? $propIdx[ $k[0] ];
+			$propertyKeys = array_keys($propIdx);
+			return $propIdx[ $propertyKeys[0] ]['VALUE'] ?? $propIdx[ $propertyKeys[0] ];
 		}
 		return false;
 	}
@@ -44,11 +44,11 @@ class EventHelper
 	public static function setIblockEventPropValue(&$propIdx, $newValue): void
 	{
 		if (is_array($propIdx)) {
-			$k = array_keys($propIdx);
-			if (isset($propIdx[ $k[0] ]['VALUE'])) {
-				$propIdx[ $k[0] ]['VALUE'] = $newValue;
+			$propertyKeys = array_keys($propIdx);
+			if (isset($propIdx[ $propertyKeys[0] ]['VALUE'])) {
+				$propIdx[ $propertyKeys[0] ]['VALUE'] = $newValue;
 			} else {
-				$propIdx[ $k[0] ] = $newValue;
+				$propIdx[ $propertyKeys[0] ] = $newValue;
 			}
 		} else {
 			$propIdx = [

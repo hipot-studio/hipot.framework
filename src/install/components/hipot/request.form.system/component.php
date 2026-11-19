@@ -66,22 +66,22 @@ if (!is_array($arParams['_POST'][$arParams["POST_NAME"]])) {
 if (!empty($arParams['_POST'][$arParams["POST_NAME"]]) && check_bitrix_sessid()) {
 	// проверка обязательных полей
 	if (!empty($arParams["REQ_FIELDS"])) {
-		foreach ($arParams["REQ_FIELDS"] as $k => $f) {
-			if (is_array($f) && !empty($f)) {
-				foreach ($f as $fld) {
-					if (trim($arParams['_POST'][$arParams["POST_NAME"]][$k][$fld]) == "") {
-						$arResult["error"][] = GetMessage("RTN_" . $fld);
-					} elseif ($fld == 'mail' && !check_email($arParams['_POST'][$arParams["POST_NAME"]][$k][$fld])) {
-						$arResult["error"][] = GetMessage("RTEN_" . $fld);
+		foreach ($arParams["REQ_FIELDS"] as $fieldGroupKey => $fieldRequirement) {
+			if (is_array($fieldRequirement) && !empty($fieldRequirement)) {
+				foreach ($fieldRequirement as $requiredField) {
+					if (trim($arParams['_POST'][$arParams["POST_NAME"]][$fieldGroupKey][$requiredField]) == "") {
+						$arResult["error"][] = GetMessage("RTN_" . $requiredField);
+					} elseif ($requiredField == 'mail' && !check_email($arParams['_POST'][$arParams["POST_NAME"]][$fieldGroupKey][$requiredField])) {
+						$arResult["error"][] = GetMessage("RTEN_" . $requiredField);
 					}
 				}
 			} /**
 			 * FIXME переписал, если $arParams["REQ_FIELDS"] - это массив строк, а не массив массивов
 			 */
-			else if (trim($arParams['_POST'][$arParams["POST_NAME"]][$f]) == "") {
-				$arResult["error"][] = GetMessage("RTN_" . $f);
-			} elseif ($f == 'mail' && !check_email($arParams['_POST'][$arParams["POST_NAME"]][$f])) {
-				$arResult["error"][] = GetMessage("RTEN_" . $f);
+			else if (trim($arParams['_POST'][$arParams["POST_NAME"]][$fieldRequirement]) == "") {
+				$arResult["error"][] = GetMessage("RTN_" . $fieldRequirement);
+			} elseif ($fieldRequirement == 'mail' && !check_email($arParams['_POST'][$arParams["POST_NAME"]][$fieldRequirement])) {
+				$arResult["error"][] = GetMessage("RTEN_" . $fieldRequirement);
 			}
 		}
 	}
@@ -111,8 +111,8 @@ if (!empty($arParams['_POST'][$arParams["POST_NAME"]]) && check_bitrix_sessid())
 			Loader::includeModule("iblock");
 			$el = new \CIBlockElement();
 
-			foreach ($arParams['ADD_ELEMENT']['FIELDS'] as $k => $v) {
-				$arAddFields[$k] = $v;
+			foreach ($arParams['ADD_ELEMENT']['FIELDS'] as $fieldName => $fieldValue) {
+				$arAddFields[$fieldName] = $fieldValue;
 			}
 			if (count($arParams['ADD_ELEMENT']['PROPS']) > 0) {
 				foreach ($arParams['ADD_ELEMENT']['PROPS'] as $pk => $pv) {

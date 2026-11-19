@@ -9,12 +9,12 @@ $arTypesEx = [];
 Loader::includeModule('fileman');
 CMedialib::Init();
 
-$rsCol = CMedialibCollection::GetList([
+$collections = CMedialibCollection::GetList([
 	'arOrder'	=> ['ML_TYPE' => 'ASC']
 ]);
 $arColIndexed = [];
-foreach ($rsCol as $ar) {
-	$arColIndexed[ $ar['ID'] ] = $ar;
+foreach ($collections as $collection) {
+	$arColIndexed[ $collection['ID'] ] = $collection;
 }
 
 if (! function_exists('_getCollectionParentsNames')) {
@@ -32,8 +32,8 @@ if (! function_exists('_getCollectionParentsNames')) {
 	}
 }
 
-foreach ($rsCol as $ar) {
-	$arTypesEx[ $ar['ID'] ] = (_getCollectionParentsNames($ar['PARENT_ID'], $arColIndexed)) . $ar['NAME'] . ' [' . $ar['ID'] . '] ';
+foreach ($collections as $collection) {
+	$arTypesEx[ $collection['ID'] ] = (_getCollectionParentsNames($collection['PARENT_ID'], $arColIndexed)) . $collection['NAME'] . ' [' . $collection['ID'] . '] ';
 }
 uasort($arTypesEx, static function ($a, $b) {
 	if ($a == $b) {

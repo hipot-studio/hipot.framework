@@ -300,7 +300,7 @@ final class Recaptcha3
 		if (! \filter_var($ipAddress, FILTER_VALIDATE_IP)) {
 			return false;
 		}
-		$rs = BitrixEngine::getInstance()->connection->query(
+		$lockedAddressQueryResult = BitrixEngine::getInstance()->connection->query(
 			str_replace(['%table%', '%ip%', '%score%', '%days%'], [self::LOG_TABLE_NAME, $ipAddress, self::SCORE_LIMIT, $intervalDayCheck],
 			' SELECT `UF_ADDR` FROM `%table%` '
 					. ' WHERE `UF_SCORE` <= %score% AND `UF_ADDR` = "%ip%" '
@@ -308,7 +308,7 @@ final class Recaptcha3
 					. ' AND `UF_DATETIME` > DATE_ADD(NOW(), INTERVAL -%days% DAY) GROUP BY `UF_ADDR` ORDER BY `UF_ADDR`'
 			)
 		);
-		return $rs->getSelectedRowsCount() > 0;
+		return $lockedAddressQueryResult->getSelectedRowsCount() > 0;
 	}
 
 	private static function isIgnoredIp(string $ip): bool
@@ -325,8 +325,8 @@ final class Recaptcha3
 	private static function getCountryByIp(string $ip): string
 	{
 		try {
-			$r = GeoIp\Manager::getDataResult($ip, \LANGUAGE_ID);
-			$recheckCountryCode = $r?->getGeoData()?->countryCode;
+			$geoIpResult = GeoIp\Manager::getDataResult($ip, \LANGUAGE_ID);
+			$recheckCountryCode = $geoIpResult?->getGeoData()?->countryCode;
 		} catch (\Throwable $exception) {
 			UUtils::logException($exception);
 			$recheckCountryCode = '';
@@ -341,7 +341,7 @@ final class Recaptcha3
 
 		$logTableDm = self::getLogTableEntity();
 
-		$r = $logTableDm::add([
+		$logTableDm::add([
 			'UF_DATETIME'		=> DateTime::createFromTimestamp(time()),
 			'UF_URL'			=> $data['uri'],
 			'UF_REFERER'		=> $this->request->getServer()->get('HTTP_REFERER'),

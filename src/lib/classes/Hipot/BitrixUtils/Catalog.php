@@ -310,13 +310,13 @@ final class Catalog
 	public static function updateProduct(int $productId, array $arItemProduct = []): \Bitrix\Main\ORM\Data\Result
 	{
 		// Create the product
-		$res = ProductTable::getList([
+		$productQueryResult = ProductTable::getList([
 			'filter' => [
 				"ID" => $productId,
 			],
 			'select' => ['*']
 		]);
-		if (!$arProduct = $res->fetch()) {
+		if (!$arProduct = $productQueryResult->fetch()) {
 			$arFields        = [
 				'ID'             => $productId,
 				'QUANTITY_TRACE' => ProductTable::STATUS_DEFAULT,

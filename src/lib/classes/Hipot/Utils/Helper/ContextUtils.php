@@ -290,8 +290,8 @@ trait ContextUtils
 			$eventsToTurnOff = ['OnPageStart', 'OnBeforeProlog', 'OnProlog', 'OnEpilog', 'OnAfterEpilog', 'OnEndBufferContent'];
 			foreach ($eventsToTurnOff as $eventType) {
 				$arrResult = $bitrixEngine->eventManager->findEventHandlers('main', $eventType);
-				foreach ($arrResult as $k => $event) {
-					$bitrixEngine->eventManager->removeEventHandler('main', $eventType, $k);
+				foreach ($arrResult as $handlerId => $event) {
+					$bitrixEngine->eventManager->removeEventHandler('main', $eventType, $handlerId);
 				}
 			}
 		}, false, 1);

@@ -62,8 +62,8 @@ trait UserFieldUtils
 			foreach ($list as $prop) {
 				if ($prop['USER_TYPE_ID'] === UserFieldTypes::ENUMERATION->value) {
 					$prop['VALUES'] = [];
-					$rs = \CUserFieldEnum::GetList(['VALUE' => 'ASC'], ['USER_FIELD_ID' => $prop['ID']]);
-					while ($enum = $rs->Fetch()) {
+					$enumQueryResult = \CUserFieldEnum::GetList(['VALUE' => 'ASC'], ['USER_FIELD_ID' => $prop['ID']]);
+					while ($enum = $enumQueryResult->Fetch()) {
 						$prop['VALUES'][ $enum['ID'] ] = $enum['VALUE'];
 					}
 				}
@@ -107,8 +107,8 @@ trait UserFieldUtils
 
 						// reselect enum items
 						$propSettings['VALUES'] = [];
-						$rs = \CUserFieldEnum::GetList(['VALUE' => 'ASC'], ['USER_FIELD_ID' => $propSettings['ID']]);
-						while ($enum = $rs->Fetch()) {
+						$enumQueryResult = \CUserFieldEnum::GetList(['VALUE' => 'ASC'], ['USER_FIELD_ID' => $propSettings['ID']]);
+						while ($enum = $enumQueryResult->Fetch()) {
 							$propSettings['VALUES'][ $enum['ID'] ] = $enum['VALUE'];
 						}
 
@@ -124,10 +124,10 @@ trait UserFieldUtils
 
 		if (is_callable($modificator)) {
 			if (is_array($value)) {
-				foreach ($value as &$v) {
-					$v = $modificator($v);
+				foreach ($value as &$fieldValue) {
+					$fieldValue = $modificator($fieldValue);
 				}
-				unset($v);
+				unset($fieldValue);
 			} else {
 				$value = $modificator($value);
 			}

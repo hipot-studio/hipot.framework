@@ -45,22 +45,22 @@ final class FacetFragments
 	
 	public function dropCloneTable(string $cloneTable): void
 	{
-		$res = $this->query('SHOW TABLES FROM `' . $this->connection->getDatabase() . '` LIKE "' . $cloneTable . '"');
-		if ($row = $res->Fetch()) {
-			$resDel = $this->query('DROP TABLE `' . $cloneTable . '`');
+		$tableLookupResult = $this->query('SHOW TABLES FROM `' . $this->connection->getDatabase() . '` LIKE "' . $cloneTable . '"');
+		if ($row = $tableLookupResult->Fetch()) {
+			$this->query('DROP TABLE `' . $cloneTable . '`');
 		}
 	}
 	public function clearCloneTable(string $cloneTable): void
 	{
-		$res = $this->query('SHOW TABLES FROM `' . $this->connection->getDatabase() . '` LIKE "' . $cloneTable . '"');
-		if ($row = $res->Fetch()) {
-			$resDel = $this->query('TRUNCATE TABLE `' . $cloneTable . '`');
+		$tableLookupResult = $this->query('SHOW TABLES FROM `' . $this->connection->getDatabase() . '` LIKE "' . $cloneTable . '"');
+		if ($row = $tableLookupResult->Fetch()) {
+			$this->query('TRUNCATE TABLE `' . $cloneTable . '`');
 		}
 	}
 	public function createSectionFacet(int $sectionID, string $fullTable, string $cloneTable): void
 	{
-		$resCreate = $this->query('CREATE TABLE IF NOT EXISTS ' . $cloneTable . ' LIKE ' . $fullTable . '');
-		$resInsert = $this->query('INSERT INTO `' . $cloneTable . '` SELECT * FROM `' . $fullTable . '` WHERE SECTION_ID="' . $sectionID . '"');
+		$this->query('CREATE TABLE IF NOT EXISTS ' . $cloneTable . ' LIKE ' . $fullTable . '');
+		$this->query('INSERT INTO `' . $cloneTable . '` SELECT * FROM `' . $fullTable . '` WHERE SECTION_ID="' . $sectionID . '"');
 	}
 	
 	/**

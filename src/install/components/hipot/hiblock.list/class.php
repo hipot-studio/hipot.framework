@@ -357,13 +357,13 @@ class HiblockList extends \CBitrixComponent
 
 	private function prepareRow(array $row, array $fields): array
 	{
-		foreach ($row as $k => $v) {
-			if ($k === "ID") {
+		foreach ($row as $fieldName => $fieldValue) {
+			if ($fieldName === "ID") {
 				continue;
 			}
 
-			$row[$k] = $this->getFieldHtml($row, $fields[$k] ?? [], $v);
-			$row["~" . $k] = $v;
+			$row[$fieldName] = $this->getFieldHtml($row, $fields[$fieldName] ?? [], $fieldValue);
+			$row["~" . $fieldName] = $fieldValue;
 		}
 
 		return $row;

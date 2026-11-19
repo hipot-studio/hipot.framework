@@ -116,16 +116,16 @@ trait Element
 		if ($checkBase) {
 			$cacheProcess[$cacheKey] = $checkBase;
 		} else {
-			$r = self::addElementToDb([
+			$resultAdd = self::addElementToDb([
 				'ACTIVE'        => 'Y',
 				'NAME'          => $fieldVal,
 				'IBLOCK_ID'     => $iblockId,
 				'CODE'          => UUtils::TranslitText($fieldVal) . '-' . randString(3)
 			]);
-			if ($r->STATUS != UpdateResult::STATUS_OK) {
+			if ($resultAdd->STATUS != UpdateResult::STATUS_OK) {
 				return false;
 			}
-			$cacheProcess[$cacheKey] = (int)$r->RESULT;
+			$cacheProcess[$cacheKey] = (int)$resultAdd->RESULT;
 		}
 		return $cacheProcess[$cacheKey];
 	}
@@ -255,8 +255,8 @@ trait Element
 		$PROPERTIES = [];
 		// QUERY 2
 		$arFilter = ["EMPTY" => "N"];
-		foreach ($exFilter as $f => $v) {
-			$arFilter[$f] = $v;
+		foreach ($exFilter as $fieldName => $filterValue) {
+			$arFilter[$fieldName] = $filterValue;
 		}
 		$db_props = CIBlockElement::GetProperty($IBLOCK_ID, $ID, ["sort" => "asc"], $arFilter);
 		while ($ar_props = $db_props->Fetch()) {
@@ -653,11 +653,11 @@ trait Element
 	public static function returnCml2AttributesFromPropVal(array $propCml2Value): array
 	{
 		$attr = [];
-		foreach ($propCml2Value as $v) {
-			if (trim($v['VALUE']) == '') {
+		foreach ($propCml2Value as $propertyValue) {
+			if (trim($propertyValue['VALUE']) == '') {
 				continue;
 			}
-			$attr[ trim($v['DESCRIPTION']) ] = trim($v['VALUE']);
+			$attr[ trim($propertyValue['DESCRIPTION']) ] = trim($propertyValue['VALUE']);
 		}
 		return $attr;
 	}
@@ -681,8 +681,8 @@ trait Element
 		static $existsValues, $PROPERTY_ID;
 		if (is_null($existsValues)) {
 			$vs = self::selectPropertyEnumArray($propCode, ['IBLOCK_ID' => $iblockId]);
-			foreach ($vs as $v) {
-				$existsValues[ trim($v['VALUE']) ] = $v['ID'];
+			foreach ($vs as $enumValue) {
+				$existsValues[ trim($enumValue['VALUE']) ] = $enumValue['ID'];
 			}
 		}
 		if (is_null($PROPERTY_ID)) {
@@ -715,16 +715,16 @@ trait Element
 	public function addMultipleFileValue(int $ID, int $IBLOCK_ID, $arFiles = [], string $prop_code = '')
 	{
 		$result = true;
-		$ar = [];
+		$filePropertyValues = [];
 
-		$rsPr = CIBlockElement::GetProperty($IBLOCK_ID, $ID, ['sort', 'asc'], [
+		$propertyQueryResult = CIBlockElement::GetProperty($IBLOCK_ID, $ID, ['sort', 'asc'], [
 			'CODE'  => $prop_code,
 			'EMPTY' => 'N'
 		]);
-		while ($arPr = $rsPr->GetNext()) {
+		while ($arPr = $propertyQueryResult->GetNext()) {
 			$far = CFile::GetFileArray($arPr['VALUE']);
 			$far = CFile::MakeFileArray($far['SRC']);
-			$ar[] = [
+			$filePropertyValues[] = [
 				'VALUE' => $far,
 				'DESCRIPTION' => $arPr['DESCRIPTION']
 			];
@@ -737,7 +737,7 @@ trait Element
 				$art = CFile::MakeFileArray($l);
 			}
 			if ($art['tmp_name']) {
-				$ar[] = [
+				$filePropertyValues[] = [
 					'VALUE' => $art,
 					'DESCRIPTION' => $d
 				];
@@ -746,7 +746,7 @@ trait Element
 			}
 		}
 		CIBlockElement::SetPropertyValuesEx($ID, $IBLOCK_ID, [
-			$prop_code => $ar
+			$prop_code => $filePropertyValues
 		]);
 		return $result;
 	}

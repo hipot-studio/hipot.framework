@@ -83,8 +83,8 @@ class IblockElementItem extends Base
 	{
 		if ((int)$value['ID'] <= 0) {
 			$result = [];
-			foreach ($value as $k => $sv) {
-				$result[$k] = new IblockElementItemPropertyValue($sv);
+			foreach ($value as $valueKey => $propertyValue) {
+				$result[$valueKey] = new IblockElementItemPropertyValue($propertyValue);
 			}
 		} else {
 			$result = new IblockElementItemPropertyValue($value);

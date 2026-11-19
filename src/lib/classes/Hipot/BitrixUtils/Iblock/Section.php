@@ -61,8 +61,8 @@ trait Section
 		}
 
 		$el		= new CIBlockSection();
-		$res	= $el->Update($ID, $arAddFields, $bResort, $bUpdateSearch);
-		if ($res) {
+		$sectionUpdated = $el->Update($ID, $arAddFields, $bResort, $bUpdateSearch);
+		if ($sectionUpdated) {
 			return new UpdateResult(['RESULT' => $ID, 'STATUS' => UpdateResult::STATUS_OK]);
 		}
 

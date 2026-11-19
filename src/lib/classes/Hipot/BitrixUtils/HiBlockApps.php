@@ -158,13 +158,13 @@ final class HiBlockApps extends HiBlock
 
 			/* @var $dm \Bitrix\Main\Entity\DataManager */
 			$dm  = self::getDataManagerByHiCode($hiBlockName);
-			$res = $dm::getList([
+			$settingsQueryResult = $dm::getList([
 				'select' => ['UF_CODE', 'UF_VALUE'],
 				'order'  => ['UF_CODE' => 'ASC']
 			]);
 
-			while ($ar = $res->fetch()) {
-				$arParams[$ar['UF_CODE']] = $ar['UF_VALUE'];
+			while ($settingRow = $settingsQueryResult->fetch()) {
+				$arParams[$settingRow['UF_CODE']] = $settingRow['UF_VALUE'];
 			}
 			return $arParams;
 		});

@@ -39,19 +39,19 @@ require $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.
  * @return bool|array
  */
 $escapeArray = static function ($array, $orig = false) use (&$escapeArray) {
-	$res = false;
-	foreach ($array as $k => $v) {
-		if (is_array($v)) {
-			$o = (bool)$orig;
-			$res[$k] = $escapeArray($v, $o);
+	$escapedArray = false;
+	foreach ($array as $key => $value) {
+		if (is_array($value)) {
+			$includeOriginal = (bool)$orig;
+			$escapedArray[$key] = $escapeArray($value, $includeOriginal);
 		} else {
-			$res[$k] = htmlspecialcharsEx($v);
+			$escapedArray[$key] = htmlspecialcharsEx($value);
 			if ($orig) {
-				$res['~'.$k] = $v;
+				$escapedArray['~'.$key] = $value;
 			}
 		}
 	}
-	return $res;
+	return $escapedArray;
 };
 
 $escPOST = $escapeArray($_POST);

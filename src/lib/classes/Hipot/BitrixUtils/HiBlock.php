@@ -106,8 +106,8 @@ class HiBlock
 			'NAME'       => $hiBlockName,
 			'TABLE_NAME' => $tableName
 		];
-		foreach ($addField as $f => $v) {
-			$flds[$f] = $v;
+		foreach ($addField as $fieldName => $fieldValue) {
+			$flds[$fieldName] = $fieldValue;
 		}
 		return HighloadBlockTable::add($flds);
 	}
@@ -212,20 +212,20 @@ class HiBlock
 
 		// localization
 		$localization = [];
-		$res = HighloadBlockLangTable::getList([
+		$languageQueryResult = HighloadBlockLangTable::getList([
 			'filter' => ['ID' => array_column($hlblockList, 'ID'), 'LID' => self::getLanguageId()],
 			'select' => ['*'],
 			'cache'  => $cache,
 		]);
-		while ($row = $res->fetch()) {
+		while ($row = $languageQueryResult->fetch()) {
 			$localization[ $row['ID'] ] = $row;
 		}
 		foreach ($hlblockList as &$hlblock) {
 			$hlblock['LOC'] = $localization[ $hlblock['ID'] ] ?? ['NAME' => $hlblock['NAME']];
 			if ($getProps) {
 				$props = [];
-				$rs    = \CUserTypeEntity::GetList(['SORT' => 'ASC', 'FIELD_NAME' => 'ASC'], ['%ENTITY_ID' => 'HLBLOCK_', 'LANG' => self::getLanguageId()]);
-				while ($prop = $rs->Fetch()) {
+				$userFieldQueryResult = \CUserTypeEntity::GetList(['SORT' => 'ASC', 'FIELD_NAME' => 'ASC'], ['%ENTITY_ID' => 'HLBLOCK_', 'LANG' => self::getLanguageId()]);
+				while ($prop = $userFieldQueryResult->Fetch()) {
 					if ($prop['USER_TYPE_ID'] === 'enumeration') {
 						$prop['VALUE_LIST'] = self::getEnumPropertyValues($prop['ID']);
 					}
