@@ -144,7 +144,7 @@ class AssetsContainer
 			?>
 			<link rel="preload" href="<?=\CUtil::GetAdditionalFileURL($css)?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
 			<noscript><link rel="stylesheet" href="<?=\CUtil::GetAdditionalFileURL($css)?>"></noscript>
-			<?
+			<?php
 			$fileSize += filesize(Loader::getDocumentRoot() . $css);
 		}
 		echo '<!-- __CSS_DEFER_SIZE__ = ' . \CFile::FormatSize($fileSize) . ' -->';
@@ -185,7 +185,7 @@ class AssetsContainer
 			 */
 			const appParams = <?=Json::encode(self::$siteJsConfigs)?>;
 		</script>
-		<?
+		<?php
 		Asset::getInstance()?->addString(ob_get_clean(), true, AssetLocation::AFTER_JS_KERNEL);
 	}
 }

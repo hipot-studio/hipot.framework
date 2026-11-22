@@ -1,4 +1,4 @@
-<?
+<?php
 namespace Hipot\Utils;
 
 use Hipot\Utils\Helper\ArrayTools;

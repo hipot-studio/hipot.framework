@@ -251,7 +251,7 @@ trait ComponentUtils
 					});
 				});
 			</script>
-			<?
+			<?php
 		}
 
 		BitrixEngine::getAppD0()->IncludeComponent(

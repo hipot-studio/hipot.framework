@@ -1,6 +1,6 @@
 # Утилиты — Hipot\Utils\UUtils
 
-[UUtils](../src/lib/classes/Hipot/Utils/UUtils.php) объединяет восемь трейтов из `Hipot\Utils\Helper`. Все перечисленные методы вызываются статически. `UnsortedUtils` можно использовать как псевдоним при импорте. Файл класса начинается с короткого тега `<?` и требует включённого `short_open_tag`.
+[UUtils](../src/lib/classes/Hipot/Utils/UUtils.php) объединяет восемь трейтов из `Hipot\Utils\Helper`. Все перечисленные методы вызываются статически. `UnsortedUtils` можно использовать как псевдоним при импорте.
 
 ```php
 use Hipot\Utils\UUtils;

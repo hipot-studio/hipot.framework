@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Abstract Iblock Elements Layer
  *

@@ -122,7 +122,7 @@ final class Recaptcha3
 				}
 				grecaptcha.ready = function (cb) {
 					if (typeof grecaptcha.execute === 'undefined') {
-						<?
+						<?php
 						// window.__grecaptcha_cfg is a global variable that stores reCAPTCHA's configuration.
 						// By default, any functions listed in its 'fns' property are automatically executed when reCAPTCHA loads.
 						?>
@@ -151,7 +151,7 @@ final class Recaptcha3
 					});
 				});
 			</script>
-			<?
+			<?php
 		}
 		return ob_get_clean();
 	}
@@ -256,7 +256,7 @@ final class Recaptcha3
 		<!--noindex-->
 		<p class="grecaptcha-badge-custom">This site is protected by reCAPTCHA and the <a href="https://policies.google.com/privacy" rel="nofollow" target="_blank">Google Privacy Policy</a>.</p>
 		<!--/noindex-->
-		<?
+		<?php
 		BitrixEngine::getAppD0()->AddViewContent('MISC_END_FOOTER_CONTENT', ob_get_clean());
 
 		// endregion
