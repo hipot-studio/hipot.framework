@@ -38,7 +38,7 @@ $eventManager->addEventHandler('catalog', 'OnGetDiscountResult', static function
 });
 
 // region очистка из корзины ненужных свойств (при добавлении товара из админки)
-$eventManager->addEventHandler("sale", "OnBasketAdd", static function ($ID, $arFields) {
+$eventManager->addEventHandlerCompatible("sale", "OnBasketAdd", static function ($ID) {
 	Hipot\BitrixUtils\Sale::deleteUnusedBasketProps($ID);
 });
 $eventManager->addEventHandler(
@@ -53,7 +53,9 @@ $eventManager->addEventHandler(
 		if (isset($GLOBALS[$checkFlag])) {
 			return;
 		}
-		Hipot\BitrixUtils\Sale::deleteUnusedBasketProps();
+		foreach ($order->getBasket() ?? [] as $basketItem) {
+			Hipot\BitrixUtils\Sale::deleteUnusedBasketProps($basketItem->getId());
+		}
 		/** @noinspection GlobalVariableUsageInspection */
 		$GLOBALS[$checkFlag] = true;
 	}

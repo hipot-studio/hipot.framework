@@ -4,6 +4,7 @@ namespace Hipot\BitrixUtils;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Context;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Sale as bxSale;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketBase;
@@ -25,7 +26,7 @@ final class Sale
 	/**
 	 * Retrieves the basket for the current front-end user.
 	 *
-	 * @return BasketBase|null The basket for the front-end user, or null if no basket is found.
+	 * @return BasketBase|null The basket for the front-end user, which is empty when it has no items.
 	 */
 	public static function getFUserBasket(): ?BasketBase
 	{
@@ -92,16 +93,13 @@ final class Sale
 	 */
 	public static function getOrderStoreId(Order $order): int
 	{
-		$storeId = -1;
-		$shipmentCollection = $order->getShipmentCollection();
-		foreach ($shipmentCollection as $shipment) {
-			/** @var \Bitrix\Sale\Shipment $shipment */
+		foreach ($order->getShipmentCollection() as $shipment) {
 			$storeId = $shipment->getStoreId();
 			if ($storeId > 0) {
-				break;
+				return $storeId;
 			}
 		}
-		return $storeId;
+		return -1;
 	}
 	
 	/**
@@ -110,9 +108,10 @@ final class Sale
 	 * @param Order|null $order The order to apply discounts to.
 	 * @param array|null $result A reference to the variable where the result of applying discounts will be stored.
 	 *
-	 * @return array An array of error messages, if any.
+	 * @return list<list<string>> Calculation errors, or an empty list on success or null input.
+	 * The output parameter is populated only after successful calculation.
 	 */
-	public static function applyOrderDiscounts(?Order $order = null, array &$result = null): array
+	public static function applyOrderDiscounts(?Order $order = null, ?array &$result = null): array
 	{
 		$errors = [];
 		
@@ -141,9 +140,10 @@ final class Sale
 	 * @param Basket|null $basket The basket to apply discounts to.
 	 * @param array|null  $result A reference to the variable where the result of applying discounts will be stored.
 	 *
-	 * @return array An array of error messages, if any.
+	 * @return list<list<string>> Calculation errors, or an empty list on success or null input.
+	 * The output parameter is populated only after successful calculation.
 	 */
-	public static function applyBasketDiscounts(?Basket $basket, array &$result = null): array
+	public static function applyBasketDiscounts(?Basket $basket, ?array &$result = null): array
 	{
 		$errors = [];
 		
@@ -169,7 +169,7 @@ final class Sale
 	}
 	
 	/**
-	 * Получить время изменения акций модуля sale
+	 * Получить Unix-время последнего изменения скидок или 0 при отсутствии записей.
 	 */
 	public static function getSaleDiscountModTimestamp(): int
 	{
@@ -190,10 +190,8 @@ final class Sale
 		}
 		$getListParams['limit'] = 1;
 		
-		$discount   = DiscountTable::getList($getListParams)->fetch();
-		$discountTs = $discount['TIMESTAMP_X'];
-		/* @var $discountTs \Bitrix\Main\Type\DateTime */
-		return $discountTs->format('U');
+		$discount = DiscountTable::getList($getListParams)->fetch();
+		return $discount ? $discount['TIMESTAMP_X']->getTimestamp() : 0;
 	}
 	
 	/**
@@ -203,18 +201,25 @@ final class Sale
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ArgumentNullException
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \RuntimeException If the first payment or its payment system is missing.
 	 */
 	public static function getPaySystemServiceByOrder(Order $order): array
 	{
 		$paymentCollection = $order->getPaymentCollection();
 		/** @var $payment \Bitrix\Sale\Payment */
 		$payment = $paymentCollection->getIterator()->current();
+		if (!$payment instanceof bxSale\Payment) {
+			throw new \RuntimeException('Order has no payments.');
+		}
 		
 		$paySystemAction = \Bitrix\Sale\PaySystem\Manager::getList([
 			'filter' => ['PAY_SYSTEM_ID' => $payment->getPaymentSystemId()],
 			'select' => ['*'],
 		])->fetch();
-		$service         = new \Bitrix\Sale\PaySystem\Service($paySystemAction);
+		if (!$paySystemAction) {
+			throw new \RuntimeException('Payment system was not found.');
+		}
+		$service = new \Bitrix\Sale\PaySystem\Service($paySystemAction);
 		return [$service, $payment];
 	}
 	
@@ -243,42 +248,42 @@ final class Sale
 	}
 	
 	/**
-	 * Deletes unused basket properties from the database (event handler)
-	 * @param bool|int $basketId The ID of the basket to delete unused properties from. Optional, defaults to false.
+	 * Deletes unused properties of one persisted basket item.
+	 * @param int|numeric-string|false $basketId Positive basket item ID. An omitted or invalid ID skips deletion.
 	 * @return void
 	 * @deprecated
 	 */
 	public static function deleteUnusedBasketProps($basketId = false): void
 	{
+		if ((!is_int($basketId) && !(is_string($basketId) && ctype_digit($basketId))) || (int)$basketId <= 0) {
+			return;
+		}
+
 		// need per-site config class \App
 		/** @noinspection PhpUndefinedClassInspection */
 		if (!class_exists(\App::class)) {
 			return;
 		}
 		
-		$nps = [];
-		foreach (\App::NEED_BASKET_PROPERTY as $np) {
-			$nps[] = "\"" . $np . "\"";
-		}
-		if (count($nps) <= 0) {
+		if (empty(\App::NEED_BASKET_PROPERTY)) {
 			return;
 		}
-		
-		/** @noinspection SqlNoDataSourceInspection */
-		/** @noinspection SqlResolve */
-		$sqlDelUnusedProps =
-			'DELETE from b_sale_basket_props where ' .
-			//'delete from b_sale_basket_props WHERE BASKET_ID = ' . (int)$ID . ' AND ' .
-			'CODE NOT IN (' . implode(', ', $nps) . ')';
-		
-		BitrixEngine::getInstance()->connection->query($sqlDelUnusedProps);
+
+		$connection = BitrixEngine::getInstance()->connection;
+		$query = new SqlExpression(
+			'DELETE FROM b_sale_basket_props WHERE BASKET_ID = ?i AND CODE NOT IN (?@)',
+			(int)$basketId,
+			array_map('strval', \App::NEED_BASKET_PROPERTY),
+		);
+		$query->setConnection($connection);
+		$connection->queryExecute($query->compile());
 	}
 	
 	/**
 	 * Установить свойства заказа
 	 * @param int $orderId Идентификатор заказа,
 	 * @param array $orderProps Массив свойств вида ['код свойства' => 'значение свойства'].
-	 * @return bool Возвращает true, если свойства заданы, иначе - false
+	 * @return bool Результат сохранения коллекции. Неизвестные коды пропускаются.
 	 */
 	public static function setOrderProperties(int $orderId, array $orderProps): bool
 	{

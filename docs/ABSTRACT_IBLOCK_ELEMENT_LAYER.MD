@@ -37,8 +37,10 @@ foreach ($resultChains as $ibItem) {
 var_dump($resultChains);
 
 /* hiIblockElemLinkedChains помимо рекурсивных выборок и объектной модели умеет все, 
- что умеет класс Hipot\BitrixUtils\IblockUtils */
+ что умеет класс Hipot\BitrixUtils\Iblock */
 ```
+
+Методы базового класса описаны в [документации Iblock](iblock.md).
 
 рис. смотрим какие классы есть после индексации модели инфоблоков в файл для IDE подсказок <code>/bitrix/modules/generated_iblock_sxem.php</code>:
 

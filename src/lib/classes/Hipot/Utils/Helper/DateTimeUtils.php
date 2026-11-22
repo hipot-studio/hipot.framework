@@ -64,7 +64,7 @@ trait DateTimeUtils
 
 		$converted = [
 			'days'    => floor($duration / (3600 * 24)),
-			'hours'   => floor($duration / 3600),
+			'hours'   => floor($duration / 3600) % 24,
 			'minutes' => floor(($duration / 60) % 60),
 			'seconds' => ($duration % 60)
 		];
@@ -93,12 +93,20 @@ trait DateTimeUtils
 	}
 
 	/**
-	 * @param int $time seconds
+	 * @param int $time Non-negative duration in seconds.
 	 * @return string
+	 * @throws \InvalidArgumentException When the duration is negative.
 	 * @see https://en.wikipedia.org/wiki/ISO_8601#Durations
 	 */
 	public static function timeToIso8601Duration(int $time): string
 	{
+		if ($time < 0) {
+			throw new \InvalidArgumentException('Duration cannot be negative.');
+		}
+		if ($time === 0) {
+			return 'PT0S';
+		}
+
 		$units = [
 			"Y" => 365*24*3600,
 			"D" =>     24*3600,

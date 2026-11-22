@@ -247,8 +247,8 @@ class HiBlock
 	 * @param bool  $getProps Determines whether to fetch associated properties for each highload block. Default is true.
 	 * @param bool  $useCache Indicates whether to use caching for the query. Default is false.
 	 *
-	 * @return array{array{'ID':int, 'LOC':{array{'NAME'}}, 'PROPERTIES':array{'ID':int, 'FIELD_NAME':string, 'VALUE_LIST':array{'ID':int, 'VALUE':string}}}} Returns an array of
-	 *     highload block entities. If $getProps is true, each entity includes its associated properties.
+	 * @return list<array<string, mixed>> Rows include LOC and, when requested, PROPERTIES.
+	 * Enumeration fields include VALUE_LIST. Custom projections must include ID and NAME.
 	 */
 	public static function getList(array $filter = [], array $select = ['*'], bool $getProps = true, bool $useCache = false): array
 	{

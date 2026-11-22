@@ -48,17 +48,19 @@ trait UserFieldUtils
 	/**
 	 * @param string $entityId
 	 * @param string $fieldName
-	 * @param string|array|mixed $value
-	 * @return float|int|float[]|int[]|array
+	 * @param mixed $value
+	 * @return mixed Converted value or the original value for unknown fields and types.
+	 * Enumeration values can be added when the supplied label is missing.
 	 */
 	public static function normalizeUfFieldValue(string $entityId, string $fieldName, $value)
 	{
 		// select structure of uf-props
 		static $entityIdPropList = [];
-		if (empty($entityIdPropList)) {
+		if (!isset($entityIdPropList[$entityId])) {
 			$list = self::getUserFieldList([
-				'=ENTITY_ID' => $entityId
+				'=ENTITY_ID' => $entityId,
 			]);
+			$entityIdPropList[$entityId] = [];
 			foreach ($list as $prop) {
 				if ($prop['USER_TYPE_ID'] === UserFieldTypes::ENUMERATION->value) {
 					$prop['VALUES'] = [];
@@ -96,26 +98,24 @@ trait UserFieldUtils
 				break;
 			case UserFieldTypes::ENUMERATION->value:
 				$modificator = static function ($val) use ($propSettings, &$entityIdPropList) {
-					if (!in_array($val, $propSettings['VALUES'], false)) {
+					$values =& $entityIdPropList[$propSettings['ENTITY_ID']][$propSettings['FIELD_NAME']]['VALUES'];
+					if (!in_array($val, $values, false)) {
 						$obEnum = new \CUserFieldEnum();
 						$obEnum->SetEnumValues($propSettings['ID'], [
 							'n0' => [
 								'VALUE' => $val,
-								'SORT'  => count($propSettings['VALUES']) * 100 + 100
+								'SORT'  => count($values) * 100 + 100
 							]
 						]);
 
 						// reselect enum items
-						$propSettings['VALUES'] = [];
+						$values = [];
 						$enumQueryResult = \CUserFieldEnum::GetList(['VALUE' => 'ASC'], ['USER_FIELD_ID' => $propSettings['ID']]);
 						while ($enum = $enumQueryResult->Fetch()) {
-							$propSettings['VALUES'][ $enum['ID'] ] = $enum['VALUE'];
+							$values[$enum['ID']] = $enum['VALUE'];
 						}
-
-						$etalonProp =& $entityIdPropList[ $propSettings['ENTITY_ID'] ][ $propSettings['FIELD_NAME'] ];
-						$etalonProp['VALUES'] = $propSettings['VALUES'];
 					}
-					return array_search($val, $propSettings['VALUES'], false);
+					return array_search($val, $values, false);
 				};
 				break;
 			default:            // @todo in this case has more field-types

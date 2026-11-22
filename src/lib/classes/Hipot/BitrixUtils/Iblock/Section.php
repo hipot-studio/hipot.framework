@@ -47,7 +47,7 @@ trait Section
 	 * @param bool  $bResort = true перестроить ли дерево, можно отдельно вызывать CIBlockSection::Resort(int IBLOCK_ID);
 	 * @param bool  $bUpdateSearch = false обновить ли поиск
 	 *
-	 * @return bool | UpdateResult
+	 * @return UpdateResult ID on success or an error message on failure.
 	 * @see \CIBlockSection::Add()
 	 */
 	public static function updateSectionToDb(int $ID, array $arAddFields = [], bool $bResort = true, bool $bUpdateSearch = false): UpdateResult
@@ -57,7 +57,10 @@ trait Section
 		}
 
 		if ($ID <= 0) {
-			return false;
+			return new UpdateResult([
+				'RESULT' => 'The section ID must be positive.',
+				'STATUS' => UpdateResult::STATUS_ERROR,
+			]);
 		}
 
 		$el		= new CIBlockSection();
@@ -106,7 +109,7 @@ trait Section
 	 * @param array       $arSelect
 	 * @param bool|string $arNavStartParams
 	 *
-	 * @return array|boolean
+	 * @return array Empty array, one section row, or a list of section rows.
 	 */
 	public static function selectSectionsByFilterArray($arOrder, $arFilter, bool $bIncCnt = false,
 	                                                   $arSelect = [], $arNavStartParams = false): array
@@ -135,12 +138,15 @@ trait Section
 		}
 
 		$arParentSection = CIBlockSection::GetList(["SORT" => "ASC"], $parentSectionFilter, false,
-			['ID', 'IBLOCK_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'IBLOCK_ID']
+			['ID', 'IBLOCK_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'DEPTH_LEVEL']
 		)->Fetch();
+		if (!$arParentSection) {
+			return [];
+		}
 
 		$rsSections = CIBlockSection::GetList(['LEFT_MARGIN' => 'ASC'], array_merge($filter, [
 			"IBLOCK_ID"     => $arParentSection['IBLOCK_ID'],
-			">LEFT_MARGIN"  => $arParentSection["LEFT_MARGIN"] + 1,     // see "bitrix:catalog.section.list"-component
+			">LEFT_MARGIN"  => $arParentSection["LEFT_MARGIN"],
 			"<RIGHT_MARGIN" => $arParentSection["RIGHT_MARGIN"],
 			'>DEPTH_LEVEL'  => $arParentSection['DEPTH_LEVEL']
 		]), false, $arSelect);

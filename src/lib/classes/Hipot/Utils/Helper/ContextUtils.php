@@ -120,7 +120,7 @@ trait ContextUtils
 	/**
 	 * Получить содержимое по урлу
 	 * @param $url
-	 * @return bool|false|string
+	 * @return string Response body, or an empty string if the GET request fails.
 	 */
 	public static function getPageContentByUrl($url): string
 	{
@@ -128,15 +128,23 @@ trait ContextUtils
 		return (string)$el->get( $url );
 	}
 
+	/**
+	 * @throws \RuntimeException If the HEAD request fails.
+	 */
 	public static function getHttpHeadersByUrl($url): array
 	{
 		$el = new HttpClient([
 			'redirect'                  => false,
 			'disableSslVerification'    => true
 		]);
-		$headers = $el->head( $url )->toArray();
-		$headers['status'] = $el->getStatus();
-		return $headers;
+		$headers = $el->head($url);
+		if ($headers === false) {
+			throw new \RuntimeException('Unable to retrieve HTTP headers.');
+		}
+
+		$result = $headers->toArray();
+		$result['status'] = $el->getStatus();
+		return $result;
 	}
 
 
@@ -172,7 +180,8 @@ trait ContextUtils
 	}
 
 	/**
-	 * Включаем выполнение запросов и получаем дамп накопившихся sql запросов
+	 * Возобновляет выполнение новых запросов и возвращает дамп пропущенных SQL-запросов.
+	 * Пропущенные запросы не выполняются.
 	 * @return array|null
 	 * @see stopSqlQueryExecution()
 	 */

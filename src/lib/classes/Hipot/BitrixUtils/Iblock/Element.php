@@ -65,7 +65,7 @@ trait Element
 	 * @param array $arAddFields массив к добавлению
 	 * @param bool  $bUpdateSearch = false обновить ли поиск
 	 *
-	 * @return bool | \Hipot\Types\UpdateResult
+	 * @return \Hipot\Types\UpdateResult ID on success or an error message on failure.
 	 * @see \CIBlockElement::Update()
 	 */
 	public static function updateElementToDb(int $ID, array $arAddFields = [], bool $bUpdateSearch = false): UpdateResult
@@ -75,7 +75,10 @@ trait Element
 		}
 
 		if ($ID <= 0) {
-			return false;
+			return new UpdateResult([
+				'RESULT' => 'The element ID must be positive.',
+				'STATUS' => UpdateResult::STATUS_ERROR,
+			]);
 		}
 
 		if (isset($arAddFields["PROPERTY_VALUES"])) {
@@ -216,9 +219,9 @@ trait Element
 				$arItem['PROPERTIES'] = self::selectElementProperties(
 					$arItem['ID'],
 					$arItem['IBLOCK_ID'],
-					$OnlyPropsValue,
-					$obChainBuilder,
-					$selectChainsDepth
+					onlyValue: $OnlyPropsValue,
+					obChainBuilder: $obChainBuilder,
+					selectChainsDepth: $selectChainsDepth,
 				);
 			}
 			$arResult[] = $arItem;
@@ -303,7 +306,7 @@ trait Element
 	 *
 	 * @param int $elementId код элемента
 	 *
-	 * @return bool|integer
+	 * @return int ID инфоблока или 0, если элемент не найден.
 	 */
 	public static function getElementIblockId(int $elementId): int
 	{
@@ -394,13 +397,13 @@ trait Element
 	 * @param array      $rowSort = array('sort' => 'asc') сортировка ряда след./пред.
 	 * @param array      $prevNextSelect = array('ID', 'NAME', 'DETAIL_PAGE_URL', 'DATE_ACTIVE_FROM') -
 	 *                               какие поля выбрать у след./пред. элементов. Дополнительно еще выбирается
-	 *                               TYPE - PREV|NEXT указывающий тип элемента (до или после элемента $elId)
+	 *                               стандартные поля ID, NAME, DETAIL_PAGE_URL и DATE_ACTIVE_FROM.
 	 * @param array      $dopFilter = array('ACTIVE' => 'Y') дополнительный фильтр при выборке.
 	 *                               Помимо указанных значений всегда передается IBLOCK_ID указанного элемента $elId
 	 *
-	 * @param int|number $cntSelect = 1 по скольку элементов справа и слева выбрать
+	 * @param int $cntSelect = 1 по скольку элементов справа и слева выбрать
 	 *
-	 * @return array|bool
+	 * @return array{CURRENT?: array, PREV_NEXT?: array, PREV?: list<array>, NEXT?: list<array>}|false
 	 */
 	public static function getNextPrevElementsByElementId(int $ELEMENT_ID, $rowSort = [], $prevNextSelect = [], $dopFilter = ['ACTIVE' => 'Y'], $cntSelect = 1)
 	{
@@ -445,7 +448,10 @@ trait Element
 				$arResult['CURRENT'] = $arItem;
 			}
 		}
-		foreach ($arResult['PREV_NEXT'] as $key => $val) {
+		if (!isset($arResult['CURRENT'])) {
+			return [];
+		}
+		foreach ($arResult['PREV_NEXT'] ?? [] as $key => $val) {
 			if ($key < $arResult['CURRENT']['RANK']) {
 				$arResult['PREV'][] = $val;
 			}
@@ -704,28 +710,37 @@ trait Element
 			return false;
 		}
 
-		static $existsValues, $PROPERTY_ID;
-		if (is_null($existsValues)) {
-			$vs = self::selectPropertyEnumArray($propCode, ['IBLOCK_ID' => $iblockId]);
-			foreach ($vs as $enumValue) {
-				$existsValues[ trim($enumValue['VALUE']) ] = $enumValue['ID'];
+		static $lists = [];
+		if (!isset($lists[$iblockId][$propCode])) {
+			$property = CIBlockProperty::GetList([], ['IBLOCK_ID' => $iblockId, 'CODE' => $propCode])->Fetch();
+			if (!$property) {
+				return false;
 			}
-		}
-		if (is_null($PROPERTY_ID)) {
-			$arProp = CIBlockProperty::GetList([], ['IBLOCK_ID' => $iblockId, 'CODE' => $propCode])->Fetch();
-			$PROPERTY_ID = (int)$arProp['ID'];
+
+			$values = [];
+			foreach (self::selectPropertyEnumArray((int)$property['ID']) as $enumValue) {
+				$values[trim($enumValue['VALUE'])] = $enumValue['ID'];
+			}
+			$lists[$iblockId][$propCode] = ['id' => (int)$property['ID'], 'values' => $values];
 		}
 
-		if (! isset($existsValues[ $val ])) {
-			$ibpenum = new CIBlockPropertyEnum();
-			$propID = $ibpenum::Add([
-				'PROPERTY_ID' => $PROPERTY_ID,
-				'VALUE'       => $val,
-				'SORT'        => 10 + count($existsValues) * 10
-			]);
-			$existsValues[ $val ] = $propID;
+		$list =& $lists[$iblockId][$propCode];
+		if (isset($list['values'][$val])) {
+			return (int)$list['values'][$val];
 		}
-		return $existsValues[ $val ];
+
+		$enumId = CIBlockPropertyEnum::Add([
+			'PROPERTY_ID' => $list['id'],
+			'VALUE'       => $val,
+			'SORT'        => 10 + count($list['values']) * 10,
+		]);
+		if (!$enumId) {
+			return false;
+		}
+
+		$list['values'][$val] = (int)$enumId;
+		self::clearPropertyEnumCache();
+		return (int)$enumId;
 	}
 
 	/**
@@ -758,11 +773,11 @@ trait Element
 		foreach ($arFiles as $l => $d) {
 			$art = false;
 			$gn = 0;
-			while (!$art || ($art['type'] == 'unknown' && $gn < 10)) {
+			while ($gn < 10 && (!$art || $art['type'] === 'unknown')) {
 				$gn++;
 				$art = CFile::MakeFileArray($l);
 			}
-			if ($art['tmp_name']) {
+			if (!empty($art['tmp_name'])) {
 				$filePropertyValues[] = [
 					'VALUE' => $art,
 					'DESCRIPTION' => $d
@@ -854,25 +869,25 @@ trait Element
 			throw new \InvalidArgumentException("Hasn't priceCodes param: " . print_r($priceCodes, true));
 		}
 
-		$result = [];
-
-		if ((int)$element['IBLOCK_ID'] <= 0) {
+		if ((int)($element['IBLOCK_ID'] ?? 0) <= 0) {
 			$element['IBLOCK_ID'] = self::getElementIblockId($element['ID']);
 		}
 
-		static $prices;
-		if ($prices === null) {
-			$prices = \CIBlockPriceTools::GetCatalogPrices($element['IBLOCK_ID'], $priceCodes);
-		}
+		static $pricesByCatalog = [];
+		$pricesKey = serialize([(int)$element['IBLOCK_ID'], $priceCodes]);
+		$prices = $pricesByCatalog[$pricesKey] ??= \CIBlockPriceTools::GetCatalogPrices(
+			$element['IBLOCK_ID'],
+			$priceCodes,
+		);
 
-		$bNeedSelect = true;
+		$bNeedSelect = false;
 		$arSelect = ['ID', 'IBLOCK_ID'];
 		foreach ($prices as $value) {
 			$arSelect[] = $value['SELECT'];
 			$catalogPriceValue = 'PRICE_'.$value['ID'];
 			$catalogCurrencyValue = 'CURRENCY_'.$value['ID'];
-			if (isset($element[$catalogPriceValue], $element[$catalogCurrencyValue])) {
-				$bNeedSelect = false;
+			if (!isset($element[$catalogPriceValue], $element[$catalogCurrencyValue])) {
+				$bNeedSelect = true;
 			}
 		}
 
@@ -890,11 +905,13 @@ trait Element
 			$bVATInclude,
 			['CURRENCY_ID' => Option::get("sale", "default_currency", "RUB")]
 		);
-		if (!empty($element['PRICES'])) {
-			$element['MIN_PRICE'] = $result = \CIBlockPriceTools::getMinPriceFromList($element['PRICES']);
+		unset($element['MIN_PRICE']);
+		$minPrice = \CIBlockPriceTools::getMinPriceFromList($element['PRICES']);
+		if (is_array($minPrice)) {
+			$element['MIN_PRICE'] = $minPrice;
 		}
 
-		return $result;
+		return $minPrice ?: [];
 	}
 
 	/**

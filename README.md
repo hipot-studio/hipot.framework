@@ -14,9 +14,9 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
 # Доступные инструменты и возможности:
 - библиотека классов <code>/lib/classes</code> для копирования в <code>/local/php_interface/lib/classes</code>
   - [объектная модель-обертка над инфоблоками](docs/ABSTRACT_IBLOCK_ELEMENT_LAYER.MD) <code>Hipot\IbAbstractLayer\IblockElemLinkedChains</code>. Наследует весь функционал от <code>Hipot\BitrixUtils\Iblock</code> (Abstract Iblock Elements Layer, см. ниже)
-  - класс для работы с инфоблоками <code>Hipot\BitrixUtils\Iblock (aka IblockUtils)</code>
+  - [работа с инфоблоками, элементами, разделами и свойствами](docs/iblock.md) <code>Hipot\BitrixUtils\Iblock (aka IblockUtils)</code>
   - [поиск групп пользователей по символьному коду](docs/reference_data_cache.md#поиск-групп-пользователей) <code>Hipot\BitrixUtils\UserGroup</code> с ORM-кешем
-  - класс для работы с hightload-блоками <code>Hipot\BitrixUtils\HiBlock</code> и приложение реестра настроек на его основе <code>Hipot\BitrixUtils\HiBlockApps</code>
+  - [работа с highload-блоками и реестром настроек](docs/highloadblock.md) <code>Hipot\BitrixUtils\HiBlock</code> и <code>Hipot\BitrixUtils\HiBlockApps</code>
   - [ReadModel для highload-блоков](docs/read_model.md): базовая модель <code>Hipot\Model\HiBaseModel</code>, декоратор <code>Hipot\Model\DataManagerReadModel</code>, backend-контроллер <code>HipotAjaxController</code> и клиентская библиотека <code>hi_model.js</code>
   - api для трансформации изображений и наложения водных знаков [<code>Hipot\Utils\Img</code>](docs/img.md)
   - класс для работы с кешированием [<code>Hipot\BitrixUtils\PhpCacher</code>](docs/cacher.md)
@@ -28,19 +28,20 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
     \Bitrix\Main\Diag\Debug::dump($cachedUser->GetID());
     ```
   - [объектная обёртка над агентами Bitrix](docs/bitrix_agents.md) в пространстве имён <code>Hipot\BitrixUtils\Agent</code>
-  - с магазином <code>Hipot\BitrixUtils\Sale (aka SaleUtils)</code> и товаром каталога <code>Hipot\BitrixUtils\Catalog</code>
+  - [работа с товарами, торговыми предложениями, остатками и ценами](docs/catalog.md) <code>Hipot\BitrixUtils\Catalog</code>
   - [поиск типов цен по символьному коду](docs/reference_data_cache.md#поиск-типов-цен) <code>Hipot\BitrixUtils\PriceType</code> с ORM-кешем
-  - различные утилиты-хелперы <code>Hipot\Utils\UUtils (aka UnsortedUtils)</code> и трейты-хелперы в <code>namespace Hipot\Utils\Helper\\*</code>
+  - [работа с корзиной, заказами и скидками магазина](docs/sale.md) <code>Hipot\BitrixUtils\Sale (aka SaleUtils)</code>
+  - [утилиты и трейты-хелперы](docs/uutils.md) <code>Hipot\Utils\UUtils (aka UnsortedUtils)</code> и <code>Hipot\Utils\Helper</code>
   - [генератор определений констант для IDE](docs/constant_ide_helper.md) <code>Hipot\Utils\ConstantIdeHelper</code>
   - для отложенного подключения ресурсов [<code>Hipot\BitrixUtils\AssetsContainer</code>](docs/AssetsContainer.md)
   - различные [сервисы](docs/services.md) в пространстве имен <code>Hipot\Services</code>: не используем global's, используем DTO <code>Hipot\Services\BitrixEngine</code>,
   а для проброса данных между элементами приложения используем <code>Hipot\Services\Registry</code>
-  - различные базовые типы в пространстве имен <code>[Hipot\Types](docs/types.md)</code>  
+  - различные базовые типы в пространстве имен <code>[Hipot\Types](docs/types.md)</code>
 
 - автозагрузчик к классам <code>lib/simple_loader.php</code> для копирования в <code>/local/php_interface/lib/simple_loader.php</code><br>
 В современных реалиях лучше для этого использовать [composer предназначенный для копирования в Bitrix-сайт](src/install/local/composer-example.json)
 - немного "плавающих функций" [<code>/lib/functions.php</code>](docs/functions.md)
-- универсальные обработчики событий <code>/lib/handlers_add.php</code> с подключением констант-рубильников из файла <code>/lib/constants.php</code>  
+- универсальные обработчики событий <code>/lib/handlers_add.php</code> с подключением констант-рубильников из файла <code>/lib/constants.php</code>
 - [Дополнительные типы свойств](docs/property_types.md): привязка к пользователю, HTML / визуальный редактор и привязка к элементам инфоблока с описанием.
 - скрипт [xhprof.php](docs/xhprof.md) для быстрого профилирования "боевых" проектов
 - [SQL-профилирование отдельной страницы](docs/sql_profile.md) через штатный Монитор производительности Bitrix, без внешних зависимостей
@@ -58,7 +59,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
 - пример файла <code>/local/php_interface/init.php</code> с подключением деталей фреймворка к битриксу
 можно найти в файле [include.php](src/include.php)
 
-  
+
 ### Установка:
 Пока для ручного осознанного копирования деталей, в дальнейшем будет модуль <code>hipot.framework</code> с установщиком.
 - скопировать папку <code>src</code> модуля в папку /local/modules/ (для новых проектов) или /bitrix/modules/ для рабочих

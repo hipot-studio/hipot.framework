@@ -187,12 +187,12 @@ final class Catalog
 	/**
 	 * Retrieves the barcode for a given product.
 	 * @param int $productId The ID of the product.
-	 * @return string The barcode for the product, or null if no barcode is found.
+	 * @return string The barcode for the product, or an empty string if none is found.
 	 */
 	public static function getProductBarCode(int $productId): string
 	{
 		if ($productId <= 0) {
-			return false;
+			return '';
 		}
 		$dbBarCode = \CCatalogStoreBarCode::getList([], ["PRODUCT_ID" => $productId], false, false, ["ID", "BARCODE", 'PRODUCT_ID']);
 		$arBarCode = $dbBarCode->GetNext();
@@ -217,9 +217,17 @@ final class Catalog
 		$dbBarCode = \CCatalogStoreBarCode::getList([], ["PRODUCT_ID" => $productId], false, false, ["ID", "BARCODE", 'PRODUCT_ID']);
 		$arBarCode = $dbBarCode->GetNext();
 		if (!$arBarCode) {
-			$dbBarCode = \CCatalogStoreBarCode::Add(["PRODUCT_ID" => $productId, "BARCODE" => $barcode, "CREATED_BY" => $userId]);
-		} elseif ($arBarCode["ID"]["BARCODE"] != $barcode) {
-			$dbBarCode = \CCatalogStoreBarCode::Update($arBarCode["ID"], ["BARCODE" => $barcode, "MODIFIED_BY" => $userId]);
+			return (bool)\CCatalogStoreBarCode::Add([
+				'PRODUCT_ID' => $productId,
+				'BARCODE'    => $barcode,
+				'CREATED_BY' => $userId,
+			]);
+		}
+		if (($arBarCode['~BARCODE'] ?? $arBarCode['BARCODE']) !== $barcode) {
+			return (bool)\CCatalogStoreBarCode::Update($arBarCode['ID'], [
+				'BARCODE'     => $barcode,
+				'MODIFIED_BY' => $userId,
+			]);
 		}
 		return true;
 	}
@@ -231,14 +239,14 @@ final class Catalog
 	 *
 	 * @return float|false Возвращает коэффициент измерения продукта или false, если коэффициент не найден
 	 */
-	public static function getProductMeasureRatio(int $productId)
+	public static function getProductMeasureRatio(int $productId): float|false
 	{
 		if ($productId <= 0) {
 			return false;
 		}
 		$ratioIterator = \CCatalogMeasureRatio::getList([], ['PRODUCT_ID' => $productId], false, false, ['ID', 'PRODUCT_ID', 'RATIO']);
 		if ($currentRatio = $ratioIterator->Fetch()) {
-			return $currentRatio['RATIO'];
+			return (float)$currentRatio['RATIO'];
 		}
 		return false;
 	}
@@ -275,12 +283,13 @@ final class Catalog
 		}
 
 		$arParams = [];
-		if (\CCatalogSku::TYPE_OFFERS == $arMainCatalog['CATALOG_TYPE']) {
+		$catalog = $arMainCatalog[$iblockId];
+		if (($catalog['CATALOG_TYPE'] ?? null) === \CCatalogSku::TYPE_OFFERS) {
 			$arParams['SKU']        = 'Y';
 			$arParams['SKU_PARAMS'] = [
-				'IBLOCK_ID' => $arMainCatalog['IBLOCK_ID'],
-				'PRODUCT_IBLOCK_ID' => $arMainCatalog['PRODUCT_IBLOCK_ID'],
-				'SKU_PROPERTY_ID' => $arMainCatalog['SKU_PROPERTY_ID'],
+				'IBLOCK_ID'         => $catalog['IBLOCK_ID'],
+				'PRODUCT_IBLOCK_ID' => $catalog['PRODUCT_IBLOCK_ID'],
+				'SKU_PROPERTY_ID'   => $catalog['SKU_PROPERTY_ID'],
 			];
 		}
 		$arParams['DISCOUNT_FIELDS'] = [
@@ -303,54 +312,28 @@ final class Catalog
 	 * Updates a product.
 	 *
 	 * @param int   $productId The ID of the product.
-	 * @param array $arItemProduct An optional array of product data.
+	 * @param array $arItemProduct Product fields. Omitted quantity and tracking fields are preserved on update.
 	 *
 	 * @return \Bitrix\Main\ORM\Data\Result
 	 */
 	public static function updateProduct(int $productId, array $arItemProduct = []): \Bitrix\Main\ORM\Data\Result
 	{
-		// Create the product
-		$productQueryResult = ProductTable::getList([
-			'filter' => [
-				"ID" => $productId,
-			],
-			'select' => ['*']
-		]);
-		if (!$arProduct = $productQueryResult->fetch()) {
-			$arFields        = [
-				'ID'             => $productId,
-				'QUANTITY_TRACE' => ProductTable::STATUS_DEFAULT,
-				'CAN_BUY_ZERO'   => ProductTable::STATUS_DEFAULT,
-			];
-			if ($arItemProduct['QUANTITY']) {
-				$arFields['QUANTITY'] = $arItemProduct['QUANTITY'];
-			} else {
-				$arFields['QUANTITY'] = 0;
-			}
-			if (isset($arItemProduct['AVAILABLE'])) {
-				$arFields['AVAILABLE'] = $arItemProduct['AVAILABLE'];
-			} else {
-				$arFields['AVAILABLE'] = ProductTable::calculateAvailable($arFields);
-			}
-			$arFields += $arItemProduct;
-			return ProductTable::add($arFields);
+		$product = ProductTable::getByPrimary($productId, [
+			'select' => ['QUANTITY_TRACE', 'CAN_BUY_ZERO', 'QUANTITY'],
+		])->fetch();
+
+		unset($arItemProduct['ID']);
+		$defaults = [
+			'QUANTITY_TRACE' => $product['QUANTITY_TRACE'] ?? ProductTable::STATUS_DEFAULT,
+			'CAN_BUY_ZERO'   => $product['CAN_BUY_ZERO'] ?? ProductTable::STATUS_DEFAULT,
+			'QUANTITY'       => $product['QUANTITY'] ?? 0,
+		];
+		$arItemProduct['AVAILABLE'] ??= ProductTable::calculateAvailable($arItemProduct + $defaults);
+
+		if (!$product) {
+			return ProductTable::add(['ID' => $productId] + $arItemProduct + $defaults);
 		}
 
-		$arFields = [
-			'QUANTITY_TRACE' => $arProduct['QUANTITY_TRACE'],
-			'CAN_BUY_ZERO' => $arProduct['CAN_BUY_ZERO'],
-		];
-		if (isset($arItemProduct['QUANTITY'])) {
-			$arFields['QUANTITY'] = $arItemProduct['QUANTITY'];
-		} else {
-			$arFields['QUANTITY'] = 0;
-		}
-		if (isset($arItemProduct['AVAILABLE'])) {
-			$arFields['AVAILABLE'] = $arItemProduct['AVAILABLE'];
-		} else {
-			$arFields['AVAILABLE'] = ProductTable::calculateAvailable($arFields);
-		}
-		$arFields += $arItemProduct;
-		return ProductTable::update($arProduct['ID'], $arFields);
+		return ProductTable::update($productId, $arItemProduct);
 	}
 }

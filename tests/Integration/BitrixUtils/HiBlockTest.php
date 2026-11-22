@@ -173,3 +173,35 @@ it('uses the technical name when localization and properties are not requested',
 		->and(HiBlock::getDataManagerByHiCode('   '))->toBeFalse()
 		->and(HiBlock::getHightloadBlockTable(0, ''))->toBeNull();
 });
+
+it('caches custom settings separately for each highload block', function (): void {
+	$names = [];
+	$ids = [];
+	try {
+		foreach (['first', 'second'] as $value) {
+			$suffix = bin2hex(random_bytes(6));
+			$name = 'TestSettings' . $suffix;
+			$add = HiBlock::addHiBlock($name, 'b_hlbd_settings_' . $suffix);
+			expect($add->isSuccess())->toBeTrue(implode('; ', $add->getErrorMessages()));
+
+			$id = (int)$add->getId();
+			$ids[] = $id;
+			$names[] = $name;
+			expect(HiBlock::addHiBlockField(['HLBLOCK_ID' => $id, 'CODE' => 'CODE']))->toBeInt()
+				->and(HiBlock::addHiBlockField(['HLBLOCK_ID' => $id, 'CODE' => 'VALUE']))->toBeInt();
+
+			$dataClass = HiBlock::getDataManager($id);
+			expect($dataClass)->not->toBeNull();
+			$added = $dataClass::add(['UF_CODE' => 'example', 'UF_VALUE' => $value]);
+			expect($added->isSuccess())->toBeTrue(implode('; ', $added->getErrorMessages()));
+		}
+
+		expect(\Hipot\BitrixUtils\HiBlockApps::getCustomSettingsList($names[0], 60))->toBe(['example' => 'first'])
+			->and(\Hipot\BitrixUtils\HiBlockApps::getCustomSettingsList($names[1], 60))->toBe(['example' => 'second'])
+			->and(\Hipot\BitrixUtils\HiBlockApps::getCustomSettingsList($names[0], 60))->toBe(['example' => 'first']);
+	} finally {
+		foreach ($ids as $id) {
+			HighloadBlockTable::delete($id);
+		}
+	}
+});

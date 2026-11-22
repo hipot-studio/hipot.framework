@@ -111,11 +111,11 @@ final class HiBlockApps extends HiBlock
 	/**
 	 * Установить таблицу и HL-блок с произвольными настройками сайта
 	 *
-	 * @param string $tableName = 'we_custom_settings'
+	 * @param string $tableName = 'hi_custom_settings'
 	 * @param string $hiBlockName = 'CustomSettings'
 	 *
-	 * @return array Результаты добавления свойств в HL-блок
-	 * @throws \RuntimeException ERROR - VOID tableName, ERROR - VOID hiBlockName
+	 * @return array<string, int> ID созданных полей по их кодам.
+	 * @throws \RuntimeException При ошибке установки. Созданные части схемы сохраняются.
 	 */
 	public static function installCustomSettingsHiBlock(string $tableName = self::CS_TABLE_NAME, string $hiBlockName = self::CS_HIBLOCK_NAME): array
 	{
@@ -148,11 +148,12 @@ final class HiBlockApps extends HiBlock
 	 *
 	 * @param string $hiBlockName = 'CustomSettings'
 	 * @param int $cacheTtl = self::CACHE_TTL
-	 * @return boolean | array{CODE: 'VALUE'}
+	 * @return array<string, mixed>|false Значения по коду настройки или false при ошибке кеширования.
 	 * @uses \Hipot\BitrixUtils\PhpCacher
 	 */
 	public static function getCustomSettingsList(string $hiBlockName = self::CS_HIBLOCK_NAME, int $cacheTtl = self::CACHE_TTL): bool|array
 	{
+		$hiBlockName = trim($hiBlockName);
 		return PhpCacher::cache(self::CS_CACHE_TAG, $cacheTtl, static function () use ($hiBlockName) {
 			$arParams = [];
 
@@ -167,7 +168,7 @@ final class HiBlockApps extends HiBlock
 				$arParams[$settingRow['UF_CODE']] = $settingRow['UF_VALUE'];
 			}
 			return $arParams;
-		});
+		}, params: ['hiBlockName' => $hiBlockName]);
 	}
 
 	/**

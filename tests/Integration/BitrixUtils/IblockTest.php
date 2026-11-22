@@ -279,3 +279,8 @@ it('toggles iblock tag-cache clearing idempotently', function (): void {
 		$wasEnabled ? Iblock::enableIblockCacheClear() : Iblock::disableIblockCacheClear();
 	}
 });
+
+it('returns update errors for non-positive element and section IDs', function (): void {
+	expect(Iblock::updateElementToDb(0)->STATUS)->toBe(UpdateResult::STATUS_ERROR)
+		->and(Iblock::updateSectionToDb(0)->STATUS)->toBe(UpdateResult::STATUS_ERROR);
+});
