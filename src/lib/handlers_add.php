@@ -83,5 +83,7 @@ require __DIR__ . '/handlers/hi_block.php';
 
 require __DIR__ . '/handlers/property_types.php';
 
+require __DIR__ . '/handlers/iblock_properties.php';
+
 // disable basic auth in bitrix admin
 UUtils::disableHttpAuth();

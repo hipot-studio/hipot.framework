@@ -6,6 +6,7 @@ use Bitrix\Iblock\InheritedProperty\ElementTemplates;
 use Bitrix\Iblock\InheritedProperty\ElementValues;
 use Bitrix\Iblock\PropertyIndex\Manager;
 use Bitrix\Iblock\PropertyTable;
+use Bitrix\Iblock\PropertyEnumerationTable;
 use Bitrix\Iblock\SectionElementTable;
 use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\Config\Option;
@@ -20,6 +21,15 @@ use function FormatText;
 
 trait Element
 {
+	/** @var array<int, array<string, array{byId: array, byXmlId: array, default: ?array}>> */
+	private static array $propertyEnumCache = [];
+
+	/** Clear after direct enum changes in this request, or between worker jobs. */
+	public static function clearPropertyEnumCache(): void
+	{
+		self::$propertyEnumCache = [];
+	}
+
 	// region /*********************** iblock elements **************************/
 
 	/**
@@ -625,24 +635,40 @@ trait Element
 			$xmlId = trim($xmlId);
 		}
 
-		$filter = [
-			'IBLOCK_ID' => $iblockId,
-			'PROPERTY_CODE' => $propertyCode,
-		];
-		if ($id !== null) {
-			$filter['ID'] = $id;
-		} elseif ($xmlId !== null) {
-			$filter['XML_ID'] = $xmlId;
-		} else {
-			$filter['DEF'] = 'Y';
+		if (!isset(self::$propertyEnumCache[$iblockId][$propertyCode])) {
+			$rows = PropertyEnumerationTable::query()
+				->setSelect(['ID', 'PROPERTY_ID', 'XML_ID', 'VALUE', 'DEF', 'SORT'])
+				->where('PROPERTY.IBLOCK_ID', $iblockId)
+				->where('PROPERTY.CODE', $propertyCode)
+				->setOrder(['DEF' => 'DESC', 'SORT' => 'ASC', 'ID' => 'ASC'])
+				->setCacheTtl(self::CACHE_TTL)
+				->cacheJoins(true)
+				->fetchAll();
+			$map = [
+				'byId'    => [],
+				'byXmlId' => [],
+				'default' => null,
+			];
+			foreach ($rows as $row) {
+				$row['ID'] = (int)$row['ID'];
+				$map['byId'][$row['ID']] = $row;
+				// Preserve the first match in the established DEF/SORT/ID order.
+				$map['byXmlId'][(string)$row['XML_ID']] ??= $row;
+				if ($row['DEF'] === 'Y') {
+					$map['default'] ??= $row;
+				}
+			}
+			self::$propertyEnumCache[$iblockId][$propertyCode] = $map;
 		}
 
-		$enum = CIBlockPropertyEnum::GetList(
-			['DEF' => 'DESC', 'SORT' => 'ASC', 'ID' => 'ASC'],
-			$filter,
-		)->Fetch();
-
-		return is_array($enum) ? $enum : null;
+		$map = self::$propertyEnumCache[$iblockId][$propertyCode];
+		if ($id !== null) {
+			return $map['byId'][$id] ?? null;
+		}
+		if ($xmlId !== null) {
+			return $map['byXmlId'][$xmlId] ?? null;
+		}
+		return $map['default'];
 	}
 
 	/**

@@ -81,6 +81,28 @@ it('adds a highload block with additional fields', function (): void {
 		]);
 });
 
+it('returns normalized metadata and nullable IDs through the new lookup contract', function (): void {
+	HighloadBlockTable::$rows[8]['ID'] = '8';
+	expect(HiBlock::getInfoByName(' Cities ')['ID'])->toBe(8)
+		->and(HiBlock::getIdByName('Cities'))->toBe(8)
+		->and(HiBlock::getInfoById(8)['ID'])->toBe(8)
+		->and(HiBlock::getInfoByName('Missing'))->toBeNull()
+		->and(HiBlock::getIdByName('Missing'))->toBeNull()
+		->and(HiBlock::getInfoByName('  '))->toBeNull()
+		->and(HiBlock::getInfoById(0))->toBeNull()
+		->and(HiBlock::getInfoById(999))->toBeNull()
+		->and(HiBlock::getHightloadBlockTable(0, 'Missing'))->toBeFalse();
+});
+
+it('resolves a data manager by an integer ID or a string name without compiling missing blocks', function (): void {
+	expect(HiBlock::getDataManager(3))->toBe(HighloadBlockTable::$compiledDataClass)
+		->and(HiBlock::getDataManager(' Cities '))->toBe(HighloadBlockTable::$compiledDataClass)
+		->and(HiBlock::getDataManager('3'))->toBeNull()
+		->and(HiBlock::getDataManager('Missing'))->toBeNull()
+		->and(HiBlock::getDataManager(999))->toBeNull()
+		->and(HiBlock::getDataManager(-1))->toBeNull();
+});
+
 it('adds a string user field with defaults and localized labels', function (): void {
 	$fieldId = HiBlock::addHiBlockField([
 		'HLBLOCK_ID' => 3,

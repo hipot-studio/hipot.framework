@@ -23,13 +23,64 @@ class HiBlock
 	 */
 	public const int CACHE_TTL = 3600;
 
+	/** @return array<string, mixed>|null Metadata by exact NAME, with surrounding whitespace removed. */
+	public static function getInfoByName(string $name): ?array
+	{
+		$name = trim($name);
+		if ($name === '') {
+			return null;
+		}
+		$row = self::getHightloadBlockTable(0, $name);
+		if (!is_array($row)) {
+			return null;
+		}
+		$row['ID'] = (int)$row['ID'];
+		return $row;
+	}
+
+	/** Returns the block ID by NAME, or null when not found. */
+	public static function getIdByName(string $name): ?int
+	{
+		return self::getInfoByName($name)['ID'] ?? null;
+	}
+
+	/** @return array<string, mixed>|null */
+	public static function getInfoById(int $id): ?array
+	{
+		if ($id <= 0) {
+			return null;
+		}
+		$row = self::getHightloadBlockTable($id, '');
+		if (!is_array($row)) {
+			return null;
+		}
+		$row['ID'] = (int)$row['ID'];
+		return $row;
+	}
+
+	/**
+	 * Returns a DataManager class name, never an instance; null when not found.
+	 * Integer identifiers are IDs; strings are NAME values (including numeric strings).
+	 * @return class-string<\Bitrix\Main\ORM\Data\DataManager>|null
+	 */
+	public static function getDataManager(int|string $identifier): ?string
+	{
+		$row = is_int($identifier) ? self::getInfoById($identifier) : self::getInfoByName($identifier);
+		if ($row === null) {
+			return null;
+		}
+		return HighloadBlockTable::compileEntity($row)->getDataClass();
+	}
+
 	/**
 	 * Получить HighloadBlockTable-строку хл-блока или обряд создания объекта для работы с HL-блоком
+	 * Legacy API: preserves false/null results and untrimmed name lookup.
+	 * For new code use getInfoByName(), getInfoById(), getIdByName() and getDataManager().
 	 *
 	 * @param int     $hlblockId в приоритете
 	 * @param string  $hiBlockName иначе по строке
 	 * @param boolean $returnEntityClass = false Обряд создания до $hlblock = [] или до \Bitrix\Main\Entity\DataManager
-	 * @return null | array | \Bitrix\Main\Entity\DataManager
+	 * @return array|class-string<\Bitrix\Main\ORM\Data\DataManager>|false|null
 	 *
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
@@ -62,7 +113,7 @@ class HiBlock
 	 *
 	 * @param int|string $hlblockId код HL-инфоблока
 	 *
-	 * @return bool | \Bitrix\Main\Entity\DataManager
+	 * @return class-string<\Bitrix\Main\ORM\Data\DataManager>|false
 	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getDataManagerByHiId($hlblockId)
@@ -70,7 +121,7 @@ class HiBlock
 		if ((int)$hlblockId <= 0) {
 			return false;
 		}
-		return self::getHightloadBlockTable($hlblockId, false, true);
+		return self::getHightloadBlockTable($hlblockId, '', true);
 	}
 
 	/**
@@ -78,7 +129,7 @@ class HiBlock
 	 *
 	 * @param string $hiBlockName символьный код HL-инфоблока
 	 *
-	 * @return bool | \Bitrix\Main\Entity\DataManager
+	 * @return class-string<\Bitrix\Main\ORM\Data\DataManager>|false
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\SystemException
 	 */

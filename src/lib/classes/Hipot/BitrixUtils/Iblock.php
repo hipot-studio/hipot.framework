@@ -26,9 +26,21 @@ Loader::includeModule('iblock');
  */
 class Iblock extends _CIBElement
 {
+	public const int CACHE_TTL = 3600;
+
 	use Element;
 
 	use Section;
+
+	/** @var array<int, array<int, array<string, array<string, mixed>>>> */
+	private static array $propertiesByCodeCache = [];
+
+	/** Clears request-local property maps after property changes or between worker jobs. */
+	public static function clearPropertiesByCodeCache(): void
+	{
+		self::$propertiesByCodeCache = [];
+		self::clearPropertyEnumCache();
+	}
 
 	/**
 	 * Returns the first iblock ID matching its symbolic code.
@@ -43,6 +55,7 @@ class Iblock extends _CIBElement
 
 	/**
 	 * Returns basic iblock metadata by symbolic code.
+	 * Uses the Bitrix ORM result cache with a TTL of 3600 seconds.
 	 *
 	 * When codes are duplicated across iblock types, pass $type to make the lookup unambiguous.
 	 *
@@ -60,7 +73,8 @@ class Iblock extends _CIBElement
 			->setSelect(['ID', 'IBLOCK_TYPE_ID', 'CODE', 'XML_ID', 'NAME', 'ACTIVE', 'SORT', 'VERSION'])
 			->where('CODE', $code)
 			->setOrder(['ID' => 'ASC'])
-			->setLimit(1);
+			->setLimit(1)
+			->setCacheTtl(self::CACHE_TTL);
 		if ($type !== null) {
 			$query->where('IBLOCK_TYPE_ID', $type);
 		}
@@ -79,6 +93,8 @@ class Iblock extends _CIBElement
 
 	/**
 	 * Returns iblock properties indexed by their symbolic codes.
+	 * Reuses the map within the request and caches ORM results for 3600 seconds.
+	 * When handlers_add.php is not loaded, clear the local map explicitly after property changes.
 	 *
 	 * Properties without a symbolic code are omitted because they cannot be represented by this contract.
 	 *
@@ -89,6 +105,10 @@ class Iblock extends _CIBElement
 		if ($iblockId <= 0) {
 			return [];
 		}
+		$mode = (int)$activeOnly;
+		if (isset(self::$propertiesByCodeCache[$iblockId][$mode])) {
+			return self::$propertiesByCodeCache[$iblockId][$mode];
+		}
 
 		$query = PropertyTable::query()
 			->setSelect([
@@ -96,7 +116,8 @@ class Iblock extends _CIBElement
 				'MULTIPLE', 'IS_REQUIRED', 'LINK_IBLOCK_ID', 'WITH_DESCRIPTION', 'DEFAULT_VALUE', 'XML_ID',
 			])
 			->where('IBLOCK_ID', $iblockId)
-			->setOrder(['SORT' => 'ASC', 'ID' => 'ASC']);
+			->setOrder(['SORT' => 'ASC', 'ID' => 'ASC'])
+			->setCacheTtl(self::CACHE_TTL);
 		if ($activeOnly) {
 			$query->where('ACTIVE', 'Y');
 		}
@@ -117,7 +138,7 @@ class Iblock extends _CIBElement
 			$properties[$code] = $property;
 		}
 
-		return $properties;
+		return self::$propertiesByCodeCache[$iblockId][$mode] = $properties;
 	}
 
 	// region /*********************** cache and tag cache performance tweaks **************************/
