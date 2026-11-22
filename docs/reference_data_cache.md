@@ -1,5 +1,48 @@
 # Кеширование и поиск справочных данных
 
+### Поиск типов цен
+
+`Hipot\BitrixUtils\PriceType` ищет типы цен по точному полю `NAME` таблицы `b_catalog_group`.
+Это символьный код, а не локализованное название и не `XML_ID`.
+
+```php
+use Hipot\BitrixUtils\PriceType;
+
+$priceTypeId = PriceType::getIdByCode('RETAIL'); // ?int
+$priceType = PriceType::getInfoByCode('RETAIL'); // ?array
+```
+
+Пробелы по краям удаляются. Для пустого кода или ненайденного типа возвращается `null`.
+При дублировании кода выбирается минимальный ID. Метаданные содержат `ID`, `NAME`, `BASE`, `SORT`, `XML_ID`;
+`ID` и `SORT` приводятся к `int`. Права доступа к ценам этим поиском не проверяются.
+
+ORM-кеш использует `PriceType::CACHE_TTL` (3600 секунд). Отдельного кеша в памяти нет.
+Для непустого кода загружается обязательный модуль `catalog`; если он недоступен, выбрасывается `LoaderException`.
+Штатный API `CCatalogGroup` в проверенном ядре очищает ORM-кеш.
+После прямой записи SQL вызывайте `Bitrix\Catalog\GroupTable::cleanCache()`.
+Работа на реальном Bitrix и влияние на производительность не проверялись.
+
+### Поиск групп пользователей
+
+`Hipot\BitrixUtils\UserGroup` ищет группы по точному значению поля `STRING_ID`:
+
+```php
+use Hipot\BitrixUtils\UserGroup;
+
+$groupId = UserGroup::getIdByCode('EDITORS'); // ?int
+$group = UserGroup::getInfoByCode('EDITORS'); // ?array
+```
+
+Пробелы по краям кода удаляются. Для пустого кода или ненайденной группы возвращается `null`.
+Учитываются и неактивные группы; при дублировании `STRING_ID` выбирается группа с минимальным ID.
+Метаданные содержат `ID`, `STRING_ID`, `NAME`, `DESCRIPTION`, `ACTIVE`, `C_SORT`;
+`ID` и `C_SORT` приводятся к `int`. Это поиск справочника, а не проверка прав пользователя.
+
+ORM-кеш имеет TTL `UserGroup::CACHE_TTL` (3600 секунд); отдельного кеша в памяти нет.
+Штатные `CGroup::Add/Update/Delete` в проверенном ядре используют ORM-запись и её сброс кеша.
+После прямой записи SQL сбрасывайте ORM-кеш через `Bitrix\Main\GroupTable::cleanCache()`.
+Реальный кеш на Bitrix и влияние на производительность не проверялись.
+
 ### Кеш справочных данных инфоблоков
 
 `Hipot\BitrixUtils\Iblock::CACHE_TTL` задаёт TTL ORM-кеша (3600 секунд) для

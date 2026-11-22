@@ -15,6 +15,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
 - библиотека классов <code>/lib/classes</code> для копирования в <code>/local/php_interface/lib/classes</code>
   - [объектная модель-обертка над инфоблоками](docs/ABSTRACT_IBLOCK_ELEMENT_LAYER.MD) <code>Hipot\IbAbstractLayer\IblockElemLinkedChains</code>. Наследует весь функционал от <code>Hipot\BitrixUtils\Iblock</code> (Abstract Iblock Elements Layer, см. ниже)
   - класс для работы с инфоблоками <code>Hipot\BitrixUtils\Iblock (aka IblockUtils)</code>
+  - [поиск групп пользователей по символьному коду](docs/reference_data_cache.md#поиск-групп-пользователей) <code>Hipot\BitrixUtils\UserGroup</code> с ORM-кешем
   - класс для работы с hightload-блоками <code>Hipot\BitrixUtils\HiBlock</code> и приложение реестра настроек на его основе <code>Hipot\BitrixUtils\HiBlockApps</code>
   - [ReadModel для highload-блоков](docs/read_model.md): базовая модель <code>Hipot\Model\HiBaseModel</code>, декоратор <code>Hipot\Model\DataManagerReadModel</code>, backend-контроллер <code>HipotAjaxController</code> и клиентская библиотека <code>hi_model.js</code>
   - api для трансформации изображений и наложения водных знаков [<code>Hipot\Utils\Img</code>](docs/img.md)
@@ -28,6 +29,7 @@ bitrix [main 23.600+](https://dev.1c-bitrix.ru/docs/versions.php?lang=ru&module=
     ```
   - [объектная обёртка над агентами Bitrix](docs/bitrix_agents.md) в пространстве имён <code>Hipot\BitrixUtils\Agent</code>
   - с магазином <code>Hipot\BitrixUtils\Sale (aka SaleUtils)</code> и товаром каталога <code>Hipot\BitrixUtils\Catalog</code>
+  - [поиск типов цен по символьному коду](docs/reference_data_cache.md#поиск-типов-цен) <code>Hipot\BitrixUtils\PriceType</code> с ORM-кешем
   - различные утилиты-хелперы <code>Hipot\Utils\UUtils (aka UnsortedUtils)</code> и трейты-хелперы в <code>namespace Hipot\Utils\Helper\\*</code>
   - [генератор определений констант для IDE](docs/constant_ide_helper.md) <code>Hipot\Utils\ConstantIdeHelper</code>
   - для отложенного подключения ресурсов [<code>Hipot\BitrixUtils\AssetsContainer</code>](docs/AssetsContainer.md)

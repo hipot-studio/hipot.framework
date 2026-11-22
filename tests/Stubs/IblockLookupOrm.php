@@ -8,6 +8,18 @@ final class LookupQueryStub
 {
 	private array $filter = [];
 	private array $order = [];
+	private ?int $limit = null;
+
+	public function setLimit(int $limit): self
+	{
+		$this->limit = $limit;
+		return $this;
+	}
+
+	public function fetch(): array|false
+	{
+		return $this->fetchAll()[0] ?? false;
+	}
 
 	public function __construct(private string $table)
 	{
@@ -67,7 +79,7 @@ final class LookupQueryStub
 			}
 			return 0;
 		});
-		return $rows;
+		return $this->limit === null ? $rows : array_slice($rows, 0, $this->limit);
 	}
 }
 
