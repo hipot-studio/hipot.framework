@@ -13,6 +13,14 @@ use CUtil;
 trait StringUtils
 {
 	/**
+	 * Кодирует email для плагина $.mailme.
+	 */
+	public static function mailHideWithMailme(string $email): string
+	{
+		return str_replace(['@', '.'], [' AT ', ' DOT '], $email);
+	}
+
+	/**
 	 * Возвращает слово с правильным суффиксом
 	 * @param int|numeric $n количество
 	 * @param array|string $forms строка 'один|два|несколько' или 'слово|слова|слов' или массив с такой же историей

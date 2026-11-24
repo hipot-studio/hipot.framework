@@ -79,7 +79,7 @@ class HiBlock
 	 *
 	 * @param int     $hlblockId в приоритете
 	 * @param string  $hiBlockName иначе по строке
-	 * @param boolean $returnEntityClass = false Обряд создания до $hlblock = [] или до \Bitrix\Main\Entity\DataManager
+	 * @param bool    $returnEntityClass Вернуть имя ORM-класса вместо метаданных
 	 * @return array|class-string<\Bitrix\Main\ORM\Data\DataManager>|false|null
 	 *
 	 * @throws \Bitrix\Main\ArgumentException
@@ -87,7 +87,7 @@ class HiBlock
 	 * @throws \Bitrix\Main\SystemException
 	 * @see \Bitrix\Highloadblock\HighloadBlockTable::resolveHighloadblock()
 	 */
-	public static function getHightloadBlockTable(int $hlblockId, string $hiBlockName, bool $returnEntityClass = false)
+	public static function getHightloadBlockTable(int $hlblockId, string $hiBlockName, bool $returnEntityClass = false): array|string|false|null
 	{
 		$hlblock = null;
 
@@ -109,14 +109,14 @@ class HiBlock
 	}
 
 	/**
-	 * Получить сущность DataManager HL-инфоблока
+	 * Получить имя ORM-класса HL-блока
 	 *
 	 * @param int|string $hlblockId код HL-инфоблока
 	 *
 	 * @return class-string<\Bitrix\Main\ORM\Data\DataManager>|false
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function getDataManagerByHiId($hlblockId)
+	public static function getDataManagerByHiId($hlblockId): string|false
 	{
 		if ((int)$hlblockId <= 0) {
 			return false;
@@ -125,7 +125,7 @@ class HiBlock
 	}
 
 	/**
-	 * Получить сущность DataManager HL-инфоблока
+	 * Получить имя ORM-класса HL-блока
 	 *
 	 * @param string $hiBlockName символьный код HL-инфоблока
 	 *
@@ -133,7 +133,7 @@ class HiBlock
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function getDataManagerByHiCode(string $hiBlockName)
+	public static function getDataManagerByHiCode(string $hiBlockName): string|false
 	{
 		if (trim($hiBlockName) == '') {
 			return false;

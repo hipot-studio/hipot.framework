@@ -31,8 +31,8 @@ if ($dataClass !== null) {
 
 ### Прежние методы поиска
 
-- `getHightloadBlockTable(int $hlblockId, string $hiBlockName, bool $returnEntityClass = false)` отдаёт приоритет положительному ID. При поиске по имени пробелы учитываются в самом запросе. В режиме метаданных возвращает строку таблицы, `false` при отсутствии совпадения или `null`, если поиск пропущен. При `$returnEntityClass = true` компилирует результат и возвращает имя класса. В проверенном ядре компиляция отсутствующего блока приводит к исключению.
-- `getDataManagerByHiId($hlblockId)` и `getDataManagerByHiCode(string $hiBlockName)` возвращают `false` для неположительного ID и пустого имени соответственно. При остальных аргументах работают через режим компиляции `getHightloadBlockTable()`. Для проверки наличия блока удобнее nullable-контракт `getDataManager()`.
+- `getHightloadBlockTable(int $hlblockId, string $hiBlockName, bool $returnEntityClass = false): array|string|false|null` отдаёт приоритет положительному ID. При поиске по имени пробелы учитываются в самом запросе. В режиме метаданных возвращает строку таблицы, `false` при отсутствии совпадения или `null`, если поиск пропущен. При `$returnEntityClass = true` компилирует результат и возвращает имя класса. В проверенном ядре компиляция отсутствующего блока приводит к исключению.
+- `getDataManagerByHiId($hlblockId): string|false` и `getDataManagerByHiCode(string $hiBlockName): string|false` возвращают `false` для неположительного ID и пустого имени соответственно. При остальных аргументах работают через режим компиляции `getHightloadBlockTable()`. Для проверки наличия блока удобнее nullable-контракт `getDataManager()`.
 
 ### Схема блока
 

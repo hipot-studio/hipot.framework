@@ -25,12 +25,12 @@ string debug_string_backtrace();
 
 В фреймоврке идет две используемые функции для работы с HL-блоками:
 
-1/ Получение DataManager для работы с данными HL-блока, кеширующие "обряд создания DataManager для HL-блоков":
+1/ `__getHl(string|int $hiBlockName, bool $staticCache = true): string|false` возвращает имя ORM-класса HL-блока и по умолчанию кеширует результат в пределах вызовов функции. Для пустого имени или неположительного числового ID возвращает `false`.
 
 ```php
 $list = __getHl('CustomSettings')::getList(['select' => '*'])->fetchAll();
 // можно и по числовому ID HL-блока
-$item = __getHl(3)->getById(1)->fetch();
+$item = __getHl(3)::getById(1)->fetch();
 ```
 
 2/ Реестр различных не-структурированных настроек по сайту. Удобно создать для такого реестра настроек отдельный HL-блок, дернуть один раз в PHP-консоли:
@@ -46,46 +46,25 @@ $item = __getHl(3)->getById(1)->fetch();
 echo __hiCs('my_param', 'default_value');
 ```
 
-### Другие для mixed-типов
+### Работа с массивами
 
-1/ Удаляет из массива пустые элементы с пустыми значениями рекурсивно. Удобно при работе с массивами, пришедшими из json.
+`array_trim_r()` и `array_get_dot()` устарели. Используйте методы [ArrayTools](uutils.md#массивы-и-объекты) через `Hipot\Utils\UUtils`.
+
 ```php
-$ar = [
-    'a' => '  ',
-    'e' => [
-        'f',
-        null
-    ]
-];
-$ar = array_trim_r($ar);
-/*
-$ar = [
-    'e' => [
-        'f',
-    ]
-];
-*/
+use Hipot\Utils\UUtils;
+
+$data = UUtils::trimRecursive($data);
+$userId = UUtils::getDot($data, 'user.profile.id', 0);
 ```
 
-2/ Получить элемент через точечную нотацию. Свой "велосипед". Лучше [использовать сторонние библиотеки](https://github.com/sajadsdi/array-dot-notation).
-```php
-$data = [
-    'user' => [
-        'profile' => [
-            'id' => 625,
-            'pic' => '625.png',
-        ],
-    ],
-];
-$defaultUserId = 0;
-$userId = array_get_dot($data, 'user.profile.id', $defaultUserId);
-```
+### Кодирование email
 
-3/ Функция кодирования email для вывода на сайт (напр. страница контактов или подвал сайта).
-Используется совместно с jquery-плагином [$.mailme](https://github.com/hipot-studio/hipot.framework/blob/master/install/js/hipot.framework/lib.js#L14)
+Глобальная функция `mailHideWithMailme()` устарела. Для кодирования email используйте `UUtils::mailHideWithMailme()` совместно с jQuery-плагином [$.mailme](https://github.com/hipot-studio/hipot.framework/blob/master/install/js/hipot.framework/lib.js#L14).
 ```php
+use Hipot\Utils\UUtils;
+
 // info AT hipot-studio DOT com
-$hideEmail = mailHideWithMailme('info@hipot-studio.com');
+$hideEmail = UUtils::mailHideWithMailme('info@hipot-studio.com');
 ```
 ```html
 <span class="mailme"><?=$hideEmail?></span>

@@ -4,6 +4,47 @@ namespace Hipot\Utils\Helper;
 trait ArrayTools
 {
 	/**
+	 * Рекурсивно удаляет значения, чьё строковое представление пусто после trim().
+	 * Сохраняет ключи и вложенные массивы, включая пустые.
+	 */
+	public static function trimRecursive(array $array): array
+	{
+		$result = [];
+		foreach ($array as $key => $value) {
+			if (is_array($value)) {
+				$result[$key] = self::trimRecursive($value);
+			} elseif (trim((string)$value) !== '') {
+				$result[$key] = $value;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Возвращает значение по точечному пути или весь массив для пути null.
+	 * Прямой ключ со значением, отличным от null, имеет приоритет перед вложенным.
+	 */
+	public static function getDot(array $array, ?string $key, mixed $default = null): mixed
+	{
+		if ($key === null) {
+			return $array;
+		}
+		if (isset($array[$key])) {
+			return $array[$key];
+		}
+
+		foreach (explode('.', $key) as $segment) {
+			if (!is_array($array) || !array_key_exists($segment, $array)) {
+				return $default;
+			}
+			$array = $array[$segment];
+		}
+
+		return $array;
+	}
+
+	/**
 	 * Преобразует вложенный массив в плоский массив с составными ключами.
 	 *
 	 * Пустые массивы сохраняются как значения. Ключи, содержащие разделитель,

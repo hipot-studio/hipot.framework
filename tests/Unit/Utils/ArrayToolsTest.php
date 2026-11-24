@@ -3,13 +3,40 @@
 declare(strict_types=1);
 
 use Hipot\Utils\Helper\ArrayTools;
+use Hipot\Utils\UUtils;
 
 function arrayToolsFixture(): object
 {
-	return new class {
-		use ArrayTools;
-	};
+	return UUtils::createObjectFromTrait(ArrayTools::class);
 }
+
+it('removes blank values recursively while preserving keys and empty branches', function (): void {
+	$result = arrayToolsFixture()::trimRecursive([
+		'blank'  => ' ',
+		'branch' => [null, ' value ', false, 0],
+		'empty'  => [null],
+	]);
+
+	expect($result)->toBe([
+		'branch' => [1 => ' value ', 3 => 0],
+		'empty'  => [],
+	]);
+});
+
+it('resolves dot paths and preserves direct key precedence and null values', function (): void {
+	$tools = arrayToolsFixture();
+	$data = [
+		'user'      => ['id' => 7, 'name' => 'Alice', 'email' => null],
+		'user.id'   => 0,
+		'user.name' => null,
+	];
+
+	expect($tools::getDot($data, null))->toBe($data)
+		->and($tools::getDot($data, 'user.id', -1))->toBe(0)
+		->and($tools::getDot($data, 'user.name'))->toBe('Alice')
+		->and($tools::getDot($data, 'user.email', 'default'))->toBeNull()
+		->and($tools::getDot($data, 'user.email.domain', 'default'))->toBe('default');
+});
 
 it('flattens nested arrays and preserves list indexes', function (): void {
 	$result = arrayToolsFixture()::flatten([

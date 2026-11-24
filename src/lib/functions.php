@@ -124,16 +124,16 @@ if (! function_exists('__hiCs')) {
 
 if (! function_exists('__getHl')) {
 	/**
-	 * Получить сущность DataManager HL-инфоблока
+	 * Получить имя ORM-класса HL-блока
 	 *
 	 * @param int|string $hiBlockName числовой или символьный код HL-инфоблока
 	 * @param bool       $staticCache = true сохранять в локальном кеше функции возвращаемые сущности
 	 *
-	 * @return bool|Bitrix\Main\ORM\Data\DataManager
+	 * @return class-string<\Bitrix\Main\ORM\Data\DataManager>|false
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	function __getHl(string|int $hiBlockName, bool $staticCache = true)
+	function __getHl(string|int $hiBlockName, bool $staticCache = true): string|false
 	{
 		static $addedBlocks;
 
@@ -156,50 +156,21 @@ if (! function_exists('__getHl')) {
 
 if (! function_exists('array_trim_r')) {
 	/**
-	 * Удаляет из массива пустые элементы с пустыми значениями рекурсивно.
-	 *
-	 * @param array $ar
-	 * @return array
+	 * @deprecated Используйте UUtils::trimRecursive().
 	 */
 	function array_trim_r(array $ar): array
 	{
-		$arRes = [];
-		foreach ($ar as $k => $v) {
-			if (is_array($v)) {
-				$arRes[$k] = array_trim_r($v);
-			} else if (trim((string)$v) != '') {
-				$arRes[$k] = $v;
-			}
-		}
-		return $arRes;
+		return UUtils::trimRecursive($ar);
 	}
 }
 
 if (! function_exists('array_get_dot')) {
 	/**
-	 * Возвращает элемент подмассива используя точечную нотацию item.sub_item
-	 *
-	 * @param array|mixed $array Массив
-	 * @param ?string $key Путь ключей
-	 * @param mixed $default Значение "по умолчанию"
-	 *
-	 * @return mixed
+	 * @deprecated Используйте UUtils::getDot().
 	 */
 	function array_get_dot(array $array, ?string $key, $default = null)
 	{
-		if (is_null($key)) {
-			return $array;
-		}
-		if (isset($array[$key])) {
-			return $array[$key];
-		}
-		foreach (explode('.', $key) as $segment) {
-			if (!is_array($array) || !array_key_exists($segment, $array)) {
-				return $default;
-			}
-			$array = $array[$segment];
-		}
-		return $array;
+		return UUtils::getDot($array, $key, $default);
 	}
 }
 
@@ -228,18 +199,12 @@ if (! function_exists('bx_js_encode')) {
 
 if (! function_exists('mailHideWithMailme')) {
 	/**
-	 * Преобразует предоставленный адрес электронной почты, заменяя символы @ и . на " AT " и " DOT " соответственно.
-	 *
-	 * @param string $email Адрес электронной почты для преобразования.
-	 *
-	 * @return string Преобразованный адрес электронной почты.
+	 * @deprecated Используйте UUtils::mailHideWithMailme().
 	 */
 	function mailHideWithMailme(string $email): string
 	{
-		return str_replace(['@', '.'], [' AT ', ' DOT '], $email);
+		return UUtils::mailHideWithMailme($email);
 	}
 }
-
-
 
 // \/EOF

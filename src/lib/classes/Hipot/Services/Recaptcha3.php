@@ -362,12 +362,11 @@ final class Recaptcha3
 	}
 
 	/**
-	 * @noinspection MissingReturnTypeInspection
-	 * @return \Bitrix\Main\ORM\Data\DataManager | string
+	 * @return class-string<\Bitrix\Main\ORM\Data\DataManager>
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	private static function getLogTableEntity()
+	private static function getLogTableEntity(): string
 	{
 		$logTableEntity = Entity::compileEntity('Recaptcha3LogTable', [
 			new Fields\IntegerField('ID', [

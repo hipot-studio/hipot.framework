@@ -157,7 +157,6 @@ final class HiBlockApps extends HiBlock
 		return PhpCacher::cache(self::CS_CACHE_TAG, $cacheTtl, static function () use ($hiBlockName) {
 			$arParams = [];
 
-			/* @var $dm \Bitrix\Main\Entity\DataManager */
 			$dm  = self::getDataManagerByHiCode($hiBlockName);
 			$settingsQueryResult = $dm::getList([
 				'select' => ['UF_CODE', 'UF_VALUE'],
